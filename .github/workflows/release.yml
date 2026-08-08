@@ -63,15 +63,15 @@ jobs:
         run: |
           if [ "$VERSION" = "0.1.1" ]; then
             cat > release-notes.md <<'EOF'
-          First public TopDps release after the project rename.
+          Первый публичный релиз TopDps после переименования проекта.
 
-          - Renamed the addon from RpalTopDps to TopDps.
-          - Added migration from the old RpalTopDps SavedVariables database.
-          - Reset project versioning to 0.1.x.
-          - Added /topdps and /td commands.
-          - Set Johnyyyk as the addon author.
-          - Added Markdown user documentation and separate contribution/development documentation.
-          - Current gameplay support: Retribution Paladin for WoW 3.3.5a.
+          - Аддон переименован из RpalTopDps в TopDps.
+          - Добавлена миграция старых SavedVariables из RpalTopDpsDB в TopDpsDB.
+          - Версионирование проекта переведено на ветку 0.1.x.
+          - Добавлены команды /topdps и /td.
+          - Автор изменён на Johnyyyk.
+          - README переведён в Markdown, документация для разработчиков вынесена отдельно.
+          - На данный момент поддерживается Retribution Paladin для WoW 3.3.5a.
           EOF
           fi
 
@@ -86,12 +86,12 @@ jobs:
             gh release create "v$VERSION" \
               "build/TopDps-$VERSION.zip" \
               --target "$GITHUB_SHA" \
-              --title "TopDps $VERSION" \
+              --title "v$VERSION" \
               --notes-file release-notes.md
           else
             gh release create "v$VERSION" \
               "build/TopDps-$VERSION.zip" \
               --target "$GITHUB_SHA" \
-              --title "TopDps $VERSION" \
+              --title "v$VERSION" \
               --generate-notes
           fi
