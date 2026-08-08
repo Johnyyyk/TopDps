@@ -7,9 +7,9 @@ Bootstrap.initialized = false
 Bootstrap.updateElapsed = 0
 
 function Bootstrap:RegisterSlashCommands()
-    SLASH_RPALTOPDPS1 = "/rpaltopdps"
-    SLASH_RPALTOPDPS2 = "/rtd"
-    SlashCmdList.RPALTOPDPS = function()
+    SLASH_TOPDPS1 = "/topdps"
+    SLASH_TOPDPS2 = "/td"
+    SlashCmdList.TOPDPS = function()
         addon.OptionsController:Open()
     end
 end

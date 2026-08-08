@@ -1,9 +1,12 @@
-RpalTopDps = RpalTopDps or {}
+TopDps = TopDps or RpalTopDps or {}
 
-local addon = RpalTopDps
+-- Compatibility alias for upgrades from the old RpalTopDps name.
+RpalTopDps = TopDps
 
-addon.NAME = "RpalTopDps"
-addon.VERSION = "2.0.1"
+local addon = TopDps
+
+addon.NAME = "TopDps"
+addon.VERSION = "0.1.1"
 
 -- Set to false to completely hide the debug page from Interface Options.
 addon.SHOW_DEBUG_OPTIONS = true

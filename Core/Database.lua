@@ -13,11 +13,15 @@ local function IsValueInList(value, list)
 end
 
 function Database:ApplyDefaults()
-    if type(RpalTopDpsDB) ~= "table" then
-        RpalTopDpsDB = {}
+    if type(TopDpsDB) ~= "table" then
+        if type(RpalTopDpsDB) == "table" then
+            TopDpsDB = RpalTopDpsDB
+        else
+            TopDpsDB = {}
+        end
     end
 
-    local db = RpalTopDpsDB
+    local db = TopDpsDB
 
     if type(db.enabled) ~= "boolean" then
         db.enabled = addon.DEFAULTS.enabled
