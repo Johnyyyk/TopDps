@@ -1,4 +1,4 @@
-TopDps 2.0.1
+TopDps 0.1.0
 =============
 
 Installation
@@ -9,7 +9,6 @@ Commands
 --------
 /topdps
 /td
-/rtd (legacy alias)
 
 Architecture
 ------------
@@ -81,5 +80,5 @@ all text and controls inside this exact area and reserves space for scrollbars.
 
 Notes
 -----
-The addon supports the standard Blizzard action bars. Priority logic is isolated in the spec provider. Version 2.0.1 also adds
+The addon supports the standard Blizzard action bars. Priority logic is isolated in the spec provider. Version 0.1.0 includes
 3.3.5-specific action spell-ID compatibility and simpler Ret availability checks.
