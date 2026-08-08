@@ -1,31 +1,31 @@
-# Contributing to TopDps
+# Разработка TopDps
 
-TopDps is structured so class/spec rotation logic is isolated from the generic engine and UI.
+TopDps устроен так, чтобы логика ротации конкретного класса и специализации была отделена от общего движка и интерфейса.
 
-## Project structure
+## Структура проекта
 
 ```text
-Core/           namespace, constants, database, API wrappers, logging, settings
-Rotation/       generic priority engine and action-bar services
-Specs/          class/spec-specific providers
-Presentation/   action-button highlighting and center-screen icons
-UI/             options pages and minimap button
-Vendor/         bundled third-party/adapted visual components
-Textures/       addon textures
-Bootstrap.lua   addon initialization and event wiring
-TopDps.toc      addon manifest and load order
+Core/           namespace, константы, база настроек, API-обёртки, логирование
+Rotation/       общий движок приоритетов и работа с панелями действий
+Specs/          логика конкретных классов и специализаций
+Presentation/   подсветка кнопок и центральные иконки
+UI/             страницы настроек и кнопка миникарты
+Vendor/         встроенные сторонние или адаптированные визуальные компоненты
+Textures/       текстуры аддона
+Bootstrap.lua   инициализация аддона и обработка событий
+TopDps.toc      манифест аддона и порядок загрузки файлов
 ```
 
-## Adding another class or specialization
+## Добавление нового класса или специализации
 
-1. Create a provider under `Specs/<Class>/<Spec>.lua`.
-2. Implement the provider contract used by `Rotation/SpecRegistry.lua` and `Rotation/Engine.lua`.
-3. Register the provider with `TopDps.SpecRegistry:Register(provider)`.
-4. Add the file to `TopDps.toc` before `Bootstrap.lua`.
+1. Создайте provider в `Specs/<Class>/<Spec>.lua`.
+2. Реализуйте контракт, который используют `Rotation/SpecRegistry.lua` и `Rotation/Engine.lua`.
+3. Зарегистрируйте provider через `TopDps.SpecRegistry:Register(provider)`.
+4. Добавьте файл в `TopDps.toc` перед `Bootstrap.lua`.
 
-The current reference implementation is `Specs/Paladin/Retribution.lua`.
+Текущая эталонная реализация находится в `Specs/Paladin/Retribution.lua`.
 
-A provider currently exposes at least:
+Минимальный набор методов provider:
 
 ```text
 id
@@ -40,25 +40,29 @@ IsEntryInRange(actionBar, entry, category, context)
 GetRecommendationName(category, entries)
 ```
 
-Rotation changes for a specific specialization should normally stay inside its provider rather than being added to the generic engine.
+Изменения ротации конкретной специализации по возможности должны оставаться внутри её provider, а не попадать в общий движок.
 
-## WoW 3.3.5a notes
+## Особенности WoW 3.3.5a
 
-- The addon targets interface version `30300`.
-- The standard Interface Options addon panel is approximately `413x429` px; `UI/OptionsWidgets.lua` keeps controls inside that area and reserves room for scrollbars.
-- `Core/GameApi.lua` contains compatibility wrappers for API differences found in 3.3.5a clients/private-server builds.
-- The addon currently assumes standard Blizzard action bars.
+- Аддон рассчитан на интерфейс версии `30300`.
+- Стандартная панель настроек аддонов имеет рабочую область примерно `413x429` px; `UI/OptionsWidgets.lua` учитывает этот размер и место под полосы прокрутки.
+- В `Core/GameApi.lua` находятся обёртки совместимости для различий API клиента 3.3.5a и отдельных private server сборок.
+- Сейчас предполагается использование стандартных панелей действий Blizzard.
 
-## Debug page
+## Отладка
 
-The debug options page can be hidden globally in `Core/Namespace.lua`:
+Страницу отладки можно полностью скрыть в `Core/Namespace.lua`:
 
 ```lua
 addon.SHOW_DEBUG_OPTIONS = false
 ```
 
-When changing rotation detection or WoW API compatibility, enable debug logging and verify the recognized action IDs and recommendation state in-game.
+При изменении определения способностей или совместимости с WoW API включайте отладочный журнал и проверяйте распознанные ID способностей и текущее состояние рекомендации непосредственно в игре.
 
-## Versioning
+## Версионирование и релизы
 
-The project uses semantic versioning. The initial public version is `0.1.0`.
+Проект использует семантическое версионирование.
+
+- Тег и название релиза: `vX.Y.Z`, например `v0.1.1`.
+- Архив релиза: `TopDps-X.Y.Z.zip`.
+- README, документация и описание релизов ведутся на русском языке.

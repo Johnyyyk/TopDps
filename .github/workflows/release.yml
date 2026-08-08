@@ -1,4 +1,4 @@
-name: Release addon
+name: Выпуск релиза
 
 on:
   push:
@@ -13,10 +13,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Получить исходники
         uses: actions/checkout@v4
 
-      - name: Read addon version
+      - name: Прочитать версию аддона
         id: version
         shell: bash
         run: |
@@ -24,7 +24,7 @@ jobs:
           test -n "$VERSION"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Check existing release
+      - name: Проверить существующий релиз
         id: release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -37,7 +37,7 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Build addon archive
+      - name: Собрать архив аддона
         if: steps.release.outputs.exists != 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -55,7 +55,7 @@ jobs:
           cd build
           zip -r "TopDps-$VERSION.zip" TopDps
 
-      - name: Prepare release notes
+      - name: Подготовить описание релиза
         if: steps.release.outputs.exists != 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -73,25 +73,19 @@ jobs:
           - README переведён в Markdown, документация для разработчиков вынесена отдельно.
           - На данный момент поддерживается Retribution Paladin для WoW 3.3.5a.
           EOF
+          else
+            printf 'Изменения версии v%s.\n' "$VERSION" > release-notes.md
           fi
 
-      - name: Create GitHub release
+      - name: Создать GitHub Release
         if: steps.release.outputs.exists != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
         shell: bash
         run: |
-          if [ -f release-notes.md ]; then
-            gh release create "v$VERSION" \
-              "build/TopDps-$VERSION.zip" \
-              --target "$GITHUB_SHA" \
-              --title "v$VERSION" \
-              --notes-file release-notes.md
-          else
-            gh release create "v$VERSION" \
-              "build/TopDps-$VERSION.zip" \
-              --target "$GITHUB_SHA" \
-              --title "v$VERSION" \
-              --generate-notes
-          fi
+          gh release create "v$VERSION" \
+            "build/TopDps-$VERSION.zip" \
+            --target "$GITHUB_SHA" \
+            --title "v$VERSION" \
+            --notes-file release-notes.md

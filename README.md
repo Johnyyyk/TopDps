@@ -1,47 +1,48 @@
 # TopDps
 
-TopDps is a priority helper addon for World of Warcraft 3.3.5a.
+TopDps — аддон-помощник по приоритетам способностей для World of Warcraft 3.3.5a.
 
-Current version: **0.1.1**
+Текущая версия: **0.1.1**
 
-## Supported specializations
+## Поддерживаемые специализации
 
-- Paladin — Retribution
+- Паладин — Воздаяние
 
-Support for additional classes and specializations is planned.
+В дальнейшем планируется добавить другие классы и специализации.
 
-## Features
+## Возможности
 
-- Shows the next recommended ability on the standard Blizzard action bars.
-- Blizzard and Cheese-style highlighting.
-- Optional center-screen recommendation icons.
-- Configurable display modes: everywhere, dungeons and raids, raids only, or disabled.
-- Movable minimap button.
-- Russian and English localization.
-- Debug page with recommendation output and addon logs.
+- Показывает следующую рекомендуемую способность на стандартных панелях Blizzard.
+- Два варианта подсветки: Blizzard и Cheese.
+- Опциональные центральные иконки следующей способности.
+- Настройка размера и прозрачности центральных иконок.
+- Режимы работы: везде, подземелья и рейды, только рейды или полностью выключено.
+- Перемещаемая кнопка у миникарты.
+- Русская и английская локализация интерфейса.
+- Страница отладки с выводом рекомендаций и журналом аддона.
 
-## Installation
+## Установка
 
-1. Download the addon release.
-2. Extract the `TopDps` folder into:
+1. Скачайте архив нужного релиза.
+2. Распакуйте папку `TopDps` в:
    `World of Warcraft/Interface/AddOns/`
-3. Restart the game or run `/reload`.
+3. Перезапустите игру или выполните `/reload`.
 
-The final path should look like:
+Итоговый путь должен выглядеть так:
 
 ```text
 World of Warcraft/Interface/AddOns/TopDps/TopDps.toc
 ```
 
-## Commands
+## Команды
 
-- `/topdps` — open addon settings.
-- `/td` — short alias.
+- `/topdps` — открыть настройки аддона.
+- `/td` — короткий вариант команды.
 
-## Compatibility
+## Совместимость
 
-TopDps targets WoW **3.3.5a** and currently supports the standard Blizzard action bars.
+TopDps предназначен для WoW **3.3.5a** и сейчас работает со стандартными панелями действий Blizzard.
 
-## Development
+## Разработка
 
-Architecture, extension points and contribution notes are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
+Архитектура проекта, точки расширения и информация для разработки описаны в [CONTRIBUTING.md](CONTRIBUTING.md).
