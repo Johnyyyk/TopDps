@@ -1,0 +1,169 @@
+local addon = RpalTopDps
+local GameApi = addon:CreateModule("GameApi")
+
+function GameApi:GetInventoryItemId(slot)
+    if GetInventoryItemID then
+        return GetInventoryItemID("player", slot)
+    end
+
+    local link = GetInventoryItemLink("player", slot)
+    if not link then
+        return nil
+    end
+
+    return tonumber(string.match(link, "item:(%d+)"))
+end
+
+function GameApi:GetActiveTalentGroup()
+    if not GetActiveTalentGroup then
+        return nil
+    end
+
+    local ok, group = pcall(GetActiveTalentGroup)
+    if ok then
+        return group
+    end
+
+    return nil
+end
+
+function GameApi:GetTalentPoints(tabIndex, talentGroup)
+    if not GetTalentTabInfo then
+        return nil
+    end
+
+    if talentGroup then
+        local ok, _, _, points = pcall(GetTalentTabInfo, tabIndex, false, false, talentGroup)
+        if ok and type(points) == "number" then
+            return points
+        end
+    end
+
+    local ok, _, _, points = pcall(GetTalentTabInfo, tabIndex, false, false)
+    if ok and type(points) == "number" then
+        return points
+    end
+
+    ok, _, _, points = pcall(GetTalentTabInfo, tabIndex, false)
+    if ok and type(points) == "number" then
+        return points
+    end
+
+    return nil
+end
+
+function GameApi:GetTalentRankByName(tabIndex, talentName)
+    if not talentName or not GetTalentInfo then
+        return 0
+    end
+
+    local talentGroup = self:GetActiveTalentGroup()
+    local maxTalents = 30
+
+    if GetNumTalents then
+        local ok, count = pcall(GetNumTalents, tabIndex, false, false)
+        if ok and type(count) == "number" and count > 0 then
+            maxTalents = count
+        end
+    end
+
+    local index
+    for index = 1, maxTalents do
+        local ok, name, _, _, _, rank
+        if talentGroup then
+            ok, name, _, _, _, rank = pcall(GetTalentInfo, tabIndex, index, false, false, talentGroup)
+        else
+            ok, name, _, _, _, rank = pcall(GetTalentInfo, tabIndex, index, false, false)
+        end
+
+        if not ok then
+            ok, name, _, _, _, rank = pcall(GetTalentInfo, tabIndex, index, false)
+        end
+
+        if ok and name == talentName then
+            return tonumber(rank) or 0
+        end
+    end
+
+    return 0
+end
+
+function GameApi:GetActionSpellData(action)
+    -- The 3.3.5 client exposes a fourth GetActionInfo return value with the
+    -- global spell ID. The second value may be a spellbook index on some
+    -- clients, so using it as a spell ID makes random abilities disappear.
+    local actionType, id, _, globalId = GetActionInfo(action)
+    if actionType == "spell" then
+        local spellId = tonumber(globalId)
+        if not spellId or spellId <= 0 then
+            spellId = tonumber(id)
+        end
+
+        local name
+        if spellId then
+            name = GetSpellInfo(spellId)
+        end
+
+        -- Compatibility fallback for clients where id is a spellbook slot.
+        if not name and id and GetSpellName then
+            name = GetSpellName(id, BOOKTYPE_SPELL)
+        end
+
+        return spellId, name
+    end
+
+    if actionType == "macro" and id and GetMacroSpell then
+        local first, second, third = GetMacroSpell(id)
+        if type(first) == "number" then
+            return first, GetSpellInfo(first)
+        end
+
+        if type(third) == "number" then
+            return third, GetSpellInfo(third)
+        end
+
+        if type(first) == "string" and first ~= "" then
+            return nil, first
+        end
+
+        if type(second) == "string" and second ~= "" then
+            return nil, second
+        end
+    end
+
+    return nil, nil
+end
+
+function GameApi:GetActionSpellName(action)
+    local _, spellName = self:GetActionSpellData(action)
+    return spellName
+end
+
+function GameApi:GetButtonAction(button)
+    if ActionButton_CalculateAction then
+        local ok, action = pcall(ActionButton_CalculateAction, button)
+        if ok and action then
+            return action
+        end
+    end
+
+    if button.action then
+        return button.action
+    end
+
+    if ActionButton_GetPagedID then
+        local ok, action = pcall(ActionButton_GetPagedID, button)
+        if ok and action then
+            return action
+        end
+    end
+
+    if button.GetAttribute then
+        local action = button:GetAttribute("action")
+        if action then
+            return action
+        end
+    end
+
+    return nil
+end

@@ -1,0 +1,39 @@
+## Interface: 30300
+## Title: RpalTopDps
+## Notes: Extensible priority helper for WoW 3.3.5a
+## Notes-ruRU: Расширяемый помощник приоритетов для WoW 3.3.5a
+## Author: OpenAI
+## Version: 2.0.1
+## SavedVariables: RpalTopDpsDB
+
+Core\Namespace.lua
+Core\Constants.lua
+Core\Database.lua
+Localization.lua
+Core\GameApi.lua
+Core\Logger.lua
+Core\Settings.lua
+
+Rotation\SpecRegistry.lua
+Rotation\ActionBarService.lua
+Rotation\CombatTracker.lua
+Rotation\Engine.lua
+
+Vendor\Cheese\CheeseAnimation.xml
+Vendor\Cheese\CheeseGlow.lua
+Vendor\Cheese\CheeseGlow.xml
+
+Presentation\BlizzardHighlight.lua
+Presentation\HighlightManager.lua
+Presentation\CenterIcons.lua
+Presentation\RecommendationPresenter.lua
+
+Specs\Paladin\Retribution.lua
+
+UI\OptionsWidgets.lua
+UI\MinimapButton.lua
+UI\GeneralOptions.lua
+UI\DebugOptions.lua
+UI\OptionsController.lua
+
+Bootstrap.lua
