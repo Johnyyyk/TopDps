@@ -2,7 +2,7 @@
 
 TopDps is a priority helper addon for World of Warcraft 3.3.5a.
 
-Current version: **0.1.0**
+Current version: **0.1.1**
 
 ## Supported specializations
 
