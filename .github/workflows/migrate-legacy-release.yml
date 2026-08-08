@@ -21,7 +21,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          if gh release view "v2.0.1" >/dev/null 2>&1; then
+          if gh api "repos/$REPO/releases/tags/v2.0.1" >/dev/null 2>&1; then
             LEGACY_SHA="$(gh api "repos/$REPO/git/ref/tags/v2.0.1" --jq '.object.sha')"
 
             if ! gh api "repos/$REPO/git/ref/tags/v0.1.0" >/dev/null 2>&1; then
@@ -44,7 +44,7 @@ jobs:
             gh api --method DELETE "repos/$REPO/git/refs/tags/v2.0.1"
           fi
 
-          if gh release view "v0.1.1" >/dev/null 2>&1; then
+          if gh api "repos/$REPO/releases/tags/v0.1.1" >/dev/null 2>&1; then
             RELEASE_ID="$(gh api "repos/$REPO/releases/tags/v0.1.1" --jq '.id')"
             BODY="$(cat <<'EOF'
           Первый публичный релиз TopDps после переименования проекта.
