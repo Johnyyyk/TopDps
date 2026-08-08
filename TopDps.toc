@@ -3,7 +3,7 @@
 ## Notes: Расширяемый помощник приоритетов для WoW 3.3.5a
 ## Notes-ruRU: Расширяемый помощник приоритетов для WoW 3.3.5a
 ## Author: Johnyyyk
-## Version: 0.1.1
+## Version: 1.0.0
 ## SavedVariables: TopDpsDB, RpalTopDpsDB
 
 Core\Namespace.lua
@@ -14,10 +14,15 @@ Core\GameApi.lua
 Core\Logger.lua
 Core\Settings.lua
 
-Rotation\SpecRegistry.lua
-Rotation\ActionBarService.lua
-Rotation\CombatTracker.lua
-Rotation\Engine.lua
+Engine\ActionBarService.lua
+Engine\ReadinessService.lua
+Engine\CombatTracker.lua
+Engine\ContextBuilder.lua
+Engine\RotationEngine.lua
+
+Specs\SpecProvider.lua
+Specs\SpecRegistry.lua
+Specs\SpecManager.lua
 
 Vendor\Cheese\CheeseAnimation.xml
 Vendor\Cheese\CheeseGlow.lua
@@ -28,7 +33,10 @@ Presentation\HighlightManager.lua
 Presentation\CenterIcons.lua
 Presentation\RecommendationPresenter.lua
 
+# TopDps-Specs-Start
+Specs\Paladin\Common.lua
 Specs\Paladin\Retribution.lua
+# TopDps-Specs-End
 
 UI\OptionsWidgets.lua
 UI\MinimapButton.lua

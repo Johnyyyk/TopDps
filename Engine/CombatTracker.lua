@@ -1,4 +1,4 @@
-local addon = RpalTopDps
+local addon = TopDps
 local CombatTracker = addon:CreateModule("CombatTracker")
 
 local DAMAGE_EVENTS = {

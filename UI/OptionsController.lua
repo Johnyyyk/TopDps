@@ -1,4 +1,4 @@
-local addon = RpalTopDps
+local addon = TopDps
 local OptionsController = addon:CreateModule("OptionsController")
 
 function OptionsController:Initialize()
@@ -24,8 +24,8 @@ function OptionsController:Open()
         return
     end
 
-    -- Calling twice is required by the 3.3.5 Interface Options implementation
-    -- when opening a category directly from outside the options frame.
+    -- Реализации Interface Options в 3.3.5 требуется два вызова при открытии
+    -- категории извне окна настроек.
     InterfaceOptionsFrame_OpenToCategory(addon.GeneralOptions.panel)
     InterfaceOptionsFrame_OpenToCategory(addon.GeneralOptions.panel)
 end

@@ -1,4 +1,4 @@
-local addon = RpalTopDps
+local addon = TopDps
 local CenterIcons = addon:CreateModule("CenterIcons")
 
 local function CreateIconFrame(name)
@@ -17,7 +17,7 @@ local function CreateIconFrame(name)
 
     local overlay = frame:CreateTexture(nil, "OVERLAY")
     overlay:SetAllPoints(frame)
-    overlay:SetTexture("Interface\\AddOns\\RpalTopDps\\Textures\\CenterFrame")
+    overlay:SetTexture("Interface\\AddOns\\TopDps\\Textures\\CenterFrame")
     overlay:SetBlendMode("ADD")
     frame.overlay = overlay
 
@@ -35,8 +35,8 @@ end
 
 function CenterIcons:Initialize()
     self.frames = {
-        CreateIconFrame("RpalTopDpsCenterIconLeft"),
-        CreateIconFrame("RpalTopDpsCenterIconRight"),
+        CreateIconFrame("TopDpsCenterIconLeft"),
+        CreateIconFrame("TopDpsCenterIconRight"),
     }
 
     self:ApplyLayout()

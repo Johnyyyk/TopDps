@@ -1,4 +1,4 @@
-local addon = RpalTopDps
+local addon = TopDps
 local Logger = addon:CreateModule("Logger")
 local unpack = unpack
 
@@ -127,14 +127,12 @@ function Logger:WriteDiagnosticSnapshot()
     end
 
     local _, class = UnitClass("player")
-    local provider = addon.SpecRegistry and addon.SpecRegistry:GetActiveProvider() or nil
+    local provider = addon.SpecManager and addon.SpecManager:GetActive() or nil
     local providerId = provider and provider.id or "none"
     local buttonCount = addon.ActionBarService and #addon.ActionBarService.buttons or 0
-    local t9Count = provider and provider.t9Count or 0
-    local t10Count = provider and provider.t10Count or 0
 
     self:Info(
-        "Snapshot: version=%s, locale=%s, class=%s, level=%s, enabled=%s, mode=%s, glow=%s, center=%s, provider=%s, buttons=%s, T9=%s, T10=%s",
+        "Snapshot: version=%s, locale=%s, class=%s, level=%s, enabled=%s, mode=%s, glow=%s, center=%s, provider=%s, buttons=%s",
         addon.VERSION,
         tostring(GetLocale()),
         tostring(class),
@@ -144,10 +142,15 @@ function Logger:WriteDiagnosticSnapshot()
         tostring(addon.db.highlightStyle),
         tostring(addon.db.showCenterIcons),
         tostring(providerId),
-        tostring(buttonCount),
-        tostring(t9Count),
-        tostring(t10Count)
+        tostring(buttonCount)
     )
+
+    if provider then
+        local providerState = provider:GetDebugState()
+        if providerState then
+            self:Info("Provider state: %s", tostring(providerState))
+        end
+    end
 
     if provider and addon.ActionBarService then
         local actions = addon.ActionBarService:CollectVisibleActions(provider)

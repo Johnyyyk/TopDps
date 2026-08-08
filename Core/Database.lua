@@ -1,4 +1,4 @@
-local addon = RpalTopDps
+local addon = TopDps
 local Database = addon:CreateModule("Database")
 
 local function IsValueInList(value, list)
@@ -14,6 +14,7 @@ end
 
 function Database:ApplyDefaults()
     if type(TopDpsDB) ~= "table" then
+        -- Старое имя SavedVariables оставляем только для однократной миграции настроек.
         if type(RpalTopDpsDB) == "table" then
             TopDpsDB = RpalTopDpsDB
         else

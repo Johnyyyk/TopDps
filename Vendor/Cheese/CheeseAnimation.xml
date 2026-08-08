@@ -2,18 +2,18 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
     <Script file="Vendor\Cheese\CheeseAnimation.lua"/>
-    <Animation name="RpalTopDpsCheeseAlphaTemplate" virtual="true">
+    <Animation name="TopDpsCheeseAlphaTemplate" virtual="true">
         <Scripts>
-            <OnUpdate function="RpalTopDpsCheeseAlphaTemplate_OnUpdate"/>
-            <OnStop function="RpalTopDpsCheeseAlphaTemplate_OnStop"/>
-            <OnFinished function="RpalTopDpsCheeseAlphaTemplate_OnFinished"/>
+            <OnUpdate function="TopDpsCheeseAlphaTemplate_OnUpdate"/>
+            <OnStop function="TopDpsCheeseAlphaTemplate_OnStop"/>
+            <OnFinished function="TopDpsCheeseAlphaTemplate_OnFinished"/>
         </Scripts>
     </Animation>
-    <Animation name="RpalTopDpsCheeseScaleTemplate" virtual="true">
+    <Animation name="TopDpsCheeseScaleTemplate" virtual="true">
         <Scripts>
-            <OnUpdate function="RpalTopDpsCheeseScaleTemplate_OnUpdate"/>
-            <OnStop function="RpalTopDpsCheeseScaleTemplate_OnStop"/>
-            <OnFinished function="RpalTopDpsCheeseScaleTemplate_OnFinished"/>
+            <OnUpdate function="TopDpsCheeseScaleTemplate_OnUpdate"/>
+            <OnStop function="TopDpsCheeseScaleTemplate_OnStop"/>
+            <OnFinished function="TopDpsCheeseScaleTemplate_OnFinished"/>
         </Scripts>
     </Animation>
 </Ui>

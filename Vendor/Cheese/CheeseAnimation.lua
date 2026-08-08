@@ -21,7 +21,7 @@ local function TidyAlphaAnimation(self)
     self.frameAlpha = nil
 end
 
-function RpalTopDpsCheeseAlphaTemplate_OnUpdate(self)
+function TopDpsCheeseAlphaTemplate_OnUpdate(self)
     local progress = self:GetSmoothProgress()
     if progress ~= 0 then
         if not self.played then
@@ -39,14 +39,14 @@ function RpalTopDpsCheeseAlphaTemplate_OnUpdate(self)
     end
 end
 
-function RpalTopDpsCheeseAlphaTemplate_OnStop(self)
+function TopDpsCheeseAlphaTemplate_OnStop(self)
     if self.frameAlpha then
         TidyAlphaAnimation(self)
     end
     self.played = nil
 end
 
-RpalTopDpsCheeseAlphaTemplate_OnFinished = RpalTopDpsCheeseAlphaTemplate_OnStop
+TopDpsCheeseAlphaTemplate_OnFinished = TopDpsCheeseAlphaTemplate_OnStop
 
 local function InitScaleAnimation(self)
     local target = self.target
@@ -141,7 +141,7 @@ local function TidyScaleAnimation(self)
     self.frameHeight = nil
 end
 
-function RpalTopDpsCheeseScaleTemplate_OnUpdate(self)
+function TopDpsCheeseScaleTemplate_OnUpdate(self)
     local progress = self:GetSmoothProgress()
     if progress ~= 0 then
         if not self.played then
@@ -163,11 +163,11 @@ function RpalTopDpsCheeseScaleTemplate_OnUpdate(self)
     end
 end
 
-function RpalTopDpsCheeseScaleTemplate_OnStop(self)
+function TopDpsCheeseScaleTemplate_OnStop(self)
     if self.frameWidth then
         TidyScaleAnimation(self)
     end
     self.played = nil
 end
 
-RpalTopDpsCheeseScaleTemplate_OnFinished = RpalTopDpsCheeseScaleTemplate_OnStop
+TopDpsCheeseScaleTemplate_OnFinished = TopDpsCheeseScaleTemplate_OnStop

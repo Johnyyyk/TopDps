@@ -1,4 +1,4 @@
-local addon = RpalTopDps
+local addon = TopDps
 local CheeseHighlight = addon:CreateModule("CheeseHighlight")
 
 CheeseHighlight.unused = CheeseHighlight.unused or {}
@@ -30,7 +30,7 @@ local function ApplySteadyGlow(overlay)
     overlay:Show()
 end
 
-function RpalTopDpsCheese_AnimateTexCoords(texture, textureWidth, textureHeight, frameWidth, frameHeight, numFrames, elapsed, throttle)
+function TopDpsCheese_AnimateTexCoords(texture, textureWidth, textureHeight, frameWidth, frameHeight, numFrames, elapsed, throttle)
     if not texture.frame then
         texture.frame = 1
         texture.throttle = throttle
@@ -67,9 +67,9 @@ function CheeseHighlight:GetOverlay()
         self.count = self.count + 1
         overlay = CreateFrame(
             "Frame",
-            "RpalTopDpsCheeseActionButtonOverlay" .. self.count,
+            "TopDpsCheeseActionButtonOverlay" .. self.count,
             UIParent,
-            "RpalTopDpsCheeseActionBarButtonGlow"
+            "TopDpsCheeseActionBarButtonGlow"
         )
         overlay.animOut.isPlaying = false
         overlay.animOut.IsPlaying = IsAnimPlaying
@@ -79,20 +79,18 @@ function CheeseHighlight:GetOverlay()
 end
 
 function CheeseHighlight:Show(button)
-    local overlay = button.rpalTopDpsCheeseOverlay
+    local overlay = button.topDpsCheeseOverlay
     if overlay then
         if overlay.animOut:IsPlaying() then
             overlay.animOut:Stop()
         end
 
-        -- Show the final Cheese glow immediately. The original intro scales a
-        -- square down onto the button; that phase is intentionally skipped.
         ApplySteadyGlow(overlay)
         return overlay
     end
 
     overlay = self:GetOverlay()
-    button.rpalTopDpsCheeseOverlay = overlay
+    button.topDpsCheeseOverlay = overlay
     self.active[button] = overlay
 
     local frameWidth, frameHeight = button:GetSize()
@@ -108,7 +106,7 @@ function CheeseHighlight:Show(button)
 end
 
 function CheeseHighlight:Hide(button)
-    local overlay = button.rpalTopDpsCheeseOverlay
+    local overlay = button.topDpsCheeseOverlay
     if not overlay then
         return
     end
@@ -120,16 +118,16 @@ function CheeseHighlight:Hide(button)
     if button:IsVisible() then
         overlay.animOut:Play()
     else
-        RpalTopDpsCheeseGlowAnimOutFinished(overlay.animOut)
+        TopDpsCheeseGlowAnimOutFinished(overlay.animOut)
     end
 end
 
-function RpalTopDpsCheeseGlowAnimOutFinished(animGroup)
+function TopDpsCheeseGlowAnimOutFinished(animGroup)
     local overlay = animGroup:GetParent()
     local button = overlay:GetParent()
 
     overlay:Hide()
-    button.rpalTopDpsCheeseOverlay = nil
+    button.topDpsCheeseOverlay = nil
     CheeseHighlight.active[button] = nil
     table.insert(CheeseHighlight.unused, overlay)
 end

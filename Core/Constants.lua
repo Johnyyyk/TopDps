@@ -1,4 +1,4 @@
-local addon = RpalTopDps
+local addon = TopDps
 
 addon.MODE_DISABLED = "DISABLED"
 addon.MODE_EVERYWHERE = "EVERYWHERE"

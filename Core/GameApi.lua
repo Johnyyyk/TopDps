@@ -1,4 +1,4 @@
-local addon = RpalTopDps
+local addon = TopDps
 local GameApi = addon:CreateModule("GameApi")
 
 function GameApi:GetInventoryItemId(slot)
@@ -89,9 +89,8 @@ function GameApi:GetTalentRankByName(tabIndex, talentName)
 end
 
 function GameApi:GetActionSpellData(action)
-    -- The 3.3.5 client exposes a fourth GetActionInfo return value with the
-    -- global spell ID. The second value may be a spellbook index on some
-    -- clients, so using it as a spell ID makes random abilities disappear.
+    -- На 3.3.5 четвёртое значение GetActionInfo содержит global spell ID.
+    -- Второе значение на части клиентов является индексом spellbook.
     local actionType, id, _, globalId = GetActionInfo(action)
     if actionType == "spell" then
         local spellId = tonumber(globalId)
@@ -104,7 +103,6 @@ function GameApi:GetActionSpellData(action)
             name = GetSpellInfo(spellId)
         end
 
-        -- Compatibility fallback for clients where id is a spellbook slot.
         if not name and id and GetSpellName then
             name = GetSpellName(id, BOOKTYPE_SPELL)
         end

@@ -1,4 +1,4 @@
-local addon = RpalTopDps
+local addon = TopDps
 local GeneralOptions = addon:CreateModule("GeneralOptions")
 local Widgets = addon.OptionsWidgets
 
@@ -11,8 +11,8 @@ local function GetHighlightStyleText(style)
 end
 
 function GeneralOptions:Create()
-    local panel = Widgets:CreatePanel("RpalTopDpsOptionsPanel", addon.NAME)
-    local _, content = Widgets:CreateScrollArea(panel, "RpalTopDpsOptionsScrollFrame", 690)
+    local panel = Widgets:CreatePanel("TopDpsOptionsPanel", addon.NAME)
+    local _, content = Widgets:CreateScrollArea(panel, "TopDpsOptionsScrollFrame", 690)
 
     local title = Widgets:CreateText(
         content,
@@ -32,37 +32,20 @@ function GeneralOptions:Create()
 
     Widgets:CreateSectionHeader(content, addon.L.GENERAL_SETTINGS, -82)
 
-    local enabledCheck = Widgets:CreateCheckButton(
-        content,
-        "RpalTopDpsOptionsEnabled",
-        6,
-        -104,
-        addon.L.ENABLED
-    )
+    local enabledCheck = Widgets:CreateCheckButton(content, "TopDpsOptionsEnabled", 6, -104, addon.L.ENABLED)
     enabledCheck:SetScript("OnClick", function(self)
         addon.Settings:SetEnabled(Widgets:GetCheckValue(self))
     end)
 
-    local showMinimap = Widgets:CreateCheckButton(
-        content,
-        "RpalTopDpsOptionsShowMinimap",
-        6,
-        -140,
-        addon.L.SHOW_MINIMAP
-    )
+    local showMinimap = Widgets:CreateCheckButton(content, "TopDpsOptionsShowMinimap", 6, -140, addon.L.SHOW_MINIMAP)
     showMinimap:SetScript("OnClick", function(self)
         addon.db.showMinimap = Widgets:GetCheckValue(self)
         addon.MinimapButton:Refresh()
     end)
 
-    local modeLabel = Widgets:CreateText(content, "GameFontNormal", 8, -190, Widgets.TEXT_WIDTH, addon.L.MODE)
+    Widgets:CreateText(content, "GameFontNormal", 8, -190, Widgets.TEXT_WIDTH, addon.L.MODE)
 
-    local modeDropdown = CreateFrame(
-        "Frame",
-        "RpalTopDpsOptionsModeDropDown",
-        content,
-        "UIDropDownMenuTemplate"
-    )
+    local modeDropdown = CreateFrame("Frame", "TopDpsOptionsModeDropDown", content, "UIDropDownMenuTemplate")
     modeDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -206)
     UIDropDownMenu_SetWidth(modeDropdown, 270)
 
@@ -82,15 +65,9 @@ function GeneralOptions:Create()
     end)
 
     Widgets:CreateSectionHeader(content, addon.L.VISUAL_SETTINGS, -274)
-
     Widgets:CreateText(content, "GameFontNormal", 8, -302, Widgets.TEXT_WIDTH, addon.L.HIGHLIGHT_STYLE)
 
-    local highlightDropdown = CreateFrame(
-        "Frame",
-        "RpalTopDpsOptionsHighlightDropDown",
-        content,
-        "UIDropDownMenuTemplate"
-    )
+    local highlightDropdown = CreateFrame("Frame", "TopDpsOptionsHighlightDropDown", content, "UIDropDownMenuTemplate")
     highlightDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -318)
     UIDropDownMenu_SetWidth(highlightDropdown, 270)
 
@@ -111,7 +88,7 @@ function GeneralOptions:Create()
 
     local centerIconsCheck = Widgets:CreateCheckButton(
         content,
-        "RpalTopDpsOptionsCenterIcons",
+        "TopDpsOptionsCenterIcons",
         6,
         -378,
         addon.L.SHOW_CENTER_ICONS
@@ -120,12 +97,7 @@ function GeneralOptions:Create()
         addon.Settings:SetCenterIconsEnabled(Widgets:GetCheckValue(self))
     end)
 
-    local opacitySlider = CreateFrame(
-        "Slider",
-        "RpalTopDpsOptionsCenterOpacity",
-        content,
-        "OptionsSliderTemplate"
-    )
+    local opacitySlider = CreateFrame("Slider", "TopDpsOptionsCenterOpacity", content, "OptionsSliderTemplate")
     opacitySlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -446)
     opacitySlider:SetWidth(300)
     opacitySlider:SetMinMaxValues(0.2, 1)
@@ -140,12 +112,7 @@ function GeneralOptions:Create()
         addon.Settings:SetCenterIconsOpacity(rounded)
     end)
 
-    local sizeSlider = CreateFrame(
-        "Slider",
-        "RpalTopDpsOptionsCenterSize",
-        content,
-        "OptionsSliderTemplate"
-    )
+    local sizeSlider = CreateFrame("Slider", "TopDpsOptionsCenterSize", content, "OptionsSliderTemplate")
     sizeSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -520)
     sizeSlider:SetWidth(300)
     sizeSlider:SetMinMaxValues(addon.CENTER_ICON_SIZE_MIN, addon.CENTER_ICON_SIZE_MAX)
@@ -159,14 +126,7 @@ function GeneralOptions:Create()
         addon.Settings:SetCenterIconsSize(math.floor(value / 2 + 0.5) * 2)
     end)
 
-    Widgets:CreateText(
-        content,
-        "GameFontHighlightSmall",
-        8,
-        -600,
-        Widgets.TEXT_WIDTH,
-        addon.L.OPTIONS_HINT
-    )
+    Widgets:CreateText(content, "GameFontHighlightSmall", 8, -600, Widgets.TEXT_WIDTH, addon.L.OPTIONS_HINT)
 
     panel:SetScript("OnShow", function()
         addon.OptionsController:Refresh()

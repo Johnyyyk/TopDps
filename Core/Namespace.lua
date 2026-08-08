@@ -1,14 +1,11 @@
-TopDps = TopDps or RpalTopDps or {}
-
--- Compatibility alias for upgrades from the old RpalTopDps name.
-RpalTopDps = TopDps
+TopDps = TopDps or {}
 
 local addon = TopDps
 
 addon.NAME = "TopDps"
-addon.VERSION = "0.1.1"
+addon.VERSION = "1.0.0"
 
--- Set to false to completely hide the debug page from Interface Options.
+-- Установите false, чтобы полностью скрыть страницу отладки из настроек интерфейса.
 addon.SHOW_DEBUG_OPTIONS = true
 
 addon.Modules = addon.Modules or {}

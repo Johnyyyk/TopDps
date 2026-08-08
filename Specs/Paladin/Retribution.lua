@@ -1,50 +1,54 @@
-local addon = RpalTopDps
+local addon = TopDps
 
-local Retribution = {
+local Retribution = addon.SpecProvider:Create({
     id = "PALADIN_RETRIBUTION",
-    classToken = "PALADIN",
-    talentTabIndex = 3,
-}
+    classToken = addon.Paladin.CLASS_TOKEN,
+    talentTab = addon.Paladin.TALENT_TABS.RETRIBUTION,
+    defaultForClass = true,
 
-Retribution.categories = {
-    "judgement",
-    "hammerOfWrath",
-    "crusaderStrike",
-    "divineStorm",
-    "consecration",
-    "exorcism",
-    "holyWrath",
-}
+    categories = {
+        "judgement",
+        "hammerOfWrath",
+        "crusaderStrike",
+        "divineStorm",
+        "consecration",
+        "exorcism",
+        "holyWrath",
+    },
+
+    abilities = {
+        judgement = {
+            spellIds = {
+                20271, -- Judgement of Light
+                53408, -- Judgement of Wisdom
+                53407, -- Judgement of Justice
+            },
+        },
+        hammerOfWrath = {
+            spellIds = { 24275, 24274, 24239, 27180, 48805, 48806 },
+        },
+        crusaderStrike = {
+            spellIds = { 35395 },
+        },
+        divineStorm = {
+            spellIds = { 53385 },
+        },
+        consecration = {
+            spellIds = { 26573, 20116, 20922, 20923, 20924, 27173, 48818, 48819 },
+        },
+        exorcism = {
+            spellIds = { 879, 5614, 5615, 10312, 10313, 10314, 27138, 48800, 48801 },
+        },
+        holyWrath = {
+            spellIds = { 2812, 10318, 27139, 48816, 48817 },
+        },
+    },
+})
+
 Retribution.debugCategories = Retribution.categories
 
 local SPELL_IDS = {
     artOfWarAura = 59578,
-}
-
-local SPELL_RANK_IDS = {
-    judgement = {
-        20271, -- Judgement of Light
-        53408, -- Judgement of Wisdom
-        53407, -- Judgement of Justice
-    },
-    hammerOfWrath = {
-        24275, 24274, 24239, 27180, 48805, 48806,
-    },
-    crusaderStrike = {
-        35395,
-    },
-    divineStorm = {
-        53385,
-    },
-    consecration = {
-        26573, 20116, 20922, 20923, 20924, 27173, 48818, 48819,
-    },
-    exorcism = {
-        879, 5614, 5615, 10312, 10313, 10314, 27138, 48800, 48801,
-    },
-    holyWrath = {
-        2812, 10318, 27139, 48816, 48817,
-    },
 }
 
 local T9_ITEMS = {
@@ -63,192 +67,131 @@ local T10_ITEMS = {
 }
 
 local TIER_SLOTS = {
-    1,  -- Head
-    3,  -- Shoulder
-    5,  -- Chest
-    7,  -- Legs
-    10, -- Hands
+    1,
+    3,
+    5,
+    7,
+    10,
 }
 
-local LEVEL_1_19_PRIORITY = {
-    "judgement",
+-- Таблицы ниже — основное место для ручного изменения порядка способностей.
+local PRIORITY = {
+    level1To19 = {
+        "judgement",
+    },
+    level20To43 = {
+        "judgement",
+        "consecration",
+        "exorcism",
+    },
+    level44To49 = {
+        "hammerOfWrath",
+        "judgement",
+        "exorcism",
+        "consecration",
+    },
+    level50To59Short = {
+        "hammerOfWrath",
+        "judgement",
+        "crusaderStrike",
+        "exorcism",
+        "consecration",
+    },
+    level50To59Long = {
+        "crusaderStrike",
+        "hammerOfWrath",
+        "judgement",
+        "exorcism",
+        "consecration",
+    },
+    level60To79Short = {
+        "hammerOfWrath",
+        "divineStorm",
+        "judgement",
+        "crusaderStrike",
+        "exorcism",
+        "consecration",
+        "holyWrath",
+    },
+    level60To79Long = {
+        "crusaderStrike",
+        "hammerOfWrath",
+        "judgement",
+        "divineStorm",
+        "exorcism",
+        "consecration",
+        "holyWrath",
+    },
+    levelingAoe = {
+        "hammerOfWrath",
+        "divineStorm",
+        "judgement",
+        "crusaderStrike",
+        "consecration",
+        "exorcism",
+        "holyWrath",
+    },
+    preT9 = {
+        "crusaderStrike",
+        "hammerOfWrath",
+        "judgement",
+        "divineStorm",
+        "consecration",
+        "exorcism",
+        "holyWrath",
+    },
+    t9 = {
+        "judgement",
+        "hammerOfWrath",
+        "crusaderStrike",
+        "divineStorm",
+        "consecration",
+        "exorcism",
+        "holyWrath",
+    },
+    level80Aoe = {
+        "judgement",
+        "hammerOfWrath",
+        "divineStorm",
+        "crusaderStrike",
+        "consecration",
+        "exorcism",
+        "holyWrath",
+    },
+    t10TwoPiece = {
+        "divineStorm",
+        "judgement",
+        "crusaderStrike",
+        "hammerOfWrath",
+        "consecration",
+        "exorcism",
+        "holyWrath",
+    },
+    t9T10Mixed = {
+        "judgement",
+        "divineStorm",
+        "hammerOfWrath",
+        "crusaderStrike",
+        "consecration",
+        "exorcism",
+        "holyWrath",
+    },
+    t10FourPiece = {
+        "judgement",
+        "divineStorm",
+        "crusaderStrike",
+        "hammerOfWrath",
+        "consecration",
+        "exorcism",
+        "holyWrath",
+    },
 }
 
-local LEVEL_20_43_PRIORITY = {
-    "judgement",
-    "consecration",
-    "exorcism",
-}
-
-local LEVEL_44_49_PRIORITY = {
-    "hammerOfWrath",
-    "judgement",
-    "exorcism",
-    "consecration",
-}
-
-local LEVEL_50_59_SHORT_PRIORITY = {
-    "hammerOfWrath",
-    "judgement",
-    "crusaderStrike",
-    "exorcism",
-    "consecration",
-}
-
-local LEVEL_50_59_LONG_PRIORITY = {
-    "crusaderStrike",
-    "hammerOfWrath",
-    "judgement",
-    "exorcism",
-    "consecration",
-}
-
-local LEVEL_60_79_SHORT_PRIORITY = {
-    "hammerOfWrath",
-    "divineStorm",
-    "judgement",
-    "crusaderStrike",
-    "exorcism",
-    "consecration",
-    "holyWrath",
-}
-
-local LEVEL_60_79_LONG_PRIORITY = {
-    "crusaderStrike",
-    "hammerOfWrath",
-    "judgement",
-    "divineStorm",
-    "exorcism",
-    "consecration",
-    "holyWrath",
-}
-
-local LEVELING_AOE_PRIORITY = {
-    "hammerOfWrath",
-    "divineStorm",
-    "judgement",
-    "crusaderStrike",
-    "consecration",
-    "exorcism",
-    "holyWrath",
-}
-
-local PRE_T9_PRIORITY = {
-    "crusaderStrike",
-    "hammerOfWrath",
-    "judgement",
-    "divineStorm",
-    "consecration",
-    "exorcism",
-    "holyWrath",
-}
-
-local T9_PRIORITY = {
-    "judgement",
-    "hammerOfWrath",
-    "crusaderStrike",
-    "divineStorm",
-    "consecration",
-    "exorcism",
-    "holyWrath",
-}
-
-local LEVEL_80_AOE_PRIORITY = {
-    "judgement",
-    "hammerOfWrath",
-    "divineStorm",
-    "crusaderStrike",
-    "consecration",
-    "exorcism",
-    "holyWrath",
-}
-
-local T10_2_PRIORITY = {
-    "divineStorm",
-    "judgement",
-    "crusaderStrike",
-    "hammerOfWrath",
-    "consecration",
-    "exorcism",
-    "holyWrath",
-}
-
-local T9_T10_MIXED_PRIORITY = {
-    "judgement",
-    "divineStorm",
-    "hammerOfWrath",
-    "crusaderStrike",
-    "consecration",
-    "exorcism",
-    "holyWrath",
-}
-
-local T10_4_PRIORITY = {
-    "judgement",
-    "divineStorm",
-    "crusaderStrike",
-    "hammerOfWrath",
-    "consecration",
-    "exorcism",
-    "holyWrath",
-}
-
-local function AddSpellCategory(provider, spellId, category)
-    provider.spellCategoryById[spellId] = category
-
-    local name = GetSpellInfo(spellId)
-    if name then
-        provider.spellCategoryByName[name] = category
-        provider.spellNameByCategory[category] = provider.spellNameByCategory[category] or name
-    end
-end
-
-function Retribution:Initialize()
-    self:BuildSpellCatalog()
-    self:RefreshEquipment()
-end
-
-function Retribution:BuildSpellCatalog()
-    self.spellCategoryById = {}
-    self.spellCategoryByName = {}
-    self.spellNameByCategory = {}
-
-    local category
-    local spellIds
-    local index
-
-    for category, spellIds in pairs(SPELL_RANK_IDS) do
-        for index = 1, #spellIds do
-            AddSpellCategory(self, spellIds[index], category)
-        end
-    end
-
+function Retribution:OnSpellCatalogBuilt()
     self.artOfWarAuraName = GetSpellInfo(SPELL_IDS.artOfWarAura)
 end
 
-function Retribution:GetSpellCategory(spellId, spellName)
-    local category
-
-    if spellId then
-        category = self.spellCategoryById[spellId]
-    end
-
-    if not category and spellName then
-        category = self.spellCategoryByName[spellName]
-    end
-
-    return category
-end
-
-function Retribution:GetRecommendationName(category, entries)
-    if entries and entries[1] and entries[1].spellName then
-        return entries[1].spellName
-    end
-
-    return self.spellNameByCategory[category] or category
-end
-
-function Retribution:RefreshEquipment()
+function Retribution:OnEquipmentChanged()
     local t9Count = 0
     local t10Count = 0
     local index
@@ -270,32 +213,11 @@ function Retribution:RefreshEquipment()
     self.t10Count = t10Count
 end
 
-function Retribution:IsActive()
-    local _, class = UnitClass("player")
-    if class ~= self.classToken then
-        return false
-    end
-
-    if UnitLevel("player") < 10 then
-        return true
-    end
-
-    local talentGroup = addon.GameApi:GetActiveTalentGroup()
-    local holyPoints = addon.GameApi:GetTalentPoints(1, talentGroup)
-    local protectionPoints = addon.GameApi:GetTalentPoints(2, talentGroup)
-    local retributionPoints = addon.GameApi:GetTalentPoints(3, talentGroup)
-
-    if holyPoints == nil or protectionPoints == nil or retributionPoints == nil then
-        return true
-    end
-
-    return retributionPoints >= holyPoints and retributionPoints >= protectionPoints
+function Retribution:GetDebugState()
+    return "T9=" .. tostring(self.t9Count or 0) .. ", T10=" .. tostring(self.t10Count or 0)
 end
 
 function Retribution:CanTreatUnusableAsUsable(category, entry, context)
-    -- Some 3.3.5 clients report false from IsUsableAction for conditional
-    -- abilities even when their actual condition is already satisfied. Mana is
-    -- still checked by ActionBarService before this fallback is called.
     if category == "hammerOfWrath" then
         return self:IsTargetBelowExecuteRange()
     end
@@ -311,9 +233,9 @@ function Retribution:CanTreatUnusableAsUsable(category, entry, context)
     return false
 end
 
-function Retribution:GetReadyEntries(actionBar, entries, category, context)
+function Retribution:GetReadyEntries(readiness, entries, category, context)
     if category ~= "judgement" then
-        return actionBar:GetDefaultReadyEntries(entries, category, self, context)
+        return readiness:GetDefaultReadyEntries(entries, category, self, context)
     end
 
     local readyEntries = {}
@@ -321,7 +243,7 @@ function Retribution:GetReadyEntries(actionBar, entries, category, context)
     local index
 
     for index = 1, #entries do
-        if actionBar:IsActionReady(entries[index], category, self, context) then
+        if readiness:IsActionReady(entries[index], category, self, context) then
             anyReady = true
             break
         end
@@ -331,12 +253,10 @@ function Retribution:GetReadyEntries(actionBar, entries, category, context)
         return readyEntries
     end
 
-    -- Judgements share a cooldown. Highlight every visible choice so the
-    -- player may choose Light or Wisdom instead of the addon selecting one.
     for index = 1, #entries do
         local entry = entries[index]
-        if actionBar:IsEntryInRange(entry, category, self, context)
-            and actionBar:IsActionCooldownReady(entry.action) then
+        if readiness:IsEntryInRange(entry, category, self, context)
+            and readiness:IsActionCooldownReady(entry.action) then
             table.insert(readyEntries, entry)
         end
     end
@@ -399,22 +319,19 @@ function Retribution:IsTargetInMelee(context)
         return CheckInteractDistance("target", 3) == 1
     end
 
-    -- If this client cannot report range, do not hide melee abilities forever.
     return true
 end
 
-function Retribution:IsEntryInRange(actionBar, entry, category, context)
+function Retribution:IsEntryInRange(readiness, entry, category, context)
     if category == "crusaderStrike" or category == "divineStorm" then
         return self:IsTargetInMelee(context)
     end
 
-    -- Consecration and Holy Wrath are player-centred effects. Their target
-    -- action range is undefined on 3.3.5 and must not be used as a filter.
     if category == "consecration" or category == "holyWrath" then
         return true
     end
 
-    return actionBar:IsActionInRange(entry.action)
+    return readiness:IsActionInRange(entry.action)
 end
 
 function Retribution:IsUndeadOrDemon()
@@ -473,8 +390,6 @@ function Retribution:IsCategoryAllowed(category, context)
     end
 
     if category == "exorcism" then
-        -- Outside melee it may be used as a normal ranged cast. In melee it is
-        -- recommended only while the actual Art of War proc aura is present.
         return not self:IsTargetInMelee(context) or self:HasArtOfWarAura()
     end
 
@@ -510,58 +425,58 @@ function Retribution:GetPriority(context)
     local enemyCount = context.enemyCount
 
     if level < 20 then
-        return LEVEL_1_19_PRIORITY
+        return PRIORITY.level1To19
     end
 
     if level < 44 then
-        return LEVEL_20_43_PRIORITY
+        return PRIORITY.level20To43
     end
 
     if level < 50 then
-        return LEVEL_44_49_PRIORITY
+        return PRIORITY.level44To49
     end
 
     if level < 60 then
         if self:IsLongLivedTarget(enemyCount) then
-            return LEVEL_50_59_LONG_PRIORITY
+            return PRIORITY.level50To59Long
         end
 
-        return LEVEL_50_59_SHORT_PRIORITY
+        return PRIORITY.level50To59Short
     end
 
     if level < 80 then
         if enemyCount >= 2 then
-            return LEVELING_AOE_PRIORITY
+            return PRIORITY.levelingAoe
         end
 
         if self:IsLongLivedTarget(enemyCount) then
-            return LEVEL_60_79_LONG_PRIORITY
+            return PRIORITY.level60To79Long
         end
 
-        return LEVEL_60_79_SHORT_PRIORITY
+        return PRIORITY.level60To79Short
     end
 
     if self.t10Count >= 4 then
-        return T10_4_PRIORITY
+        return PRIORITY.t10FourPiece
     end
 
     if self.t10Count >= 2 and self.t9Count >= 2 then
-        return T9_T10_MIXED_PRIORITY
+        return PRIORITY.t9T10Mixed
     end
 
     if self.t10Count >= 2 then
-        return T10_2_PRIORITY
+        return PRIORITY.t10TwoPiece
     end
 
     if enemyCount >= 2 then
-        return LEVEL_80_AOE_PRIORITY
+        return PRIORITY.level80Aoe
     end
 
     if self.t9Count >= 2 then
-        return T9_PRIORITY
+        return PRIORITY.t9
     end
 
-    return PRE_T9_PRIORITY
+    return PRIORITY.preT9
 end
 
 addon.SpecRegistry:Register(Retribution)
