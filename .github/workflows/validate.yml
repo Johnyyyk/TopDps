@@ -16,3 +16,27 @@ jobs:
 
       - name: Проверить список специализаций в TOC
         run: python3 tools/generate_toc.py --check
+
+      - name: Установить Lua 5.1
+        run: sudo apt-get update && sudo apt-get install -y lua5.1
+
+      - name: Проверить Lua-синтаксис
+        shell: bash
+        run: |
+          find . \
+            -type f \
+            -name '*.lua' \
+            -not -path './.git/*' \
+            -print0 | xargs -0 -n1 luac5.1 -p
+
+      - name: Проверить XML
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          for path in Path('.').rglob('*.xml'):
+              ET.parse(path)
+              print(path)
+          PY
