@@ -6,7 +6,7 @@ RpalTopDps = TopDps
 local addon = TopDps
 
 addon.NAME = "TopDps"
-addon.VERSION = "0.1.0"
+addon.VERSION = "0.1.1"
 
 -- Set to false to completely hide the debug page from Interface Options.
 addon.SHOW_DEBUG_OPTIONS = true
