@@ -1,4 +1,4 @@
-local addon = RpalTopDps
+local addon = TopDps
 local Settings = addon:CreateModule("Settings")
 
 local function IsValueInList(value, list)

@@ -1,4 +1,4 @@
-local addon = RpalTopDps
+local addon = TopDps
 local RecommendationPresenter = addon:CreateModule("RecommendationPresenter")
 
 function RecommendationPresenter:Set(provider, category, entries)

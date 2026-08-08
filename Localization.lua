@@ -1,4 +1,4 @@
-local addon = RpalTopDps
+local addon = TopDps
 local locale = GetLocale()
 
 local L = {}

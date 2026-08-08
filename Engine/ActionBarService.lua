@@ -1,4 +1,4 @@
-local addon = RpalTopDps
+local addon = TopDps
 local ActionBarService = addon:CreateModule("ActionBarService")
 
 ActionBarService.buttons = ActionBarService.buttons or {}
@@ -48,79 +48,6 @@ function ActionBarService:CollectVisibleActions(provider)
     end
 
     return actionsByCategory
-end
-
-function ActionBarService:IsActionInRange(action)
-    local inRange = IsActionInRange(action)
-    return inRange ~= 0
-end
-
-function ActionBarService:IsActionCooldownReady(action)
-    local start, duration, enabled = GetActionCooldown(action)
-    if enabled == 0 then
-        return false
-    end
-
-    if not start or start == 0 or not duration or duration == 0 then
-        return true
-    end
-
-    local remaining = start + duration - GetTime()
-    if remaining <= 0.15 then
-        return true
-    end
-
-    -- The recommendation may be displayed during the global cooldown.
-    return duration <= 1.6
-end
-
-function ActionBarService:IsEntryInRange(entry, category, provider, context)
-    if provider.IsEntryInRange then
-        return provider:IsEntryInRange(self, entry, category, context)
-    end
-
-    return self:IsActionInRange(entry.action)
-end
-
-function ActionBarService:IsActionReady(entry, category, provider, context)
-    local usable, notEnoughMana = IsUsableAction(entry.action)
-    if not usable then
-        if notEnoughMana then
-            return false
-        end
-
-        if not provider:CanTreatUnusableAsUsable(category, entry, context) then
-            return false
-        end
-    end
-
-    if not self:IsEntryInRange(entry, category, provider, context) then
-        return false
-    end
-
-    return self:IsActionCooldownReady(entry.action)
-end
-
-function ActionBarService:GetDefaultReadyEntries(entries, category, provider, context)
-    local readyEntries = {}
-    local index
-
-    for index = 1, #entries do
-        local entry = entries[index]
-        if self:IsActionReady(entry, category, provider, context) then
-            table.insert(readyEntries, entry)
-        end
-    end
-
-    return readyEntries
-end
-
-function ActionBarService:GetReadyEntries(entries, category, provider, context)
-    if provider.GetReadyEntries then
-        return provider:GetReadyEntries(self, entries, category, context)
-    end
-
-    return self:GetDefaultReadyEntries(entries, category, provider, context)
 end
 
 function ActionBarService:BuildActionSummary(provider, actionsByCategory)

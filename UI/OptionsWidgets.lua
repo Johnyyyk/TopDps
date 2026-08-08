@@ -1,9 +1,8 @@
-local addon = RpalTopDps
+local addon = TopDps
 local Widgets = addon:CreateModule("OptionsWidgets")
 
--- Blizzard 3.3.5a InterfaceOptionsFrame is 648x520. Its panel container starts
--- at x=213 and ends at x=626, so addon panels have an exact width of 413 and
--- height of 429. Keep all custom content inside this coordinate space.
+-- В WoW 3.3.5a InterfaceOptionsFrame имеет размер 648x520. Контейнер панели
+-- начинается на x=213 и заканчивается на x=626: рабочая ширина 413, высота 429.
 Widgets.PANEL_WIDTH = 413
 Widgets.PANEL_HEIGHT = 429
 Widgets.SCROLL_CONTENT_WIDTH = 350

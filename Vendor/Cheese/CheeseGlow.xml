@@ -1,9 +1,9 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 ..\FrameXML\UI.xsd">
-	<Frame name="RpalTopDpsCheeseActionBarButtonGlow" virtual="true">
+	<Frame name="TopDpsCheeseActionBarButtonGlow" virtual="true">
 		<Animations>
 			<AnimationGroup parentKey="animIn">
-				<Animation inherits="RpalTopDpsCheeseScaleTemplate" duration="0.2" order="1">
+				<Animation inherits="TopDpsCheeseScaleTemplate" duration="0.2" order="1">
 					<Scripts>
 						<OnLoad>
 							self.target, self.scaleX, self.scaleY = self:GetRegionParent():GetName().."Spark", 1.5, 1.5;
@@ -25,77 +25,77 @@
 						</OnPlay>
 					</Scripts>
 				</Animation>
-				<Animation inherits="RpalTopDpsCheeseAlphaTemplate" duration="0.2" order="1">
+				<Animation inherits="TopDpsCheeseAlphaTemplate" duration="0.2" order="1">
 					<Scripts>
 						<OnLoad>
 							self.target, self.change = self:GetRegionParent():GetName().."Spark", 1;
 						</OnLoad>
 					</Scripts>
 				</Animation>
-				<Animation inherits="RpalTopDpsCheeseScaleTemplate" duration="0.3" endDelay="1" order="1">
+				<Animation inherits="TopDpsCheeseScaleTemplate" duration="0.3" endDelay="1" order="1">
 					<Scripts>
 						<OnLoad>
 							self.target, self.scaleX, self.scaleY = self:GetRegionParent():GetName().."InnerGlow", 2, 2;
 						</OnLoad>
 					</Scripts>
 				</Animation>
-				<Animation inherits="RpalTopDpsCheeseScaleTemplate" duration="0.3" order="1">
+				<Animation inherits="TopDpsCheeseScaleTemplate" duration="0.3" order="1">
 					<Scripts>
 						<OnLoad>
 							self.target, self.scaleX, self.scaleY = self:GetRegionParent():GetName().."InnerGlowOver", 2, 2;
 						</OnLoad>
 					</Scripts>
 				</Animation>
-				<Animation inherits="RpalTopDpsCheeseAlphaTemplate" duration="0.3" order="1">
+				<Animation inherits="TopDpsCheeseAlphaTemplate" duration="0.3" order="1">
 					<Scripts>
 						<OnLoad>
 							self.target, self.change = self:GetRegionParent():GetName().."InnerGlowOver", -1;
 						</OnLoad>
 					</Scripts>
 				</Animation>
-				<Animation inherits="RpalTopDpsCheeseScaleTemplate" duration="0.3" order="1">
+				<Animation inherits="TopDpsCheeseScaleTemplate" duration="0.3" order="1">
 					<Scripts>
 						<OnLoad>
 							self.target, self.scaleX, self.scaleY = self:GetRegionParent():GetName().."OuterGlow", 0.5, 0.5;
 						</OnLoad>
 					</Scripts>
 				</Animation>
-				<Animation inherits="RpalTopDpsCheeseScaleTemplate" duration="0.3" order="1">
+				<Animation inherits="TopDpsCheeseScaleTemplate" duration="0.3" order="1">
 					<Scripts>
 						<OnLoad>
 							self.target, self.scaleX, self.scaleY = self:GetRegionParent():GetName().."OuterGlowOver", 0.5, 0.5;
 						</OnLoad>
 					</Scripts>
 				</Animation>
-				<Animation inherits="RpalTopDpsCheeseAlphaTemplate" duration="0.3" order="1">
+				<Animation inherits="TopDpsCheeseAlphaTemplate" duration="0.3" order="1">
 					<Scripts>
 						<OnLoad>
 							self.target, self.change = self:GetRegionParent():GetName().."OuterGlowOver", -1;
 						</OnLoad>
 					</Scripts>
 				</Animation>
-				<Animation inherits="RpalTopDpsCheeseScaleTemplate" startDelay="0.2" duration="0.2" order="1">
+				<Animation inherits="TopDpsCheeseScaleTemplate" startDelay="0.2" duration="0.2" order="1">
 					<Scripts>
 						<OnLoad>
 							self.target, self.scaleX, self.scaleY = self:GetRegionParent():GetName().."Spark", 0.666666, 0.666666;
 						</OnLoad>
 					</Scripts>
 				</Animation>
-				<Animation inherits="RpalTopDpsCheeseAlphaTemplate" startDelay="0.2" duration="0.2" order="1">
+				<Animation inherits="TopDpsCheeseAlphaTemplate" startDelay="0.2" duration="0.2" order="1">
 					<Scripts>
 						<OnLoad>
 							self.target, self.change = self:GetRegionParent():GetName().."Spark", -1;
 						</OnLoad>
 					</Scripts>
 				</Animation>
-				<Animation inherits="RpalTopDpsCheeseAlphaTemplate" startDelay="0.3" duration="0.2" order="1">
+				<Animation inherits="TopDpsCheeseAlphaTemplate" startDelay="0.3" duration="0.2" order="1">
 					<Scripts>
 						<OnLoad>
 							self.target, self.change = self:GetRegionParent():GetName().."InnerGlow", -1;
 						</OnLoad>
 					</Scripts>
 				</Animation>
-				<Animation inherits="RpalTopDpsCheeseAlphaTemplate" startDelay="0.3" duration="0.2" order="1">
+				<Animation inherits="TopDpsCheeseAlphaTemplate" startDelay="0.3" duration="0.2" order="1">
 					<Scripts>
 						<OnLoad>
 							self.target, self.change = self:GetRegionParent():GetName().."Ants", 1;
@@ -118,28 +118,28 @@
 				</Scripts>
 			</AnimationGroup>
 			<AnimationGroup parentKey="animOut">
-				<Animation inherits="RpalTopDpsCheeseAlphaTemplate" duration="0.2" order="1">
+				<Animation inherits="TopDpsCheeseAlphaTemplate" duration="0.2" order="1">
 					<Scripts>
 						<OnLoad>
 							self.target, self.change = self:GetRegionParent():GetName().."OuterGlowOver", 1;
 						</OnLoad>
 					</Scripts>
 				</Animation>
-				<Animation inherits="RpalTopDpsCheeseAlphaTemplate" duration="0.2" order="1">
+				<Animation inherits="TopDpsCheeseAlphaTemplate" duration="0.2" order="1">
 					<Scripts>
 						<OnLoad>
 							self.target, self.change = self:GetRegionParent():GetName().."Ants", -1;
 						</OnLoad>
 					</Scripts>
 				</Animation>
-				<Animation inherits="RpalTopDpsCheeseAlphaTemplate" duration="0.2" order="2">
+				<Animation inherits="TopDpsCheeseAlphaTemplate" duration="0.2" order="2">
 					<Scripts>
 						<OnLoad>
 							self.target, self.change = self:GetRegionParent():GetName().."OuterGlowOver", -1;
 						</OnLoad>
 					</Scripts>
 				</Animation>
-				<Animation inherits="RpalTopDpsCheeseAlphaTemplate" duration="0.2" order="2">
+				<Animation inherits="TopDpsCheeseAlphaTemplate" duration="0.2" order="2">
 					<Scripts>
 						<OnLoad>
 							self.target, self.change = self:GetRegionParent():GetName().."OuterGlow", -1;
@@ -155,14 +155,14 @@
 					</OnStop>
 					<OnFinished>
 						self.isPlaying = false;
-						RpalTopDpsCheeseGlowAnimOutFinished(self);
+						TopDpsCheeseGlowAnimOutFinished(self);
 					</OnFinished>
 				</Scripts>
 			</AnimationGroup>
 		</Animations>
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture name="$parentSpark" parentKey="spark" file="Interface\AddOns\RpalTopDps\Textures\Cheese\IconAlert" alpha="0" setAllPoints="true">
+				<Texture name="$parentSpark" parentKey="spark" file="Interface\AddOns\TopDps\Textures\Cheese\IconAlert" alpha="0" setAllPoints="true">
 					<Anchors>
 						<Anchor point="CENTER"/>
 					</Anchors>
@@ -170,26 +170,26 @@
 				</Texture>
 			</Layer>
 			<Layer level="ARTWORK">
-				<Texture name="$parentInnerGlow" parentKey="innerGlow" file="Interface\AddOns\RpalTopDps\Textures\Cheese\IconAlert" alpha="0" setAllPoints="true">
+				<Texture name="$parentInnerGlow" parentKey="innerGlow" file="Interface\AddOns\TopDps\Textures\Cheese\IconAlert" alpha="0" setAllPoints="true">
 					<Anchors>
 						<Anchor point="CENTER"/>
 					</Anchors>
 					<TexCoords left="0.00781250" right="0.50781250" top="0.27734375" bottom="0.52734375"/>
 				</Texture>
-				<Texture name="$parentInnerGlowOver" parentKey="innerGlowOver" file="Interface\AddOns\RpalTopDps\Textures\Cheese\IconAlert" alpha="0">
+				<Texture name="$parentInnerGlowOver" parentKey="innerGlowOver" file="Interface\AddOns\TopDps\Textures\Cheese\IconAlert" alpha="0">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="$parentInnerGlow" relativePoint="TOPLEFT"/>
 						<Anchor point="BOTTOMRIGHT" relativeTo="$parentInnerGlow" relativePoint="BOTTOMRIGHT"/>
 					</Anchors>
 					<TexCoords left="0.00781250" right="0.50781250" top="0.53515625" bottom="0.78515625"/>
 				</Texture>
-				<Texture name="$parentOuterGlow" parentKey="outerGlow" file="Interface\AddOns\RpalTopDps\Textures\Cheese\IconAlert" alpha="0" setAllPoints="true">
+				<Texture name="$parentOuterGlow" parentKey="outerGlow" file="Interface\AddOns\TopDps\Textures\Cheese\IconAlert" alpha="0" setAllPoints="true">
 					<Anchors>
 						<Anchor point="CENTER"/>
 					</Anchors>
 					<TexCoords left="0.00781250" right="0.50781250" top="0.27734375" bottom="0.52734375"/>
 				</Texture>
-				<Texture name="$parentOuterGlowOver" parentKey="outerGlowOver" file="Interface\AddOns\RpalTopDps\Textures\Cheese\IconAlert" alpha="0">
+				<Texture name="$parentOuterGlowOver" parentKey="outerGlowOver" file="Interface\AddOns\TopDps\Textures\Cheese\IconAlert" alpha="0">
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="$parentOuterGlow" relativePoint="TOPLEFT"/>
 						<Anchor point="BOTTOMRIGHT" relativeTo="$parentOuterGlow" relativePoint="BOTTOMRIGHT"/>
@@ -198,7 +198,7 @@
 				</Texture>
 			</Layer>
 			<Layer level="OVERLAY">
-				<Texture name="$parentAnts" parentKey="ants" file="Interface\AddOns\RpalTopDps\Textures\Cheese\IconAlertAnts" alpha="0" setAllPoints="true">
+				<Texture name="$parentAnts" parentKey="ants" file="Interface\AddOns\TopDps\Textures\Cheese\IconAlertAnts" alpha="0" setAllPoints="true">
 					<Anchors>
 						<Anchor point="CENTER"/>
 					</Anchors>
@@ -226,12 +226,12 @@
 				end
 			</OnLoad>
 			<OnUpdate>
-				RpalTopDpsCheese_AnimateTexCoords(self.ants, 256, 256, 48, 48, 22, elapsed, 0.01)
+				TopDpsCheese_AnimateTexCoords(self.ants, 256, 256, 48, 48, 22, elapsed, 0.01)
 			</OnUpdate>
 			<OnHide>
 				if ( self.animOut:IsPlaying() ) then
 					self.animOut:Stop();
-					RpalTopDpsCheeseGlowAnimOutFinished(self.animOut);
+					TopDpsCheeseGlowAnimOutFinished(self.animOut);
 				end
 			</OnHide>
 		</Scripts>

@@ -1,4 +1,4 @@
-local addon = RpalTopDps
+local addon = TopDps
 local HighlightManager = addon:CreateModule("HighlightManager")
 
 HighlightManager.active = HighlightManager.active or {}

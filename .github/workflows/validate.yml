@@ -1,0 +1,18 @@
+name: Проверка проекта
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Получить исходники
+        uses: actions/checkout@v4
+
+      - name: Проверить список специализаций в TOC
+        run: python3 tools/generate_toc.py --check

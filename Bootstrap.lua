@@ -1,4 +1,4 @@
-local addon = RpalTopDps
+local addon = TopDps
 
 local Bootstrap = addon:CreateModule("Bootstrap")
 local eventFrame = CreateFrame("Frame")
@@ -21,7 +21,7 @@ function Bootstrap:Initialize()
 
     self.initialized = true
 
-    addon.SpecRegistry:Initialize()
+    addon.SpecManager:Initialize()
     addon.ActionBarService:CollectButtons()
     addon.CenterIcons:Initialize()
     addon.MinimapButton:Initialize()
@@ -30,6 +30,15 @@ function Bootstrap:Initialize()
 
     addon.Logger:Info("Addon initialized, version %s", addon.VERSION)
     addon.Logger:WriteDiagnosticSnapshot()
+end
+
+function Bootstrap:HandleSpecializationChanged(event)
+    local changed = addon.SpecManager:Refresh(event)
+    addon.SpecManager:RefreshSpellData()
+
+    if changed then
+        addon.RecommendationPresenter:Clear()
+    end
 end
 
 function Bootstrap:HandleEvent(event, ...)
@@ -55,28 +64,32 @@ function Bootstrap:HandleEvent(event, ...)
     end
 
     if event == "PLAYER_EQUIPMENT_CHANGED" then
-        addon.SpecRegistry:RefreshEquipment()
+        addon.SpecManager:RefreshEquipment()
 
-        local provider = addon.SpecRegistry:GetActiveProvider()
+        local provider = addon.SpecManager:GetActive()
+        local providerState = provider and provider:GetDebugState() or nil
         addon.Logger:Info(
-            "Equipment state updated: provider=%s, T9=%s, T10=%s",
+            "Equipment state updated: provider=%s%s",
             tostring(provider and provider.id or "none"),
-            tostring(provider and provider.t9Count or 0),
-            tostring(provider and provider.t10Count or 0)
+            providerState and ("; " .. tostring(providerState)) or ""
         )
     elseif event == "PLAYER_REGEN_ENABLED" then
         addon.CombatTracker:Clear()
         addon.RecommendationPresenter:Clear()
     elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
         addon.CombatTracker:RecordCombatEvent(...)
+    elseif event == "LEARNED_SPELL_IN_TAB" then
+        addon.SpecManager:RefreshSpellData()
+        addon.Logger:Info("Specialization spell catalog rebuilt")
     elseif event == "PLAYER_LEVEL_UP"
-        or event == "LEARNED_SPELL_IN_TAB"
         or event == "ACTIVE_TALENT_GROUP_CHANGED"
         or event == "CHARACTER_POINTS_CHANGED" then
-        addon.SpecRegistry:RefreshSpellData()
-        addon.Logger:Info("Specialization spell catalogs rebuilt")
-    elseif event == "PLAYER_ENTERING_WORLD"
-        or event == "ACTIONBAR_PAGE_CHANGED"
+        self:HandleSpecializationChanged(event)
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        self:HandleSpecializationChanged(event)
+        addon.ActionBarService:CollectButtons()
+        addon.Logger:Info("Action buttons collected: %s", #addon.ActionBarService.buttons)
+    elseif event == "ACTIONBAR_PAGE_CHANGED"
         or event == "ACTIONBAR_SLOT_CHANGED"
         or event == "UPDATE_BONUS_ACTIONBAR"
         or event == "UPDATE_SHAPESHIFT_FORM" then

@@ -1,4 +1,4 @@
-local addon = RpalTopDps
+local addon = TopDps
 local BlizzardHighlight = addon:CreateModule("BlizzardHighlight")
 
 BlizzardHighlight.shines = BlizzardHighlight.shines or {}
@@ -10,7 +10,7 @@ function BlizzardHighlight:GetShine(button)
     end
 
     local buttonName = button:GetName()
-    local shineName = buttonName and (buttonName .. "RpalTopDpsShine") or nil
+    local shineName = buttonName and (buttonName .. "TopDpsShine") or nil
     shine = CreateFrame("Frame", shineName, button, "AutoCastShineTemplate")
     shine:SetPoint("CENTER", button, "CENTER", 0, 0)
     shine:SetWidth(36)

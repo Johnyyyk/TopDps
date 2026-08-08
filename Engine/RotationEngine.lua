@@ -1,7 +1,7 @@
-local addon = RpalTopDps
-local Engine = addon:CreateModule("RotationEngine")
+local addon = TopDps
+local RotationEngine = addon:CreateModule("RotationEngine")
 
-function Engine:GetAvailability(provider)
+function RotationEngine:GetAvailability(provider)
     if not addon.db.enabled then
         return false, "addon_disabled"
     end
@@ -34,28 +34,16 @@ function Engine:GetAvailability(provider)
         return false, "target_not_attackable"
     end
 
-    if provider.GetAvailability then
-        local available, reason = provider:GetAvailability()
-        if not available then
-            return false, reason or "provider_unavailable"
-        end
+    local available, reason = provider:GetAvailability()
+    if not available then
+        return false, reason or "provider_unavailable"
     end
 
     return true, "active"
 end
 
-function Engine:BuildContext(provider, actionsByCategory)
-    return {
-        provider = provider,
-        actionBar = addon.ActionBarService,
-        actionsByCategory = actionsByCategory,
-        enemyCount = addon.CombatTracker:GetEnemyCount(),
-        playerLevel = UnitLevel("player"),
-    }
-end
-
-function Engine:UpdateRecommendation()
-    local provider = addon.SpecRegistry:GetActiveProvider()
+function RotationEngine:UpdateRecommendation()
+    local provider = addon.SpecManager:GetActive()
     local canRun, blockReason = self:GetAvailability(provider)
 
     if not canRun then
@@ -65,7 +53,7 @@ function Engine:UpdateRecommendation()
     end
 
     local actionsByCategory = addon.ActionBarService:CollectVisibleActions(provider)
-    local context = self:BuildContext(provider, actionsByCategory)
+    local context = addon.ContextBuilder:Build(provider, actionsByCategory)
     local priority = provider:GetPriority(context)
     local actionSummary = addon.ActionBarService:BuildActionSummary(provider, actionsByCategory)
     local index
@@ -75,7 +63,7 @@ function Engine:UpdateRecommendation()
         local entries = actionsByCategory[category]
 
         if entries and provider:IsCategoryAllowed(category, context) then
-            local readyEntries = addon.ActionBarService:GetReadyEntries(entries, category, provider, context)
+            local readyEntries = addon.ReadinessService:GetReadyEntries(entries, category, provider, context)
             if #readyEntries > 0 then
                 addon.Logger:SetRotationState(
                     "recommend:" .. category

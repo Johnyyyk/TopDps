@@ -16,6 +16,9 @@ jobs:
       - name: Получить исходники
         uses: actions/checkout@v4
 
+      - name: Обновить список специализаций
+        run: python3 tools/generate_toc.py
+
       - name: Прочитать версию аддона
         id: version
         shell: bash
@@ -50,6 +53,8 @@ jobs:
             --exclude='.github' \
             --exclude='README.md' \
             --exclude='CONTRIBUTING.md' \
+            --exclude='docs' \
+            --exclude='tools' \
             --exclude='build' \
             ./ build/TopDps/
           cd build

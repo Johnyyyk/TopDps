@@ -1,31 +1,16 @@
-local addon = RpalTopDps
+local addon = TopDps
 local DebugOptions = addon:CreateModule("DebugOptions")
 local Widgets = addon.OptionsWidgets
 
 function DebugOptions:Create()
-    local panel = Widgets:CreatePanel("RpalTopDpsDebugOptionsPanel", addon.L.DEBUG_PAGE, addon.NAME)
+    local panel = Widgets:CreatePanel("TopDpsDebugOptionsPanel", addon.L.DEBUG_PAGE, addon.NAME)
 
-    Widgets:CreateText(
-        panel,
-        "GameFontNormalLarge",
-        16,
-        -16,
-        365,
-        addon.NAME .. " - " .. addon.L.DEBUG_PAGE
-    )
-
-    Widgets:CreateText(
-        panel,
-        "GameFontHighlightSmall",
-        16,
-        -48,
-        365,
-        addon.L.DEBUG_DESCRIPTION
-    )
+    Widgets:CreateText(panel, "GameFontNormalLarge", 16, -16, 365, addon.NAME .. " - " .. addon.L.DEBUG_PAGE)
+    Widgets:CreateText(panel, "GameFontHighlightSmall", 16, -48, 365, addon.L.DEBUG_DESCRIPTION)
 
     local chatCheck = Widgets:CreateCheckButton(
         panel,
-        "RpalTopDpsDebugChatCheck",
+        "TopDpsDebugChatCheck",
         14,
         -82,
         addon.L.DEBUG_CHAT_RECOMMENDATIONS,
@@ -38,7 +23,7 @@ function DebugOptions:Create()
 
     local loggingCheck = Widgets:CreateCheckButton(
         panel,
-        "RpalTopDpsDebugLoggingCheck",
+        "TopDpsDebugLoggingCheck",
         14,
         -118,
         addon.L.DEBUG_LOGGING,
@@ -58,7 +43,7 @@ function DebugOptions:Create()
 
     Widgets:CreateSectionHeader(panel, addon.L.DEBUG_LOG_TITLE, -166, 205)
 
-    local refreshButton = CreateFrame("Button", "RpalTopDpsDebugRefreshButton", panel, "UIPanelButtonTemplate")
+    local refreshButton = CreateFrame("Button", "TopDpsDebugRefreshButton", panel, "UIPanelButtonTemplate")
     refreshButton:SetWidth(84)
     refreshButton:SetHeight(22)
     refreshButton:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -108, -154)
@@ -68,7 +53,7 @@ function DebugOptions:Create()
         DebugOptions:RefreshLog(true)
     end)
 
-    local clearButton = CreateFrame("Button", "RpalTopDpsDebugClearButton", panel, "UIPanelButtonTemplate")
+    local clearButton = CreateFrame("Button", "TopDpsDebugClearButton", panel, "UIPanelButtonTemplate")
     clearButton:SetWidth(84)
     clearButton:SetHeight(22)
     clearButton:SetPoint("LEFT", refreshButton, "RIGHT", 6, 0)
@@ -91,16 +76,11 @@ function DebugOptions:Create()
     logBorder:SetBackdropColor(0, 0, 0, 0.72)
     logBorder:SetBackdropBorderColor(0.35, 0.35, 0.35, 0.9)
 
-    local scrollFrame = CreateFrame(
-        "ScrollFrame",
-        "RpalTopDpsDebugLogScrollFrame",
-        logBorder,
-        "UIPanelScrollFrameTemplate"
-    )
+    local scrollFrame = CreateFrame("ScrollFrame", "TopDpsDebugLogScrollFrame", logBorder, "UIPanelScrollFrameTemplate")
     scrollFrame:SetPoint("TOPLEFT", logBorder, "TOPLEFT", 8, -8)
     scrollFrame:SetPoint("BOTTOMRIGHT", logBorder, "BOTTOMRIGHT", -28, 8)
 
-    local editBox = CreateFrame("EditBox", "RpalTopDpsDebugLogEditBox", scrollFrame)
+    local editBox = CreateFrame("EditBox", "TopDpsDebugLogEditBox", scrollFrame)
     editBox:SetMultiLine(true)
     editBox:SetAutoFocus(false)
     editBox:SetFontObject(ChatFontNormal)
@@ -120,14 +100,7 @@ function DebugOptions:Create()
 
     scrollFrame:SetScrollChild(editBox)
 
-    Widgets:CreateText(
-        panel,
-        "GameFontHighlightSmall",
-        18,
-        -392,
-        365,
-        addon.L.DEBUG_COPY_HINT
-    )
+    Widgets:CreateText(panel, "GameFontHighlightSmall", 18, -392, 365, addon.L.DEBUG_COPY_HINT)
 
     panel:SetScript("OnShow", function()
         addon.OptionsController:Refresh()

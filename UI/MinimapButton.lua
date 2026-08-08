@@ -1,4 +1,4 @@
-local addon = RpalTopDps
+local addon = TopDps
 local MinimapButton = addon:CreateModule("MinimapButton")
 
 local function Atan2(y, x)
@@ -71,7 +71,7 @@ end
 
 function MinimapButton:ShowMenu(anchor)
     if not self.menu then
-        self.menu = CreateFrame("Frame", "RpalTopDpsMinimapMenu", UIParent, "UIDropDownMenuTemplate")
+        self.menu = CreateFrame("Frame", "TopDpsMinimapMenu", UIParent, "UIDropDownMenuTemplate")
     end
 
     local menu = {
@@ -105,7 +105,7 @@ function MinimapButton:ShowMenu(anchor)
 end
 
 function MinimapButton:Initialize()
-    local button = CreateFrame("Button", "RpalTopDpsMinimapButton", Minimap)
+    local button = CreateFrame("Button", "TopDpsMinimapButton", Minimap)
     button:SetWidth(32)
     button:SetHeight(32)
     button:SetFrameStrata("MEDIUM")
