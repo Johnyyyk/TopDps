@@ -1,0 +1,97 @@
+name: Release addon
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read addon version
+        id: version
+        shell: bash
+        run: |
+          VERSION="$(awk -F': ' '/^## Version:/ { print $2; exit }' TopDps.toc | tr -d '\r')"
+          test -n "$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check existing release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build addon archive
+        if: steps.release.outputs.exists != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          rm -rf build
+          mkdir -p build/TopDps
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='README.md' \
+            --exclude='CONTRIBUTING.md' \
+            --exclude='build' \
+            ./ build/TopDps/
+          cd build
+          zip -r "TopDps-$VERSION.zip" TopDps
+
+      - name: Prepare release notes
+        if: steps.release.outputs.exists != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          if [ "$VERSION" = "0.1.1" ]; then
+            cat > release-notes.md <<'EOF'
+          First public TopDps release after the project rename.
+
+          - Renamed the addon from RpalTopDps to TopDps.
+          - Added migration from the old RpalTopDps SavedVariables database.
+          - Reset project versioning to 0.1.x.
+          - Added /topdps and /td commands.
+          - Set Johnyyyk as the addon author.
+          - Added Markdown user documentation and separate contribution/development documentation.
+          - Current gameplay support: Retribution Paladin for WoW 3.3.5a.
+          EOF
+          fi
+
+      - name: Create GitHub release
+        if: steps.release.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          if [ -f release-notes.md ]; then
+            gh release create "v$VERSION" \
+              "build/TopDps-$VERSION.zip" \
+              --target "$GITHUB_SHA" \
+              --title "TopDps $VERSION" \
+              --notes-file release-notes.md
+          else
+            gh release create "v$VERSION" \
+              "build/TopDps-$VERSION.zip" \
+              --target "$GITHUB_SHA" \
+              --title "TopDps $VERSION" \
+              --generate-notes
+          fi
