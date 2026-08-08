@@ -9,7 +9,6 @@ Bootstrap.updateElapsed = 0
 function Bootstrap:RegisterSlashCommands()
     SLASH_TOPDPS1 = "/topdps"
     SLASH_TOPDPS2 = "/td"
-    SLASH_TOPDPS3 = "/rtd"
     SlashCmdList.TOPDPS = function()
         addon.OptionsController:Open()
     end
