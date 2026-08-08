@@ -1,14 +1,15 @@
-RpalTopDps 2.0.1
-================
+TopDps 2.0.1
+=============
 
 Installation
 ------------
-Copy the RpalTopDps folder to Interface\AddOns and run /reload.
+Copy the TopDps folder to Interface\AddOns and run /reload.
 
 Commands
 --------
-/rpaltopdps
-/rtd
+/topdps
+/td
+/rtd (legacy alias)
 
 Architecture
 ------------
@@ -61,11 +62,11 @@ Adding another class or specialization
    GetPriority(context)
    IsCategoryAllowed(category, context)
    CanTreatUnusableAsUsable(category, entry, context)
-  IsEntryInRange(actionBar, entry, category, context)
+   IsEntryInRange(actionBar, entry, category, context)
    GetRecommendationName(category, entries)
 3. Register it with:
-   RpalTopDps.SpecRegistry:Register(provider)
-4. Add the file to RpalTopDps.toc before Bootstrap.lua.
+   TopDps.SpecRegistry:Register(provider)
+4. Add the file to TopDps.toc before Bootstrap.lua.
 
 Debug page
 ----------
