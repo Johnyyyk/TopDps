@@ -1,0 +1,65 @@
+name: Migrate legacy release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Migrate v2.0.1 to v0.1.0
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if gh release view "v2.0.1" >/dev/null 2>&1; then
+            LEGACY_SHA="$(gh api "repos/$REPO/git/ref/tags/v2.0.1" --jq '.object.sha')"
+
+            if ! gh api "repos/$REPO/git/ref/tags/v0.1.0" >/dev/null 2>&1; then
+              gh api --method POST "repos/$REPO/git/refs" \
+                -f ref='refs/tags/v0.1.0' \
+                -f sha="$LEGACY_SHA" >/dev/null
+            fi
+
+            RELEASE_ID="$(gh api "repos/$REPO/releases/tags/v2.0.1" --jq '.id')"
+            gh api --method PATCH "repos/$REPO/releases/$RELEASE_ID" \
+              -f tag_name='v0.1.0' \
+              -f name='v0.1.0' >/dev/null
+
+            ASSET_ID="$(gh api "repos/$REPO/releases/$RELEASE_ID/assets" --jq '.[] | select(.name == "RpalTopDps.zip") | .id' || true)"
+            if [ -n "$ASSET_ID" ]; then
+              gh api --method PATCH "repos/$REPO/releases/assets/$ASSET_ID" \
+                -f name='TopDps-0.1.0.zip' >/dev/null
+            fi
+
+            gh api --method DELETE "repos/$REPO/git/refs/tags/v2.0.1"
+          fi
+
+          if gh release view "v0.1.1" >/dev/null 2>&1; then
+            RELEASE_ID="$(gh api "repos/$REPO/releases/tags/v0.1.1" --jq '.id')"
+            BODY="$(cat <<'EOF'
+          Первый публичный релиз TopDps после переименования проекта.
+
+          - Аддон переименован из RpalTopDps в TopDps.
+          - Добавлена миграция старых SavedVariables из RpalTopDpsDB в TopDpsDB.
+          - Версионирование проекта переведено на ветку 0.1.x.
+          - Добавлены команды /topdps и /td.
+          - Автор изменён на Johnyyyk.
+          - README переведён в Markdown, документация для разработчиков вынесена отдельно.
+          - На данный момент поддерживается Retribution Paladin для WoW 3.3.5a.
+          EOF
+          )"
+
+            jq -n --arg name 'v0.1.1' --arg body "$BODY" \
+              '{name: $name, body: $body}' | \
+              gh api --method PATCH "repos/$REPO/releases/$RELEASE_ID" --input - >/dev/null
+          fi
