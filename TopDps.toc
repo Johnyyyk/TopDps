@@ -3,7 +3,7 @@
 ## Notes: Extensible priority helper for WoW 3.3.5a
 ## Notes-ruRU: Расширяемый помощник приоритетов для WoW 3.3.5a
 ## Author: Johnyyyk
-## Version: 0.1.0
+## Version: 0.1.1
 ## SavedVariables: TopDpsDB, RpalTopDpsDB
 
 Core\Namespace.lua
