@@ -20,12 +20,17 @@ addon.HIGHLIGHT_STYLE_ORDER = {
     addon.HIGHLIGHT_CHEESE,
 }
 
+addon.COOLDOWN_LOOKAHEAD_MIN = 0
+addon.COOLDOWN_LOOKAHEAD_MAX = 0.5
+addon.COOLDOWN_LOOKAHEAD_STEP = 0.05
+
 addon.DEFAULTS = {
     enabled = true,
     showMinimap = true,
     minimapAngle = 135,
     mode = addon.MODE_EVERYWHERE,
     highlightStyle = addon.HIGHLIGHT_BLIZZARD,
+    cooldownLookahead = 0.15,
     showCenterIcons = false,
     centerIconsOpacity = 0.85,
     centerIconsSize = 58,

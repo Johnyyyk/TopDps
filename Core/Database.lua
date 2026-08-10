@@ -44,6 +44,14 @@ function Database:ApplyDefaults()
         db.highlightStyle = addon.DEFAULTS.highlightStyle
     end
 
+    if type(db.cooldownLookahead) ~= "number" then
+        db.cooldownLookahead = addon.DEFAULTS.cooldownLookahead
+    end
+    db.cooldownLookahead = math.max(
+        addon.COOLDOWN_LOOKAHEAD_MIN,
+        math.min(addon.COOLDOWN_LOOKAHEAD_MAX, db.cooldownLookahead)
+    )
+
     if type(db.showCenterIcons) ~= "boolean" then
         db.showCenterIcons = addon.DEFAULTS.showCenterIcons
     end
