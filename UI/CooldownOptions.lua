@@ -28,7 +28,7 @@ function CooldownOptions:CreateElementsView(content, profile, entries)
     end
 
     local view = CreateFrame("Frame", nil, content)
-    view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -604)
+    view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -650)
     view:SetWidth(Widgets.SCROLL_CONTENT_WIDTH)
 
     local controls = {}
@@ -253,7 +253,7 @@ function CooldownOptions:Create()
         content,
         "UIPanelButtonTemplate"
     )
-    resetSpecButton:SetPoint("TOPLEFT", content, "TOPLEFT", 300, -488)
+    resetSpecButton:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -530)
     resetSpecButton:SetWidth(220)
     resetSpecButton:SetHeight(24)
     resetSpecButton:SetText(addon.L.COOLDOWN_SPEC_RESET)
@@ -270,7 +270,7 @@ function CooldownOptions:Create()
         content,
         "TopDpsCooldownPanelCombatOnly",
         6,
-        -532,
+        -574,
         addon.L.COOLDOWN_PANEL_COMBAT_ONLY
     )
     combatOnlyCheck:SetScript("OnClick", function(self)
@@ -286,7 +286,7 @@ function CooldownOptions:Create()
         )
     end)
 
-    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_ELEMENTS, -580)
+    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_ELEMENTS, -622)
 
     panel:SetScript("OnShow", function()
         self:Refresh()
