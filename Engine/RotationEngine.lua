@@ -14,6 +14,10 @@ function RotationEngine:GetAvailability(provider)
         return false, "unsupported_specialization"
     end
 
+    if not addon.Settings:IsSpecEnabled(provider) then
+        return false, "specialization_disabled"
+    end
+
     if UnitIsDeadOrGhost("player") then
         return false, "player_dead"
     end
@@ -62,7 +66,9 @@ function RotationEngine:UpdateRecommendation()
         local category = priority[index]
         local entries = actionsByCategory[category]
 
-        if entries and provider:IsCategoryAllowed(category, context) then
+        if entries
+            and provider:IsCategoryEnabled(category)
+            and provider:IsCategoryAllowed(category, context) then
             local readyEntries = addon.ReadinessService:GetReadyEntries(entries, category, provider, context)
             if #readyEntries > 0 then
                 addon.Logger:SetRotationState(
