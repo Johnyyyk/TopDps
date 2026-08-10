@@ -19,6 +19,9 @@ jobs:
       - name: Обновить список специализаций
         run: python3 tools/generate_toc.py
 
+      - name: Проверить версии проекта
+        run: python3 tools/check_version.py
+
       - name: Прочитать версию аддона
         id: version
         shell: bash

@@ -17,6 +17,9 @@ jobs:
       - name: Проверить список специализаций в TOC
         run: python3 tools/generate_toc.py --check
 
+      - name: Проверить версии проекта
+        run: python3 tools/check_version.py
+
       - name: Установить Lua 5.1
         run: sudo apt-get update && sudo apt-get install -y lua5.1
 
