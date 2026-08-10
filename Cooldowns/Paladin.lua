@@ -78,6 +78,16 @@ addon.CooldownRegistry:Register({
             order = 70,
         },
         {
+            id = "currentSeal",
+            type = "aura",
+            auraSpellIds = { 21084, 20164, 20165, 20166, 20375, 31801, 53736 },
+            displaySpellId = 21084,
+            name = addon.L.PALADIN_CURRENT_SEAL,
+            inactiveText = "—",
+            group = addon.COOLDOWN_GROUP_STATES,
+            order = 10,
+        },
+        {
             id = "handOfFreedom",
             type = "spell",
             spellIds = { 1044 },

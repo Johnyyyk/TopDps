@@ -185,6 +185,7 @@ function CooldownTracker:CreateDefinitionEntry(definition, knownNames)
             name = definition.name or displayName or definition.id,
             fallbackDuration = definition.fallbackDuration,
             showStacks = definition.showStacks == true,
+            inactiveText = definition.inactiveText,
             defaultEnabled = definition.defaultEnabled,
             displaySpellId = displaySpellId,
         }
@@ -363,6 +364,7 @@ function CooldownTracker:ScanPlayerAuras()
 
         if spellId then
             activeAuras[spellId] = {
+                spellId = spellId,
                 name = name,
                 icon = icon,
                 stacks = stacks or 0,
@@ -410,6 +412,8 @@ function CooldownTracker:GetActiveState(aura, fallbackDuration, showStacks)
         remaining = remaining,
         stacks = aura.stacks or 0,
         showStacks = showStacks == true,
+        icon = aura.icon,
+        spellId = aura.spellId,
     }
 end
 
@@ -446,6 +450,7 @@ function CooldownTracker:GetAuraState(entry)
         remaining = 0,
         stacks = 0,
         showStacks = entry.showStacks,
+        statusText = entry.inactiveText,
     }
 end
 

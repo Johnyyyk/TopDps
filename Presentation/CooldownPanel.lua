@@ -117,6 +117,8 @@ function CooldownPanel:CreateIcon(index)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         if entry.type == "trinket" and entry.slot and GameTooltip.SetInventoryItem then
             GameTooltip:SetInventoryItem("player", entry.slot)
+        elseif self.stateSpellId and GameTooltip.SetSpellByID then
+            GameTooltip:SetSpellByID(self.stateSpellId)
         elseif entry.displaySpellId and GameTooltip.SetSpellByID then
             GameTooltip:SetSpellByID(entry.displaySpellId)
         else
@@ -142,6 +144,7 @@ function CooldownPanel:CreateIcon(index)
 end
 
 function CooldownPanel:ResetIconVisualCache(icon)
+    icon.lastTexture = nil
     icon.lastDesaturated = nil
     icon.lastReverse = nil
     icon.lastCooldownId = nil
@@ -266,6 +269,16 @@ function CooldownPanel:UpdateIcon(icon, state)
     local isActive = state.state == "ACTIVE"
     local isInactive = state.state == "INACTIVE"
     local desaturated = isCooldown or isInactive
+    local entry = icon.frame.entry
+    local texture = state.icon
+        or (entry and entry.icon)
+        or "Interface\\Icons\\INV_Misc_QuestionMark"
+
+    if icon.lastTexture ~= texture then
+        icon.texture:SetTexture(texture)
+        icon.lastTexture = texture
+    end
+    icon.frame.stateSpellId = state.spellId
 
     if icon.lastDesaturated ~= desaturated then
         icon.texture:SetDesaturated(desaturated)
@@ -299,8 +312,8 @@ function CooldownPanel:UpdateIcon(icon, state)
         icon.lastTimeText = timeText
     end
 
-    local stackText = ""
-    if state.stacks then
+    local stackText = state.statusText or ""
+    if stackText == "" and state.stacks then
         if state.showStacks and state.stacks > 0 then
             stackText = tostring(state.stacks)
         elseif state.stacks > 1 then
