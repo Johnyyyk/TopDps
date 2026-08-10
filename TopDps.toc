@@ -14,11 +14,15 @@ Core\GameApi.lua
 Core\Logger.lua
 Core\Settings.lua
 
+Cooldowns\CooldownRegistry.lua
+Cooldowns\TrinketDatabase.lua
+
 Engine\ActionBarService.lua
 Engine\ReadinessService.lua
 Engine\CombatTracker.lua
 Engine\ContextBuilder.lua
 Engine\RotationEngine.lua
+Engine\CooldownTracker.lua
 
 Specs\SpecProvider.lua
 Specs\SpecRegistry.lua
@@ -32,16 +36,20 @@ Presentation\BlizzardHighlight.lua
 Presentation\HighlightManager.lua
 Presentation\CenterIcons.lua
 Presentation\RecommendationPresenter.lua
+Presentation\CooldownPanel.lua
 
 # TopDps-Specs-Start
 Specs\Paladin\Common.lua
 Specs\Paladin\Retribution.lua
 # TopDps-Specs-End
 
+Cooldowns\Paladin.lua
+
 UI\OptionsWidgets.lua
 UI\MinimapButton.lua
 UI\GeneralOptions.lua
 UI\RotationOptions.lua
+UI\CooldownOptions.lua
 UI\DebugOptions.lua
 UI\OptionsController.lua
 

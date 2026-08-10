@@ -58,6 +58,10 @@ function Bootstrap:HandleSpecializationChanged(event, isRetry)
     if changed then
         addon.RecommendationPresenter:Clear()
     end
+
+    if addon.CooldownTracker and addon.CooldownTracker.initialized then
+        addon.CooldownTracker:RefreshConfiguration()
+    end
 end
 
 function Bootstrap:RetrySpecializationDetection()
@@ -78,6 +82,8 @@ function Bootstrap:Initialize()
     self:HandleSpecializationChanged("initialize")
     addon.ActionBarService:CollectButtons()
     addon.CenterIcons:Initialize()
+    addon.CooldownPanel:Initialize()
+    addon.CooldownTracker:Initialize()
     addon.MinimapButton:Initialize()
     addon.OptionsController:Initialize()
     self:RegisterSlashCommands()
@@ -110,6 +116,7 @@ function Bootstrap:HandleEvent(event, ...)
 
     if event == "PLAYER_EQUIPMENT_CHANGED" then
         addon.SpecManager:RefreshEquipment()
+        addon.CooldownTracker:RefreshConfiguration()
 
         local provider = addon.SpecManager:GetActive()
         local providerState = provider and provider:GetDebugState() or nil
@@ -123,8 +130,14 @@ function Bootstrap:HandleEvent(event, ...)
         addon.RecommendationPresenter:Clear()
     elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
         addon.CombatTracker:RecordCombatEvent(...)
+    elseif event == "UNIT_AURA" then
+        local unit = ...
+        addon.CooldownTracker:HandleUnitAura(unit)
+    elseif event == "PARTY_MEMBERS_CHANGED" or event == "RAID_ROSTER_UPDATE" then
+        addon.CooldownTracker:HandleGroupChanged()
     elseif event == "LEARNED_SPELL_IN_TAB" then
         addon.SpecManager:RefreshSpellData()
+        addon.CooldownTracker:RefreshConfiguration()
         addon.Logger:Info("Specialization spell catalog rebuilt")
     elseif event == "PLAYER_LEVEL_UP"
         or event == "ACTIVE_TALENT_GROUP_CHANGED"
@@ -132,6 +145,7 @@ function Bootstrap:HandleEvent(event, ...)
         self:HandleSpecializationChanged(event)
     elseif event == "PLAYER_ENTERING_WORLD" then
         self:HandleSpecializationChanged(event)
+        addon.CooldownTracker:HandleGroupChanged()
         addon.ActionBarService:CollectButtons()
         addon.Logger:Info("Action buttons collected: %s", #addon.ActionBarService.buttons)
     elseif event == "ACTIONBAR_PAGE_CHANGED"
@@ -161,6 +175,8 @@ local EVENTS = {
     "UPDATE_SHAPESHIFT_FORM",
     "UNIT_AURA",
     "UNIT_FLAGS",
+    "PARTY_MEMBERS_CHANGED",
+    "RAID_ROSTER_UPDATE",
     "PLAYER_REGEN_ENABLED",
     "COMBAT_LOG_EVENT_UNFILTERED",
 }
@@ -203,7 +219,11 @@ eventFrame:SetScript("OnUpdate", function(_, elapsed)
         addon.Logger:SafeCall("UpdateRecommendation", function()
             addon.RotationEngine:UpdateRecommendation()
         end)
+        addon.Logger:SafeCall("UpdateCooldownPanel", function()
+            addon.CooldownTracker:Update()
+        end)
     else
         addon.RotationEngine:UpdateRecommendation()
+        addon.CooldownTracker:Update()
     end
 end)

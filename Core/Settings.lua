@@ -114,11 +114,54 @@ function Settings:IsSpecEnabled(provider)
     return enabled == true
 end
 
+function Settings:ResolveCooldownPanelSpec(classToken, talentTab)
+    if not classToken then
+        classToken = addon.SpecManager and addon.SpecManager.classToken or nil
+        if not classToken then
+            local _
+            _, classToken = UnitClass("player")
+        end
+    end
+
+    if talentTab == nil then
+        talentTab = addon.SpecManager and addon.SpecManager.talentTab or nil
+    end
+
+    return classToken, talentTab
+end
+
+function Settings:GetCooldownPanelSpecSettings(classToken, talentTab)
+    if not addon.Database then
+        return nil
+    end
+
+    classToken, talentTab = self:ResolveCooldownPanelSpec(classToken, talentTab)
+    return addon.Database:GetCooldownSpecSettings(classToken, talentTab)
+end
+
+function Settings:IsCurrentCooldownPanelSpec(classToken, talentTab)
+    classToken, talentTab = self:ResolveCooldownPanelSpec(classToken, talentTab)
+
+    local currentClass = addon.SpecManager and addon.SpecManager.classToken or nil
+    local currentTalentTab = addon.SpecManager and addon.SpecManager.talentTab or nil
+
+    return classToken ~= nil
+        and talentTab ~= nil
+        and classToken == currentClass
+        and talentTab == currentTalentTab
+end
+
 function Settings:SetEnabled(enabled)
     addon.db.enabled = enabled and true or false
 
-    if not addon.db.enabled and addon.RecommendationPresenter then
-        addon.RecommendationPresenter:Clear()
+    if not addon.db.enabled then
+        if addon.RecommendationPresenter then
+            addon.RecommendationPresenter:Clear()
+        end
+
+        if addon.CooldownPanel then
+            addon.CooldownPanel:Hide()
+        end
     end
 
     if addon.OptionsController then
@@ -141,6 +184,10 @@ function Settings:SetMode(mode, silent)
 
     if addon.RecommendationPresenter then
         addon.RecommendationPresenter:Clear()
+    end
+
+    if addon.CooldownPanel and not self:IsModeActive() then
+        addon.CooldownPanel:Hide()
     end
 
     if addon.OptionsController then
@@ -219,5 +266,168 @@ function Settings:SetCenterIconsSize(size)
 
     if addon.CenterIcons then
         addon.CenterIcons:ApplyLayout()
+    end
+end
+
+function Settings:SetCooldownPanelEnabled(enabled)
+    addon.db.showCooldownPanel = enabled and true or false
+
+    if not addon.db.showCooldownPanel and addon.CooldownPanel then
+        addon.CooldownPanel:Hide()
+    end
+
+    if addon.OptionsController then
+        addon.OptionsController:Refresh()
+    end
+end
+
+function Settings:IsCooldownPanelCombatOnly(classToken, talentTab)
+    local specSettings = self:GetCooldownPanelSpecSettings(classToken, talentTab)
+    if not specSettings then
+        return addon.DEFAULTS.cooldownPanelCombatOnly
+    end
+
+    return specSettings.combatOnly == true
+end
+
+function Settings:SetCooldownPanelCombatOnly(combatOnly, classToken, talentTab)
+    local specSettings = self:GetCooldownPanelSpecSettings(classToken, talentTab)
+    if not specSettings then
+        return
+    end
+
+    specSettings.combatOnly = combatOnly and true or false
+
+    if addon.OptionsController then
+        addon.OptionsController:Refresh()
+    end
+end
+
+function Settings:ResetCooldownPanelSpecSettings(classToken, talentTab)
+    classToken, talentTab = self:ResolveCooldownPanelSpec(classToken, talentTab)
+    local specSettings = self:GetCooldownPanelSpecSettings(classToken, talentTab)
+    if not specSettings then
+        return
+    end
+
+    specSettings.combatOnly = addon.DEFAULTS.cooldownPanelCombatOnly
+    specSettings.elementEnabled = {}
+    specSettings.elementOrder = {}
+
+    if self:IsCurrentCooldownPanelSpec(classToken, talentTab) and addon.CooldownTracker then
+        addon.CooldownTracker:RefreshConfiguration()
+    elseif addon.CooldownOptions then
+        addon.CooldownOptions:Refresh()
+    end
+end
+
+function Settings:SetCooldownPanelLocked(locked)
+    addon.db.cooldownPanelLocked = locked and true or false
+
+    if addon.CooldownPanel then
+        addon.CooldownPanel:ApplyLockState()
+    end
+
+    if addon.OptionsController then
+        addon.OptionsController:Refresh()
+    end
+end
+
+function Settings:SetCooldownPanelPosition(x, y)
+    addon.db.cooldownPanelX = tonumber(x) or addon.DEFAULTS.cooldownPanelX
+    addon.db.cooldownPanelY = tonumber(y) or addon.DEFAULTS.cooldownPanelY
+
+    if addon.CooldownPanel then
+        addon.CooldownPanel:ApplyLayout()
+    end
+end
+
+function Settings:SetCooldownPanelIconSize(size)
+    size = tonumber(size) or addon.DEFAULTS.cooldownPanelIconSize
+    size = math.floor(size + 0.5)
+    size = math.max(
+        addon.COOLDOWN_PANEL_ICON_SIZE_MIN,
+        math.min(addon.COOLDOWN_PANEL_ICON_SIZE_MAX, size)
+    )
+    addon.db.cooldownPanelIconSize = size
+
+    if addon.CooldownPanel then
+        addon.CooldownPanel:ApplyLayout()
+    end
+end
+
+function Settings:SetCooldownPanelOpacity(opacity)
+    opacity = tonumber(opacity) or addon.DEFAULTS.cooldownPanelOpacity
+    opacity = math.max(
+        addon.COOLDOWN_PANEL_OPACITY_MIN,
+        math.min(addon.COOLDOWN_PANEL_OPACITY_MAX, opacity)
+    )
+    addon.db.cooldownPanelOpacity = opacity
+
+    if addon.CooldownPanel then
+        addon.CooldownPanel:ApplyLayout()
+    end
+end
+
+function Settings:IsCooldownElementEnabled(settingId, defaultEnabled, classToken, talentTab)
+    local specSettings = self:GetCooldownPanelSpecSettings(classToken, talentTab)
+    if not specSettings or type(specSettings.elementEnabled) ~= "table" then
+        return defaultEnabled ~= false
+    end
+
+    local value = specSettings.elementEnabled[settingId]
+    if value == nil then
+        return defaultEnabled ~= false
+    end
+
+    return value == true
+end
+
+function Settings:SetCooldownElementEnabled(settingId, enabled, classToken, talentTab)
+    if not settingId then
+        return
+    end
+
+    classToken, talentTab = self:ResolveCooldownPanelSpec(classToken, talentTab)
+    local specSettings = self:GetCooldownPanelSpecSettings(classToken, talentTab)
+    if not specSettings then
+        return
+    end
+
+    specSettings.elementEnabled[settingId] = enabled and true or false
+
+    if self:IsCurrentCooldownPanelSpec(classToken, talentTab) and addon.CooldownTracker then
+        addon.CooldownTracker:RefreshConfiguration()
+    elseif addon.CooldownOptions then
+        addon.CooldownOptions:Refresh()
+    end
+end
+
+function Settings:GetCooldownElementOrder(settingId, defaultOrder, classToken, talentTab)
+    local specSettings = self:GetCooldownPanelSpecSettings(classToken, talentTab)
+    if not specSettings or type(specSettings.elementOrder) ~= "table" then
+        return tonumber(defaultOrder) or 100
+    end
+
+    return tonumber(specSettings.elementOrder[settingId]) or tonumber(defaultOrder) or 100
+end
+
+function Settings:SetCooldownElementOrder(settingId, order, classToken, talentTab)
+    if not settingId then
+        return
+    end
+
+    classToken, talentTab = self:ResolveCooldownPanelSpec(classToken, talentTab)
+    local specSettings = self:GetCooldownPanelSpecSettings(classToken, talentTab)
+    if not specSettings then
+        return
+    end
+
+    specSettings.elementOrder[settingId] = tonumber(order)
+
+    if self:IsCurrentCooldownPanelSpec(classToken, talentTab) and addon.CooldownTracker then
+        addon.CooldownTracker:RefreshConfiguration()
+    elseif addon.CooldownOptions then
+        addon.CooldownOptions:Refresh()
     end
 end
