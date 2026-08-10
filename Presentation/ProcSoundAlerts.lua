@@ -18,6 +18,7 @@ function ProcSoundAlerts:Update(entries, states)
         return
     end
 
+    local soundsEnabled = addon.Settings:AreCooldownProcSoundsEnabled()
     local shouldPlay = false
     local index
 
@@ -28,7 +29,8 @@ function ProcSoundAlerts:Update(entries, states)
             local isActive = state and state.state == "ACTIVE" or false
             local previous = self.activeStates[entry.settingId]
 
-            if previous ~= nil
+            if soundsEnabled
+                and previous ~= nil
                 and previous == false
                 and isActive
                 and addon.Settings:IsCooldownProcSoundEnabled(entry.settingId, true) then

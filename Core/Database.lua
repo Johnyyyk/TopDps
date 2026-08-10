@@ -96,6 +96,10 @@ local function ApplyGlobalDefaults(db)
         db.showCooldownPanel = addon.DEFAULTS.showCooldownPanel
     end
 
+    if type(db.cooldownProcSoundsEnabled) ~= "boolean" then
+        db.cooldownProcSoundsEnabled = addon.DEFAULTS.cooldownProcSoundsEnabled
+    end
+
     if type(db.cooldownPanelLocked) ~= "boolean" then
         db.cooldownPanelLocked = addon.DEFAULTS.cooldownPanelLocked
     end

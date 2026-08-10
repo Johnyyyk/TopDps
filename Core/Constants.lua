@@ -42,6 +42,7 @@ addon.DEFAULTS = {
     centerIconsOpacity = 0.85,
     centerIconsSize = 58,
     showCooldownPanel = true,
+    cooldownProcSoundsEnabled = true,
     cooldownPanelCombatOnly = true,
     cooldownPanelLocked = true,
     cooldownPanelX = 0,

@@ -151,6 +151,22 @@ function Settings:IsCurrentCooldownPanelSpec(classToken, talentTab)
         and talentTab == currentTalentTab
 end
 
+function Settings:AreCooldownProcSoundsEnabled()
+    if not addon.db then
+        return addon.DEFAULTS.cooldownProcSoundsEnabled
+    end
+
+    return addon.db.cooldownProcSoundsEnabled ~= false
+end
+
+function Settings:SetCooldownProcSoundsEnabled(enabled)
+    addon.db.cooldownProcSoundsEnabled = enabled and true or false
+
+    if addon.OptionsController then
+        addon.OptionsController:Refresh()
+    end
+end
+
 function Settings:IsCooldownProcSoundEnabled(settingId, defaultEnabled, classToken, talentTab)
     if not settingId then
         return false

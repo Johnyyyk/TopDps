@@ -28,7 +28,7 @@ function CooldownOptions:CreateElementsView(content, profile, entries)
     end
 
     local view = CreateFrame("Frame", nil, content)
-    view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -650)
+    view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -686)
     view:SetWidth(Widgets.SCROLL_CONTENT_WIDTH)
 
     local controls = {}
@@ -166,7 +166,7 @@ end
 function CooldownOptions:Create()
     local panel = Widgets:CreatePanel("TopDpsCooldownOptionsPanel", addon.L.COOLDOWN_PAGE, addon.NAME)
     local profiles = addon.CooldownRegistry:GetProfiles()
-    local _, content = Widgets:CreateScrollArea(panel, "TopDpsCooldownOptionsScrollFrame", 1380)
+    local _, content = Widgets:CreateScrollArea(panel, "TopDpsCooldownOptionsScrollFrame", 1420)
 
     Widgets:CreateText(
         content,
@@ -198,11 +198,22 @@ function CooldownOptions:Create()
         addon.Settings:SetCooldownPanelEnabled(Widgets:GetCheckValue(self))
     end)
 
+    local procSoundsEnabledCheck = Widgets:CreateCheckButton(
+        content,
+        "TopDpsCooldownProcSoundsEnabled",
+        6,
+        -154,
+        addon.L.COOLDOWN_PROC_SOUNDS_ENABLED
+    )
+    procSoundsEnabledCheck:SetScript("OnClick", function(self)
+        addon.Settings:SetCooldownProcSoundsEnabled(Widgets:GetCheckValue(self))
+    end)
+
     local lockedCheck = Widgets:CreateCheckButton(
         content,
         "TopDpsCooldownPanelLocked",
         6,
-        -154,
+        -190,
         addon.L.COOLDOWN_PANEL_LOCKED
     )
     lockedCheck:SetScript("OnClick", function(self)
@@ -210,7 +221,7 @@ function CooldownOptions:Create()
     end)
 
     local resetButton = CreateFrame("Button", "TopDpsCooldownPanelResetPosition", content, "UIPanelButtonTemplate")
-    resetButton:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -202)
+    resetButton:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -238)
     resetButton:SetWidth(180)
     resetButton:SetHeight(24)
     resetButton:SetText(addon.L.COOLDOWN_PANEL_RESET_POSITION)
@@ -219,7 +230,7 @@ function CooldownOptions:Create()
     end)
 
     local sizeSlider = CreateFrame("Slider", "TopDpsCooldownPanelIconSize", content, "OptionsSliderTemplate")
-    sizeSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -270)
+    sizeSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -306)
     sizeSlider:SetWidth(300)
     sizeSlider:SetMinMaxValues(addon.COOLDOWN_PANEL_ICON_SIZE_MIN, addon.COOLDOWN_PANEL_ICON_SIZE_MAX)
     sizeSlider:SetValueStep(addon.COOLDOWN_PANEL_ICON_SIZE_STEP)
@@ -233,7 +244,7 @@ function CooldownOptions:Create()
     end)
 
     local opacitySlider = CreateFrame("Slider", "TopDpsCooldownPanelOpacity", content, "OptionsSliderTemplate")
-    opacitySlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -344)
+    opacitySlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -380)
     opacitySlider:SetWidth(300)
     opacitySlider:SetMinMaxValues(addon.COOLDOWN_PANEL_OPACITY_MIN, addon.COOLDOWN_PANEL_OPACITY_MAX)
     opacitySlider:SetValueStep(addon.COOLDOWN_PANEL_OPACITY_STEP)
@@ -245,10 +256,10 @@ function CooldownOptions:Create()
         _G[self:GetName() .. "Text"]:SetText(string.format(addon.L.COOLDOWN_PANEL_OPACITY, rounded * 100))
     end)
 
-    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_SPEC_SETTINGS, -404)
+    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_SPEC_SETTINGS, -440)
 
-    local activeSpecText = Widgets:CreateText(content, "GameFontNormal", 8, -434, Widgets.TEXT_WIDTH, "")
-    Widgets:CreateText(content, "GameFontNormal", 8, -468, Widgets.TEXT_WIDTH, addon.L.CONFIGURE_SPEC)
+    local activeSpecText = Widgets:CreateText(content, "GameFontNormal", 8, -470, Widgets.TEXT_WIDTH, "")
+    Widgets:CreateText(content, "GameFontNormal", 8, -504, Widgets.TEXT_WIDTH, addon.L.CONFIGURE_SPEC)
 
     local profileDropdown = CreateFrame(
         "Frame",
@@ -256,7 +267,7 @@ function CooldownOptions:Create()
         content,
         "UIDropDownMenuTemplate"
     )
-    profileDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -484)
+    profileDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -520)
     UIDropDownMenu_SetWidth(profileDropdown, 270)
 
     UIDropDownMenu_Initialize(profileDropdown, function(_, level)
@@ -282,7 +293,7 @@ function CooldownOptions:Create()
         content,
         "UIPanelButtonTemplate"
     )
-    resetSpecButton:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -530)
+    resetSpecButton:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -566)
     resetSpecButton:SetWidth(220)
     resetSpecButton:SetHeight(24)
     resetSpecButton:SetText(addon.L.COOLDOWN_SPEC_RESET)
@@ -299,7 +310,7 @@ function CooldownOptions:Create()
         content,
         "TopDpsCooldownPanelCombatOnly",
         6,
-        -574,
+        -610,
         addon.L.COOLDOWN_PANEL_COMBAT_ONLY
     )
     combatOnlyCheck:SetScript("OnClick", function(self)
@@ -315,7 +326,7 @@ function CooldownOptions:Create()
         )
     end)
 
-    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_ELEMENTS, -622)
+    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_ELEMENTS, -658)
 
     panel:SetScript("OnShow", function()
         self:Refresh()
@@ -329,6 +340,7 @@ function CooldownOptions:Create()
     self.profileDropdown = profileDropdown
     self.activeSpecText = activeSpecText
     self.enabledCheck = enabledCheck
+    self.procSoundsEnabledCheck = procSoundsEnabledCheck
     self.combatOnlyCheck = combatOnlyCheck
     self.lockedCheck = lockedCheck
     self.resetButton = resetButton
@@ -370,6 +382,7 @@ function CooldownOptions:Refresh()
     UIDropDownMenu_SetText(self.profileDropdown, addon.CooldownRegistry:GetProfileDisplayName(profile))
 
     self.enabledCheck:SetChecked(addon.db.showCooldownPanel and 1 or nil)
+    self.procSoundsEnabledCheck:SetChecked(addon.Settings:AreCooldownProcSoundsEnabled() and 1 or nil)
     self.combatOnlyCheck:SetChecked(
         addon.Settings:IsCooldownPanelCombatOnly(profile.classToken, profile.talentTab) and 1 or nil
     )
@@ -414,12 +427,14 @@ function CooldownOptions:Refresh()
     end
 
     if addon.db.showCooldownPanel then
+        self.procSoundsEnabledCheck:Enable()
         self.combatOnlyCheck:Enable()
         self.lockedCheck:Enable()
         self.resetButton:Enable()
         self.sizeSlider:Enable()
         self.opacitySlider:Enable()
     else
+        self.procSoundsEnabledCheck:Disable()
         self.combatOnlyCheck:Disable()
         self.lockedCheck:Disable()
         self.resetButton:Disable()
