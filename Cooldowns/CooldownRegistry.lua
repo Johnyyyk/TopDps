@@ -2,6 +2,8 @@ local addon = TopDps
 local CooldownRegistry = addon:CreateModule("CooldownRegistry")
 
 CooldownRegistry.definitions = CooldownRegistry.definitions or {}
+CooldownRegistry.profiles = CooldownRegistry.profiles or {}
+CooldownRegistry.profilesByKey = CooldownRegistry.profilesByKey or {}
 
 addon.COOLDOWN_GROUP_OFFENSIVE = "OFFENSIVE"
 addon.COOLDOWN_GROUP_DEFENSIVE = "DEFENSIVE"
@@ -27,9 +29,17 @@ local SUPPORTED_TYPES = {
     counter = true,
 }
 
+local function GetProfileKey(classToken, talentTab)
+    if not classToken or not talentTab then
+        return nil
+    end
+
+    return tostring(classToken) .. ":" .. tostring(talentTab)
+end
+
 local function ValidateSpellEntry(entry)
     if type(entry.spellIds) ~= "table" or #entry.spellIds == 0 then
-        error("TopDps: spell cooldown entry requires spellIds")
+        error("TopDps: spell panel entry requires spellIds")
     end
 end
 
@@ -67,11 +77,73 @@ local function ValidateEntry(definition, entry)
     end
 
     entry.classToken = definition.classToken
-    entry.specId = definition.specId
+    entry.talentTab = definition.talentTab
     entry.group = entry.group or addon.COOLDOWN_GROUP_UTILITY
     entry.order = tonumber(entry.order) or 100
     entry.defaultEnabled = entry.defaultEnabled ~= false
-    entry.settingId = definition.classToken .. ":" .. (definition.specId or "ALL") .. ":" .. entry.id
+    entry.settingId = definition.classToken .. ":" .. (definition.talentTab or "ALL") .. ":" .. entry.id
+end
+
+function CooldownRegistry:RegisterProfile(profile)
+    if type(profile) ~= "table" then
+        error("TopDps: panel profile must be a table")
+    end
+
+    if type(profile.classToken) ~= "string" or profile.classToken == "" then
+        error("TopDps: panel profile requires classToken")
+    end
+
+    profile.talentTab = tonumber(profile.talentTab)
+    if not profile.talentTab then
+        error("TopDps: panel profile requires talentTab")
+    end
+
+    profile.key = GetProfileKey(profile.classToken, profile.talentTab)
+    if self.profilesByKey[profile.key] then
+        error("TopDps: duplicate panel profile: " .. profile.key)
+    end
+
+    self.profilesByKey[profile.key] = profile
+    table.insert(self.profiles, profile)
+end
+
+function CooldownRegistry:GetProfiles()
+    local result = {}
+    local index
+
+    for index = 1, #self.profiles do
+        result[index] = self.profiles[index]
+    end
+
+    table.sort(result, function(left, right)
+        if left.classToken ~= right.classToken then
+            return left.classToken < right.classToken
+        end
+
+        return left.talentTab < right.talentTab
+    end)
+
+    return result
+end
+
+function CooldownRegistry:GetProfile(classToken, talentTab)
+    return self.profilesByKey[GetProfileKey(classToken, talentTab)]
+end
+
+function CooldownRegistry:GetProfileByKey(key)
+    return self.profilesByKey[key]
+end
+
+function CooldownRegistry:GetProfileDisplayName(profile)
+    if not profile then
+        return nil
+    end
+
+    if profile.labelKey and addon.L[profile.labelKey] then
+        return addon.L[profile.labelKey]
+    end
+
+    return profile.label or profile.key
 end
 
 function CooldownRegistry:Register(definition)
@@ -83,6 +155,13 @@ function CooldownRegistry:Register(definition)
         error("TopDps: panel definition requires classToken")
     end
 
+    if definition.talentTab ~= nil then
+        definition.talentTab = tonumber(definition.talentTab)
+        if not definition.talentTab then
+            error("TopDps: panel definition talentTab must be numeric")
+        end
+    end
+
     local entries = definition.entries or {}
     local index
     for index = 1, #entries do
@@ -92,14 +171,14 @@ function CooldownRegistry:Register(definition)
     table.insert(self.definitions, definition)
 end
 
-function CooldownRegistry:GetEntries(classToken, specId)
+function CooldownRegistry:GetEntries(classToken, talentTab)
     local result = {}
     local definitionIndex
 
     for definitionIndex = 1, #self.definitions do
         local definition = self.definitions[definitionIndex]
         if definition.classToken == classToken
-            and (not definition.specId or definition.specId == specId) then
+            and (not definition.talentTab or definition.talentTab == talentTab) then
             local entryIndex
             for entryIndex = 1, #(definition.entries or {}) do
                 table.insert(result, definition.entries[entryIndex])

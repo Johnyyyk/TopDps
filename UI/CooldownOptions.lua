@@ -6,13 +6,13 @@ local function GetGroupLabel(group)
     return addon.L["COOLDOWN_GROUP_" .. tostring(group)] or tostring(group)
 end
 
-local function BuildEntriesSignature(entries)
-    local parts = {}
+local function BuildEntriesSignature(profile, entries)
+    local parts = { profile and profile.key or "none" }
     local index
 
     for index = 1, #entries do
         local entry = entries[index]
-        parts[index] = table.concat({
+        parts[#parts + 1] = table.concat({
             entry.settingId or "",
             tostring(entry.itemId or entry.spellId or entry.displaySpellId or ""),
             entry.name or "",
@@ -22,13 +22,13 @@ local function BuildEntriesSignature(entries)
     return table.concat(parts, "|")
 end
 
-function CooldownOptions:CreateElementsView(content, entries)
+function CooldownOptions:CreateElementsView(content, profile, entries)
     if self.elementsView then
         self.elementsView:Hide()
     end
 
     local view = CreateFrame("Frame", nil, content)
-    view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -456)
+    view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -560)
     view:SetWidth(Widgets.SCROLL_CONTENT_WIDTH)
 
     local controls = {}
@@ -52,8 +52,19 @@ function CooldownOptions:CreateElementsView(content, entries)
             entry.name
         )
         check.entry = entry
+        check.profileKey = profile.key
         check:SetScript("OnClick", function(self)
-            addon.Settings:SetCooldownElementEnabled(self.entry.settingId, Widgets:GetCheckValue(self))
+            local selectedProfile = addon.CooldownRegistry:GetProfileByKey(self.profileKey)
+            if not selectedProfile then
+                return
+            end
+
+            addon.Settings:SetCooldownElementEnabled(
+                self.entry.settingId,
+                Widgets:GetCheckValue(self),
+                selectedProfile.classToken,
+                selectedProfile.talentTab
+            )
         end)
 
         table.insert(controls, check)
@@ -77,23 +88,56 @@ function CooldownOptions:CreateElementsView(content, entries)
     self.elementControls = controls
 end
 
-function CooldownOptions:EnsureElementsView()
-    local entries = addon.CooldownTracker and addon.CooldownTracker:GetConfigurableEntries() or {}
-    local signature = BuildEntriesSignature(entries)
+function CooldownOptions:EnsureElementsView(profile)
+    if not profile then
+        return {}
+    end
+
+    local entries = addon.CooldownTracker:GetConfigurableEntriesForProfile(
+        profile.classToken,
+        profile.talentTab
+    )
+    local signature = BuildEntriesSignature(profile, entries)
     if signature == self.elementsSignature and self.elementsView then
         return entries
     end
 
     self.elementsRevision = (self.elementsRevision or 0) + 1
     self.elementsSignature = signature
-    self:CreateElementsView(self.content, entries)
+    self:CreateElementsView(self.content, profile, entries)
 
     return entries
 end
 
+function CooldownOptions:GetSelectedProfile()
+    if self.selectedProfileKey then
+        local profile = addon.CooldownRegistry:GetProfileByKey(self.selectedProfileKey)
+        if profile then
+            return profile
+        end
+    end
+
+    local activeProfile = addon.CooldownRegistry:GetProfile(
+        addon.SpecManager.classToken,
+        addon.SpecManager.talentTab
+    )
+    if activeProfile then
+        self.selectedProfileKey = activeProfile.key
+        return activeProfile
+    end
+
+    local firstProfile = self.profiles and self.profiles[1] or nil
+    if firstProfile then
+        self.selectedProfileKey = firstProfile.key
+    end
+
+    return firstProfile
+end
+
 function CooldownOptions:Create()
     local panel = Widgets:CreatePanel("TopDpsCooldownOptionsPanel", addon.L.COOLDOWN_PAGE, addon.NAME)
-    local _, content = Widgets:CreateScrollArea(panel, "TopDpsCooldownOptionsScrollFrame", 1120)
+    local profiles = addon.CooldownRegistry:GetProfiles()
+    local _, content = Widgets:CreateScrollArea(panel, "TopDpsCooldownOptionsScrollFrame", 1320)
 
     Widgets:CreateText(
         content,
@@ -112,13 +156,42 @@ function CooldownOptions:Create()
         addon.L.COOLDOWN_DESCRIPTION
     )
 
-    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_PANEL_SETTINGS, -92)
+    local activeSpecText = Widgets:CreateText(content, "GameFontNormal", 8, -88, Widgets.TEXT_WIDTH, "")
+    Widgets:CreateText(content, "GameFontNormal", 8, -122, Widgets.TEXT_WIDTH, addon.L.CONFIGURE_SPEC)
+
+    local profileDropdown = CreateFrame(
+        "Frame",
+        "TopDpsCooldownProfileDropDown",
+        content,
+        "UIDropDownMenuTemplate"
+    )
+    profileDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -138)
+    UIDropDownMenu_SetWidth(profileDropdown, 270)
+
+    UIDropDownMenu_Initialize(profileDropdown, function(_, level)
+        local index
+        for index = 1, #profiles do
+            local profile = profiles[index]
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = addon.CooldownRegistry:GetProfileDisplayName(profile)
+            info.value = profile.key
+            info.checked = self.selectedProfileKey == profile.key
+            info.func = function()
+                self.selectedProfileKey = profile.key
+                self.elementsSignature = nil
+                self:Refresh()
+            end
+            UIDropDownMenu_AddButton(info, level)
+        end
+    end)
+
+    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_PANEL_SETTINGS, -196)
 
     local enabledCheck = Widgets:CreateCheckButton(
         content,
         "TopDpsCooldownPanelEnabled",
         6,
-        -118,
+        -222,
         addon.L.COOLDOWN_PANEL_ENABLED
     )
     enabledCheck:SetScript("OnClick", function(self)
@@ -129,18 +202,27 @@ function CooldownOptions:Create()
         content,
         "TopDpsCooldownPanelCombatOnly",
         6,
-        -154,
+        -258,
         addon.L.COOLDOWN_PANEL_COMBAT_ONLY
     )
     combatOnlyCheck:SetScript("OnClick", function(self)
-        addon.Settings:SetCooldownPanelCombatOnly(Widgets:GetCheckValue(self))
+        local profile = CooldownOptions:GetSelectedProfile()
+        if not profile then
+            return
+        end
+
+        addon.Settings:SetCooldownPanelCombatOnly(
+            Widgets:GetCheckValue(self),
+            profile.classToken,
+            profile.talentTab
+        )
     end)
 
     local lockedCheck = Widgets:CreateCheckButton(
         content,
         "TopDpsCooldownPanelLocked",
         6,
-        -190,
+        -294,
         addon.L.COOLDOWN_PANEL_LOCKED
     )
     lockedCheck:SetScript("OnClick", function(self)
@@ -148,7 +230,7 @@ function CooldownOptions:Create()
     end)
 
     local resetButton = CreateFrame("Button", "TopDpsCooldownPanelResetPosition", content, "UIPanelButtonTemplate")
-    resetButton:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -238)
+    resetButton:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -342)
     resetButton:SetWidth(180)
     resetButton:SetHeight(24)
     resetButton:SetText(addon.L.COOLDOWN_PANEL_RESET_POSITION)
@@ -157,7 +239,7 @@ function CooldownOptions:Create()
     end)
 
     local sizeSlider = CreateFrame("Slider", "TopDpsCooldownPanelIconSize", content, "OptionsSliderTemplate")
-    sizeSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -306)
+    sizeSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -410)
     sizeSlider:SetWidth(300)
     sizeSlider:SetMinMaxValues(addon.COOLDOWN_PANEL_ICON_SIZE_MIN, addon.COOLDOWN_PANEL_ICON_SIZE_MAX)
     sizeSlider:SetValueStep(addon.COOLDOWN_PANEL_ICON_SIZE_STEP)
@@ -171,7 +253,7 @@ function CooldownOptions:Create()
     end)
 
     local opacitySlider = CreateFrame("Slider", "TopDpsCooldownPanelOpacity", content, "OptionsSliderTemplate")
-    opacitySlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -380)
+    opacitySlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -484)
     opacitySlider:SetWidth(300)
     opacitySlider:SetMinMaxValues(addon.COOLDOWN_PANEL_OPACITY_MIN, addon.COOLDOWN_PANEL_OPACITY_MAX)
     opacitySlider:SetValueStep(addon.COOLDOWN_PANEL_OPACITY_STEP)
@@ -183,7 +265,7 @@ function CooldownOptions:Create()
         _G[self:GetName() .. "Text"]:SetText(string.format(addon.L.COOLDOWN_PANEL_OPACITY, rounded * 100))
     end)
 
-    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_ELEMENTS, -432)
+    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_ELEMENTS, -536)
 
     panel:SetScript("OnShow", function()
         self:Refresh()
@@ -193,6 +275,9 @@ function CooldownOptions:Create()
 
     self.panel = panel
     self.content = content
+    self.profiles = profiles
+    self.profileDropdown = profileDropdown
+    self.activeSpecText = activeSpecText
     self.enabledCheck = enabledCheck
     self.combatOnlyCheck = combatOnlyCheck
     self.lockedCheck = lockedCheck
@@ -200,7 +285,10 @@ function CooldownOptions:Create()
     self.sizeSlider = sizeSlider
     self.opacitySlider = opacitySlider
 
-    self:EnsureElementsView()
+    local profile = self:GetSelectedProfile()
+    if profile then
+        self:EnsureElementsView(profile)
+    end
 end
 
 function CooldownOptions:Refresh()
@@ -208,8 +296,32 @@ function CooldownOptions:Refresh()
         return
     end
 
+    local activeProfile = addon.CooldownRegistry:GetProfile(
+        addon.SpecManager.classToken,
+        addon.SpecManager.talentTab
+    )
+    if activeProfile then
+        self.activeSpecText:SetText(string.format(
+            addon.L.DETECTED_SPEC,
+            addon.CooldownRegistry:GetProfileDisplayName(activeProfile)
+        ))
+    else
+        self.activeSpecText:SetText(addon.L.DETECTED_SPEC_UNSUPPORTED)
+    end
+
+    local profile = self:GetSelectedProfile()
+    if not profile then
+        UIDropDownMenu_SetText(self.profileDropdown, addon.L.NO_SUPPORTED_SPECS)
+        return
+    end
+
+    UIDropDownMenu_SetSelectedValue(self.profileDropdown, profile.key)
+    UIDropDownMenu_SetText(self.profileDropdown, addon.CooldownRegistry:GetProfileDisplayName(profile))
+
     self.enabledCheck:SetChecked(addon.db.showCooldownPanel and 1 or nil)
-    self.combatOnlyCheck:SetChecked(addon.Settings:IsCooldownPanelCombatOnly() and 1 or nil)
+    self.combatOnlyCheck:SetChecked(
+        addon.Settings:IsCooldownPanelCombatOnly(profile.classToken, profile.talentTab) and 1 or nil
+    )
     self.lockedCheck:SetChecked(addon.db.cooldownPanelLocked and 1 or nil)
     self.sizeSlider:SetValue(addon.db.cooldownPanelIconSize)
     self.opacitySlider:SetValue(addon.db.cooldownPanelOpacity)
@@ -221,12 +333,17 @@ function CooldownOptions:Refresh()
         string.format(addon.L.COOLDOWN_PANEL_OPACITY, addon.db.cooldownPanelOpacity * 100)
     )
 
-    self:EnsureElementsView()
+    self:EnsureElementsView(profile)
     local index
     for index = 1, #(self.elementControls or {}) do
         local check = self.elementControls[index]
         local entry = check.entry
-        check:SetChecked(addon.Settings:IsCooldownElementEnabled(entry.settingId, entry.defaultEnabled) and 1 or nil)
+        check:SetChecked(addon.Settings:IsCooldownElementEnabled(
+            entry.settingId,
+            entry.defaultEnabled,
+            profile.classToken,
+            profile.talentTab
+        ) and 1 or nil)
     end
 
     if addon.db.showCooldownPanel then

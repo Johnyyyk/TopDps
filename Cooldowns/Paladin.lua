@@ -1,5 +1,23 @@
 local addon = TopDps
 
+addon.CooldownRegistry:RegisterProfile({
+    classToken = addon.Paladin.CLASS_TOKEN,
+    talentTab = addon.Paladin.TALENT_TABS.HOLY,
+    labelKey = "SPEC_PALADIN_HOLY",
+})
+
+addon.CooldownRegistry:RegisterProfile({
+    classToken = addon.Paladin.CLASS_TOKEN,
+    talentTab = addon.Paladin.TALENT_TABS.PROTECTION,
+    labelKey = "SPEC_PALADIN_PROTECTION",
+})
+
+addon.CooldownRegistry:RegisterProfile({
+    classToken = addon.Paladin.CLASS_TOKEN,
+    talentTab = addon.Paladin.TALENT_TABS.RETRIBUTION,
+    labelKey = "SPEC_PALADIN_RETRIBUTION",
+})
+
 addon.CooldownRegistry:Register({
     classToken = addon.Paladin.CLASS_TOKEN,
     entries = {
@@ -141,7 +159,7 @@ addon.CooldownRegistry:Register({
 
 addon.CooldownRegistry:Register({
     classToken = addon.Paladin.CLASS_TOKEN,
-    specId = "PALADIN_RETRIBUTION",
+    talentTab = addon.Paladin.TALENT_TABS.RETRIBUTION,
     entries = {
         {
             id = "artOfWar",

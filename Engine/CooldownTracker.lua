@@ -101,6 +101,34 @@ local function GetDisplaySpellData(definition)
     return displaySpellId, name, icon
 end
 
+local function SortEntries(entries, classToken, talentTab)
+    table.sort(entries, function(left, right)
+        local leftGroup = GetGroupOrder(left.group)
+        local rightGroup = GetGroupOrder(right.group)
+        if leftGroup ~= rightGroup then
+            return leftGroup < rightGroup
+        end
+
+        local leftOrder = addon.Settings:GetCooldownElementOrder(
+            left.settingId,
+            left.order,
+            classToken,
+            talentTab
+        )
+        local rightOrder = addon.Settings:GetCooldownElementOrder(
+            right.settingId,
+            right.order,
+            classToken,
+            talentTab
+        )
+        if leftOrder ~= rightOrder then
+            return leftOrder < rightOrder
+        end
+
+        return left.settingId < right.settingId
+    end)
+end
+
 function CooldownTracker:Initialize()
     self.initialized = true
     self:RefreshConfiguration()
@@ -111,7 +139,9 @@ function CooldownTracker:GetEntries()
 end
 
 function CooldownTracker:GetConfigurableEntries()
-    return self.availableEntries or {}
+    local classToken = addon.SpecManager and addon.SpecManager.classToken or nil
+    local talentTab = addon.SpecManager and addon.SpecManager.talentTab or nil
+    return self:GetConfigurableEntriesForProfile(classToken, talentTab)
 end
 
 function CooldownTracker:CreateDefinitionEntry(definition, knownNames)
@@ -177,15 +207,30 @@ function CooldownTracker:CreateDefinitionEntry(definition, knownNames)
     return nil
 end
 
+function CooldownTracker:CreateConfigurableDefinitionEntry(definition)
+    local displaySpellId, displayName, displayIcon = GetDisplaySpellData(definition)
+
+    return {
+        settingId = definition.settingId,
+        type = definition.type,
+        group = definition.group,
+        order = definition.order,
+        spellId = displaySpellId,
+        displaySpellId = displaySpellId,
+        icon = definition.icon or displayIcon,
+        name = definition.name or displayName or definition.id,
+        defaultEnabled = definition.defaultEnabled,
+    }
+end
+
 function CooldownTracker:CreateClassEntries()
     local _, classToken = UnitClass("player")
     if not classToken then
         return {}
     end
 
-    local activeProvider = addon.SpecManager and addon.SpecManager:GetActive() or nil
-    local specId = activeProvider and activeProvider.id or nil
-    local definitions = addon.CooldownRegistry:GetEntries(classToken, specId)
+    local talentTab = addon.SpecManager and addon.SpecManager.talentTab or nil
+    local definitions = addon.CooldownRegistry:GetEntries(classToken, talentTab)
     local knownNames = GetKnownSpellNames()
     local result = {}
     local index
@@ -230,11 +275,46 @@ function CooldownTracker:CreateTrinketEntry(slot, order)
     }
 end
 
+function CooldownTracker:CreateConfigurableTrinketEntry(slot, order)
+    return {
+        settingId = "TRINKET_SLOT_" .. tostring(slot),
+        type = "trinket",
+        group = addon.COOLDOWN_GROUP_TRINKETS,
+        order = order,
+        slot = slot,
+        name = string.format(addon.L.COOLDOWN_TRINKET_SLOT, slot == 13 and 1 or 2),
+        defaultEnabled = true,
+    }
+end
+
+function CooldownTracker:GetConfigurableEntriesForProfile(classToken, talentTab)
+    if not classToken or not talentTab then
+        return {}
+    end
+
+    local definitions = addon.CooldownRegistry:GetEntries(classToken, talentTab)
+    local entries = {}
+    local index
+
+    for index = 1, #definitions do
+        table.insert(entries, self:CreateConfigurableDefinitionEntry(definitions[index]))
+    end
+
+    for index = 1, #TRINKET_SLOTS do
+        table.insert(entries, self:CreateConfigurableTrinketEntry(TRINKET_SLOTS[index], index * 10))
+    end
+
+    SortEntries(entries, classToken, talentTab)
+    return entries
+end
+
 function CooldownTracker:RefreshConfiguration()
     if not addon.db then
         return
     end
 
+    local classToken = addon.SpecManager and addon.SpecManager.classToken or nil
+    local talentTab = addon.SpecManager and addon.SpecManager.talentTab or nil
     local entries = self:CreateClassEntries()
     local index
     for index = 1, #TRINKET_SLOTS do
@@ -244,28 +324,18 @@ function CooldownTracker:RefreshConfiguration()
         end
     end
 
-    table.sort(entries, function(left, right)
-        local leftGroup = GetGroupOrder(left.group)
-        local rightGroup = GetGroupOrder(right.group)
-        if leftGroup ~= rightGroup then
-            return leftGroup < rightGroup
-        end
-
-        local leftOrder = addon.Settings:GetCooldownElementOrder(left.settingId, left.order)
-        local rightOrder = addon.Settings:GetCooldownElementOrder(right.settingId, right.order)
-        if leftOrder ~= rightOrder then
-            return leftOrder < rightOrder
-        end
-
-        return left.settingId < right.settingId
-    end)
-
+    SortEntries(entries, classToken, talentTab)
     self.availableEntries = entries
 
     local visibleEntries = {}
     for index = 1, #entries do
         local entry = entries[index]
-        if addon.Settings:IsCooldownElementEnabled(entry.settingId, entry.defaultEnabled) then
+        if addon.Settings:IsCooldownElementEnabled(
+            entry.settingId,
+            entry.defaultEnabled,
+            classToken,
+            talentTab
+        ) then
             table.insert(visibleEntries, entry)
         end
     end
