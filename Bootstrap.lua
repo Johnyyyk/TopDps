@@ -130,6 +130,11 @@ function Bootstrap:HandleEvent(event, ...)
         addon.RecommendationPresenter:Clear()
     elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
         addon.CombatTracker:RecordCombatEvent(...)
+    elseif event == "UNIT_AURA" then
+        local unit = ...
+        addon.CooldownTracker:HandleUnitAura(unit)
+    elseif event == "PARTY_MEMBERS_CHANGED" or event == "RAID_ROSTER_UPDATE" then
+        addon.CooldownTracker:HandleGroupChanged()
     elseif event == "LEARNED_SPELL_IN_TAB" then
         addon.SpecManager:RefreshSpellData()
         addon.CooldownTracker:RefreshConfiguration()
@@ -140,6 +145,7 @@ function Bootstrap:HandleEvent(event, ...)
         self:HandleSpecializationChanged(event)
     elseif event == "PLAYER_ENTERING_WORLD" then
         self:HandleSpecializationChanged(event)
+        addon.CooldownTracker:HandleGroupChanged()
         addon.ActionBarService:CollectButtons()
         addon.Logger:Info("Action buttons collected: %s", #addon.ActionBarService.buttons)
     elseif event == "ACTIONBAR_PAGE_CHANGED"
@@ -169,6 +175,8 @@ local EVENTS = {
     "UPDATE_SHAPESHIFT_FORM",
     "UNIT_AURA",
     "UNIT_FLAGS",
+    "PARTY_MEMBERS_CHANGED",
+    "RAID_ROSTER_UPDATE",
     "PLAYER_REGEN_ENABLED",
     "COMBAT_LOG_EVENT_UNFILTERED",
 }

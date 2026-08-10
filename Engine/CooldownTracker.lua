@@ -2,11 +2,14 @@ local addon = TopDps
 local CooldownTracker = addon:CreateModule("CooldownTracker")
 
 local GCD_THRESHOLD = 2
+local AURA_SCAN_LIMIT = 40
 local TRINKET_SLOTS = { 13, 14 }
 
 CooldownTracker.entries = {}
 CooldownTracker.availableEntries = {}
 CooldownTracker.activeAuras = {}
+CooldownTracker.groupAuraEntries = {}
+CooldownTracker.groupAuras = {}
 
 local function GetGroupOrder(group)
     return addon.COOLDOWN_GROUP_ORDER[group] or 100
@@ -129,6 +132,55 @@ local function SortEntries(entries, classToken, talentTab)
     end)
 end
 
+local function IsOwnAuraCaster(unitCaster)
+    if not unitCaster then
+        return false
+    end
+
+    if unitCaster == "player" then
+        return true
+    end
+
+    if UnitIsUnit then
+        local ok, sameUnit = pcall(UnitIsUnit, unitCaster, "player")
+        return ok and sameUnit == true
+    end
+
+    return false
+end
+
+local function IsGroupUnit(unit)
+    if unit == "player" then
+        return true
+    end
+
+    if type(unit) ~= "string" then
+        return false
+    end
+
+    return string.sub(unit, 1, 5) == "party" or string.sub(unit, 1, 4) == "raid"
+end
+
+local function GetGroupUnits()
+    local units = {}
+    local raidCount = GetNumRaidMembers and GetNumRaidMembers() or 0
+    local partyCount = GetNumPartyMembers and GetNumPartyMembers() or 0
+    local index
+
+    if raidCount > 0 then
+        for index = 1, raidCount do
+            units[#units + 1] = "raid" .. tostring(index)
+        end
+    else
+        units[#units + 1] = "player"
+        for index = 1, partyCount do
+            units[#units + 1] = "party" .. tostring(index)
+        end
+    end
+
+    return units
+end
+
 function CooldownTracker:Initialize()
     self.initialized = true
     self:RefreshConfiguration()
@@ -168,6 +220,7 @@ function CooldownTracker:CreateDefinitionEntry(definition, knownNames)
             icon = icon,
             auraSpellIds = definition.auraSpellIds or { spellId },
             name = spellName or definition.id,
+            showStacks = definition.showStacks == true,
             defaultEnabled = definition.defaultEnabled,
         }
     end
@@ -181,11 +234,17 @@ function CooldownTracker:CreateDefinitionEntry(definition, knownNames)
             group = definition.group,
             order = definition.order,
             auraSpellIds = definition.auraSpellIds,
+            auraUnit = definition.auraUnit or "player",
+            auraFilter = definition.auraFilter or "HELPFUL",
+            ownOnly = definition.ownOnly == true,
             icon = definition.icon or displayIcon,
             name = definition.name or displayName or definition.id,
             fallbackDuration = definition.fallbackDuration,
+            showDuration = definition.showDuration ~= false,
             showStacks = definition.showStacks == true,
             inactiveText = definition.inactiveText,
+            activeState = definition.activeState or "ACTIVE",
+            inactiveState = definition.inactiveState or "INACTIVE",
             defaultEnabled = definition.defaultEnabled,
             displaySpellId = displaySpellId,
         }
@@ -342,6 +401,16 @@ function CooldownTracker:RefreshConfiguration()
     end
 
     self.entries = visibleEntries
+    self.groupAuraEntries = {}
+
+    for index = 1, #visibleEntries do
+        local entry = visibleEntries[index]
+        if entry.type == "aura" and entry.auraUnit == "group" then
+            table.insert(self.groupAuraEntries, entry)
+        end
+    end
+
+    self:RefreshGroupAuras()
 
     if addon.CooldownPanel then
         addon.CooldownPanel:SetEntries(visibleEntries)
@@ -352,25 +421,67 @@ function CooldownTracker:RefreshConfiguration()
     end
 end
 
+function CooldownTracker:ReadAura(unit, index, filter)
+    local reader = filter == "HARMFUL" and UnitDebuff or UnitBuff
+    if not reader then
+        return nil
+    end
+
+    local name, _, icon, stacks, _, duration, expirationTime, unitCaster, _, _, spellId = reader(unit, index)
+    if not name then
+        return nil
+    end
+
+    return {
+        spellId = spellId,
+        name = name,
+        icon = icon,
+        stacks = stacks or 0,
+        duration = duration or 0,
+        expirationTime = expirationTime or 0,
+        unitCaster = unitCaster,
+        unit = unit,
+    }
+end
+
+function CooldownTracker:FindAuraOnUnit(unit, spellIds, filter, ownOnly)
+    if not unit or not spellIds or not UnitExists(unit) then
+        return nil
+    end
+
+    local wanted = {}
+    local index
+    for index = 1, #spellIds do
+        wanted[spellIds[index]] = true
+    end
+
+    for index = 1, AURA_SCAN_LIMIT do
+        local aura = self:ReadAura(unit, index, filter)
+        if not aura then
+            break
+        end
+
+        if aura.spellId and wanted[aura.spellId]
+            and (not ownOnly or IsOwnAuraCaster(aura.unitCaster)) then
+            return aura, aura.spellId
+        end
+    end
+
+    return nil, nil
+end
+
 function CooldownTracker:ScanPlayerAuras()
     local activeAuras = {}
     local index
 
-    for index = 1, 40 do
-        local name, _, icon, stacks, _, duration, expirationTime, _, _, _, spellId = UnitBuff("player", index)
-        if not name then
+    for index = 1, AURA_SCAN_LIMIT do
+        local aura = self:ReadAura("player", index, "HELPFUL")
+        if not aura then
             break
         end
 
-        if spellId then
-            activeAuras[spellId] = {
-                spellId = spellId,
-                name = name,
-                icon = icon,
-                stacks = stacks or 0,
-                duration = duration or 0,
-                expirationTime = expirationTime or 0,
-            }
+        if aura.spellId then
+            activeAuras[aura.spellId] = aura
         end
     end
 
@@ -393,7 +504,63 @@ function CooldownTracker:FindActiveAura(spellIds)
     return nil, nil
 end
 
-function CooldownTracker:GetActiveState(aura, fallbackDuration, showStacks)
+function CooldownTracker:FindGroupAura(entry)
+    local units = GetGroupUnits()
+    local index
+
+    for index = 1, #units do
+        local aura = self:FindAuraOnUnit(
+            units[index],
+            entry.auraSpellIds,
+            entry.auraFilter,
+            entry.ownOnly
+        )
+        if aura then
+            return aura
+        end
+    end
+
+    return nil
+end
+
+function CooldownTracker:RefreshGroupAuraEntry(entry)
+    self.groupAuras[entry.settingId] = self:FindGroupAura(entry)
+end
+
+function CooldownTracker:RefreshGroupAuras()
+    self.groupAuras = {}
+
+    local index
+    for index = 1, #(self.groupAuraEntries or {}) do
+        self:RefreshGroupAuraEntry(self.groupAuraEntries[index])
+    end
+end
+
+function CooldownTracker:HandleUnitAura(unit)
+    if not IsGroupUnit(unit) or #(self.groupAuraEntries or {}) == 0 then
+        return
+    end
+
+    local index
+    for index = 1, #self.groupAuraEntries do
+        local entry = self.groupAuraEntries[index]
+        local aura = self:FindAuraOnUnit(unit, entry.auraSpellIds, entry.auraFilter, entry.ownOnly)
+        if aura then
+            self.groupAuras[entry.settingId] = aura
+        else
+            local current = self.groupAuras[entry.settingId]
+            if current and current.unit == unit then
+                self:RefreshGroupAuraEntry(entry)
+            end
+        end
+    end
+end
+
+function CooldownTracker:HandleGroupChanged()
+    self:RefreshGroupAuras()
+end
+
+function CooldownTracker:GetActiveState(aura, fallbackDuration, showStacks, showDuration)
     local now = GetTime()
     local duration = tonumber(aura.duration) or 0
     local expirationTime = tonumber(aura.expirationTime) or 0
@@ -404,6 +571,12 @@ function CooldownTracker:GetActiveState(aura, fallbackDuration, showStacks)
 
     local start = expirationTime > 0 and expirationTime - duration or now
     local remaining = expirationTime > 0 and math.max(0, expirationTime - now) or duration
+
+    if showDuration == false then
+        start = now
+        duration = 0
+        remaining = 0
+    end
 
     return {
         state = "ACTIVE",
@@ -420,7 +593,7 @@ end
 function CooldownTracker:GetSpellState(entry)
     local aura = self:FindActiveAura(entry.auraSpellIds)
     if aura then
-        return self:GetActiveState(aura)
+        return self:GetActiveState(aura, nil, entry.showStacks, true)
     end
 
     local start, duration = GetSpellCooldownSafe(entry.spellId, entry.spellName)
@@ -439,14 +612,38 @@ function CooldownTracker:GetSpellState(entry)
     }
 end
 
+function CooldownTracker:GetAuraForEntry(entry)
+    if entry.auraUnit == "group" then
+        return self.groupAuras[entry.settingId]
+    end
+
+    if entry.auraUnit == "player" and entry.auraFilter == "HELPFUL" and not entry.ownOnly then
+        return self:FindActiveAura(entry.auraSpellIds)
+    end
+
+    return self:FindAuraOnUnit(
+        entry.auraUnit,
+        entry.auraSpellIds,
+        entry.auraFilter,
+        entry.ownOnly
+    )
+end
+
 function CooldownTracker:GetAuraState(entry)
-    local aura = self:FindActiveAura(entry.auraSpellIds)
+    local aura = self:GetAuraForEntry(entry)
     if aura then
-        return self:GetActiveState(aura, entry.fallbackDuration, entry.showStacks)
+        local state = self:GetActiveState(
+            aura,
+            entry.fallbackDuration,
+            entry.showStacks,
+            entry.showDuration
+        )
+        state.state = entry.activeState
+        return state
     end
 
     return {
-        state = "INACTIVE",
+        state = entry.inactiveState,
         remaining = 0,
         stacks = 0,
         showStacks = entry.showStacks,
@@ -522,7 +719,7 @@ function CooldownTracker:GetTrinketState(entry)
         local aura = self:FindActiveAura(procData.procSpellIds)
         if aura then
             self:RememberProcCooldown(entry, aura)
-            return self:GetActiveState(aura, procData.durationFallback)
+            return self:GetActiveState(aura, procData.durationFallback, true, true)
         end
     end
 
