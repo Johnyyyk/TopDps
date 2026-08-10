@@ -65,7 +65,8 @@ if locale == "ruRU" then
 
     L.COOLDOWN_PAGE = "Панель способностей"
     L.COOLDOWN_DESCRIPTION = "Панель важных способностей, проков, стаков и тринкетов с их текущим состоянием."
-    L.COOLDOWN_PANEL_SETTINGS = "Настройки панели"
+    L.COOLDOWN_PANEL_SETTINGS = "Общие настройки панели"
+    L.COOLDOWN_SPEC_SETTINGS = "Настройки специализации"
     L.COOLDOWN_PANEL_ENABLED = "Показывать панель способностей"
     L.COOLDOWN_PANEL_COMBAT_ONLY = "Отображение только в бою"
     L.COOLDOWN_PANEL_LOCKED = "Закрепить положение панели"
@@ -157,7 +158,8 @@ else
 
     L.COOLDOWN_PAGE = "Ability Panel"
     L.COOLDOWN_DESCRIPTION = "A panel for important abilities, procs, stacks, resources, and trinkets with their current state."
-    L.COOLDOWN_PANEL_SETTINGS = "Panel settings"
+    L.COOLDOWN_PANEL_SETTINGS = "General panel settings"
+    L.COOLDOWN_SPEC_SETTINGS = "Specialization settings"
     L.COOLDOWN_PANEL_ENABLED = "Show ability panel"
     L.COOLDOWN_PANEL_COMBAT_ONLY = "Show only in combat"
     L.COOLDOWN_PANEL_LOCKED = "Lock panel position"

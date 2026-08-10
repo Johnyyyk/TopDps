@@ -28,7 +28,7 @@ function CooldownOptions:CreateElementsView(content, profile, entries)
     end
 
     local view = CreateFrame("Frame", nil, content)
-    view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -560)
+    view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -604)
     view:SetWidth(Widgets.SCROLL_CONTENT_WIDTH)
 
     local controls = {}
@@ -137,7 +137,7 @@ end
 function CooldownOptions:Create()
     local panel = Widgets:CreatePanel("TopDpsCooldownOptionsPanel", addon.L.COOLDOWN_PAGE, addon.NAME)
     local profiles = addon.CooldownRegistry:GetProfiles()
-    local _, content = Widgets:CreateScrollArea(panel, "TopDpsCooldownOptionsScrollFrame", 1320)
+    local _, content = Widgets:CreateScrollArea(panel, "TopDpsCooldownOptionsScrollFrame", 1380)
 
     Widgets:CreateText(
         content,
@@ -156,8 +156,70 @@ function CooldownOptions:Create()
         addon.L.COOLDOWN_DESCRIPTION
     )
 
-    local activeSpecText = Widgets:CreateText(content, "GameFontNormal", 8, -88, Widgets.TEXT_WIDTH, "")
-    Widgets:CreateText(content, "GameFontNormal", 8, -122, Widgets.TEXT_WIDTH, addon.L.CONFIGURE_SPEC)
+    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_PANEL_SETTINGS, -92)
+
+    local enabledCheck = Widgets:CreateCheckButton(
+        content,
+        "TopDpsCooldownPanelEnabled",
+        6,
+        -118,
+        addon.L.COOLDOWN_PANEL_ENABLED
+    )
+    enabledCheck:SetScript("OnClick", function(self)
+        addon.Settings:SetCooldownPanelEnabled(Widgets:GetCheckValue(self))
+    end)
+
+    local lockedCheck = Widgets:CreateCheckButton(
+        content,
+        "TopDpsCooldownPanelLocked",
+        6,
+        -154,
+        addon.L.COOLDOWN_PANEL_LOCKED
+    )
+    lockedCheck:SetScript("OnClick", function(self)
+        addon.Settings:SetCooldownPanelLocked(Widgets:GetCheckValue(self))
+    end)
+
+    local resetButton = CreateFrame("Button", "TopDpsCooldownPanelResetPosition", content, "UIPanelButtonTemplate")
+    resetButton:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -202)
+    resetButton:SetWidth(180)
+    resetButton:SetHeight(24)
+    resetButton:SetText(addon.L.COOLDOWN_PANEL_RESET_POSITION)
+    resetButton:SetScript("OnClick", function()
+        addon.CooldownPanel:ResetPosition()
+    end)
+
+    local sizeSlider = CreateFrame("Slider", "TopDpsCooldownPanelIconSize", content, "OptionsSliderTemplate")
+    sizeSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -270)
+    sizeSlider:SetWidth(300)
+    sizeSlider:SetMinMaxValues(addon.COOLDOWN_PANEL_ICON_SIZE_MIN, addon.COOLDOWN_PANEL_ICON_SIZE_MAX)
+    sizeSlider:SetValueStep(addon.COOLDOWN_PANEL_ICON_SIZE_STEP)
+    _G[sizeSlider:GetName() .. "Low"]:SetText(tostring(addon.COOLDOWN_PANEL_ICON_SIZE_MIN))
+    _G[sizeSlider:GetName() .. "High"]:SetText(tostring(addon.COOLDOWN_PANEL_ICON_SIZE_MAX))
+    sizeSlider:SetScript("OnValueChanged", function(self, value)
+        local rounded = math.floor(value / addon.COOLDOWN_PANEL_ICON_SIZE_STEP + 0.5)
+            * addon.COOLDOWN_PANEL_ICON_SIZE_STEP
+        addon.Settings:SetCooldownPanelIconSize(rounded)
+        _G[self:GetName() .. "Text"]:SetText(string.format(addon.L.COOLDOWN_PANEL_ICON_SIZE, rounded))
+    end)
+
+    local opacitySlider = CreateFrame("Slider", "TopDpsCooldownPanelOpacity", content, "OptionsSliderTemplate")
+    opacitySlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -344)
+    opacitySlider:SetWidth(300)
+    opacitySlider:SetMinMaxValues(addon.COOLDOWN_PANEL_OPACITY_MIN, addon.COOLDOWN_PANEL_OPACITY_MAX)
+    opacitySlider:SetValueStep(addon.COOLDOWN_PANEL_OPACITY_STEP)
+    _G[opacitySlider:GetName() .. "Low"]:SetText("30%")
+    _G[opacitySlider:GetName() .. "High"]:SetText("100%")
+    opacitySlider:SetScript("OnValueChanged", function(self, value)
+        local rounded = math.floor(value * 20 + 0.5) / 20
+        addon.Settings:SetCooldownPanelOpacity(rounded)
+        _G[self:GetName() .. "Text"]:SetText(string.format(addon.L.COOLDOWN_PANEL_OPACITY, rounded * 100))
+    end)
+
+    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_SPEC_SETTINGS, -404)
+
+    local activeSpecText = Widgets:CreateText(content, "GameFontNormal", 8, -434, Widgets.TEXT_WIDTH, "")
+    Widgets:CreateText(content, "GameFontNormal", 8, -468, Widgets.TEXT_WIDTH, addon.L.CONFIGURE_SPEC)
 
     local profileDropdown = CreateFrame(
         "Frame",
@@ -165,7 +227,7 @@ function CooldownOptions:Create()
         content,
         "UIDropDownMenuTemplate"
     )
-    profileDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -138)
+    profileDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -484)
     UIDropDownMenu_SetWidth(profileDropdown, 270)
 
     UIDropDownMenu_Initialize(profileDropdown, function(_, level)
@@ -185,24 +247,11 @@ function CooldownOptions:Create()
         end
     end)
 
-    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_PANEL_SETTINGS, -196)
-
-    local enabledCheck = Widgets:CreateCheckButton(
-        content,
-        "TopDpsCooldownPanelEnabled",
-        6,
-        -222,
-        addon.L.COOLDOWN_PANEL_ENABLED
-    )
-    enabledCheck:SetScript("OnClick", function(self)
-        addon.Settings:SetCooldownPanelEnabled(Widgets:GetCheckValue(self))
-    end)
-
     local combatOnlyCheck = Widgets:CreateCheckButton(
         content,
         "TopDpsCooldownPanelCombatOnly",
         6,
-        -258,
+        -532,
         addon.L.COOLDOWN_PANEL_COMBAT_ONLY
     )
     combatOnlyCheck:SetScript("OnClick", function(self)
@@ -218,54 +267,7 @@ function CooldownOptions:Create()
         )
     end)
 
-    local lockedCheck = Widgets:CreateCheckButton(
-        content,
-        "TopDpsCooldownPanelLocked",
-        6,
-        -294,
-        addon.L.COOLDOWN_PANEL_LOCKED
-    )
-    lockedCheck:SetScript("OnClick", function(self)
-        addon.Settings:SetCooldownPanelLocked(Widgets:GetCheckValue(self))
-    end)
-
-    local resetButton = CreateFrame("Button", "TopDpsCooldownPanelResetPosition", content, "UIPanelButtonTemplate")
-    resetButton:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -342)
-    resetButton:SetWidth(180)
-    resetButton:SetHeight(24)
-    resetButton:SetText(addon.L.COOLDOWN_PANEL_RESET_POSITION)
-    resetButton:SetScript("OnClick", function()
-        addon.CooldownPanel:ResetPosition()
-    end)
-
-    local sizeSlider = CreateFrame("Slider", "TopDpsCooldownPanelIconSize", content, "OptionsSliderTemplate")
-    sizeSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -410)
-    sizeSlider:SetWidth(300)
-    sizeSlider:SetMinMaxValues(addon.COOLDOWN_PANEL_ICON_SIZE_MIN, addon.COOLDOWN_PANEL_ICON_SIZE_MAX)
-    sizeSlider:SetValueStep(addon.COOLDOWN_PANEL_ICON_SIZE_STEP)
-    _G[sizeSlider:GetName() .. "Low"]:SetText(tostring(addon.COOLDOWN_PANEL_ICON_SIZE_MIN))
-    _G[sizeSlider:GetName() .. "High"]:SetText(tostring(addon.COOLDOWN_PANEL_ICON_SIZE_MAX))
-    sizeSlider:SetScript("OnValueChanged", function(self, value)
-        local rounded = math.floor(value / addon.COOLDOWN_PANEL_ICON_SIZE_STEP + 0.5)
-            * addon.COOLDOWN_PANEL_ICON_SIZE_STEP
-        addon.Settings:SetCooldownPanelIconSize(rounded)
-        _G[self:GetName() .. "Text"]:SetText(string.format(addon.L.COOLDOWN_PANEL_ICON_SIZE, rounded))
-    end)
-
-    local opacitySlider = CreateFrame("Slider", "TopDpsCooldownPanelOpacity", content, "OptionsSliderTemplate")
-    opacitySlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -484)
-    opacitySlider:SetWidth(300)
-    opacitySlider:SetMinMaxValues(addon.COOLDOWN_PANEL_OPACITY_MIN, addon.COOLDOWN_PANEL_OPACITY_MAX)
-    opacitySlider:SetValueStep(addon.COOLDOWN_PANEL_OPACITY_STEP)
-    _G[opacitySlider:GetName() .. "Low"]:SetText("30%")
-    _G[opacitySlider:GetName() .. "High"]:SetText("100%")
-    opacitySlider:SetScript("OnValueChanged", function(self, value)
-        local rounded = math.floor(value * 20 + 0.5) / 20
-        addon.Settings:SetCooldownPanelOpacity(rounded)
-        _G[self:GetName() .. "Text"]:SetText(string.format(addon.L.COOLDOWN_PANEL_OPACITY, rounded * 100))
-    end)
-
-    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_ELEMENTS, -536)
+    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_ELEMENTS, -580)
 
     panel:SetScript("OnShow", function()
         self:Refresh()
