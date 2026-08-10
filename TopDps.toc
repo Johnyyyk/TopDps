@@ -37,6 +37,7 @@ Presentation\HighlightManager.lua
 Presentation\CenterIcons.lua
 Presentation\RecommendationPresenter.lua
 Presentation\CooldownPanel.lua
+Presentation\ProcSoundAlerts.lua
 
 # TopDps-Specs-Start
 Specs\Paladin\Common.lua
