@@ -24,8 +24,23 @@ local function IsValueInList(value, list)
     return false
 end
 
+local function BuildReservedSettingKeys(provider)
+    local reservedKeys = {
+        enabled = true,
+    }
+
+    local categories = provider.categories or {}
+    local index
+    for index = 1, #categories do
+        reservedKeys["ability_" .. tostring(categories[index])] = true
+    end
+
+    return reservedKeys
+end
+
 local function ValidateSettings(provider)
     local settings = provider.settings or {}
+    local reservedKeys = BuildReservedSettingKeys(provider)
     local keys = {}
     local index
 
@@ -38,6 +53,10 @@ local function ValidateSettings(provider)
         if definition.type ~= "header" then
             if type(definition.key) ~= "string" or definition.key == "" then
                 error("TopDps: specialization setting requires key for " .. tostring(provider.id))
+            end
+
+            if reservedKeys[definition.key] then
+                error("TopDps: specialization setting key is reserved: " .. tostring(definition.key))
             end
 
             if keys[definition.key] then
@@ -54,8 +73,14 @@ local function ValidateSettings(provider)
             if type(definition.default) ~= "number"
                 or type(definition.min) ~= "number"
                 or type(definition.max) ~= "number"
-                or definition.min > definition.max then
-                error("TopDps: slider setting requires numeric default/min/max")
+                or definition.min > definition.max
+                or definition.default < definition.min
+                or definition.default > definition.max then
+                error("TopDps: slider setting requires valid numeric default/min/max")
+            end
+
+            if definition.step ~= nil and (type(definition.step) ~= "number" or definition.step <= 0) then
+                error("TopDps: slider setting step must be a positive number")
             end
         end
 

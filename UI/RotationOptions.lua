@@ -38,7 +38,18 @@ local function RoundSliderValue(definition, value)
         return value
     end
 
-    return math.floor(value / step + 0.5) * step
+    local base = definition.min or 0
+    local rounded = base + math.floor((value - base) / step + 0.5) * step
+
+    if definition.min then
+        rounded = math.max(definition.min, rounded)
+    end
+
+    if definition.max then
+        rounded = math.min(definition.max, rounded)
+    end
+
+    return rounded
 end
 
 local function FormatSliderText(provider, definition, value)
@@ -88,7 +99,9 @@ function RotationOptions:CreateSlider(view, provider, definition, index, y)
     slider:SetScript("OnValueChanged", function(self, value)
         local rounded = RoundSliderValue(definition, value)
         provider:SetSetting(definition.key, rounded)
-        _G[self:GetName() .. "Text"]:SetText(FormatSliderText(provider, definition, rounded))
+
+        local normalized = provider:GetSetting(definition.key)
+        _G[self:GetName() .. "Text"]:SetText(FormatSliderText(provider, definition, normalized))
     end)
 
     return {

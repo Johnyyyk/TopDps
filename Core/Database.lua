@@ -96,6 +96,20 @@ function Database:NormalizeSpecSetting(definition, value)
             value = math.min(definition.max, value)
         end
 
+        local step = definition.step
+        if step and step > 0 then
+            local base = definition.min or 0
+            value = base + math.floor((value - base) / step + 0.5) * step
+
+            if definition.min then
+                value = math.max(definition.min, value)
+            end
+
+            if definition.max then
+                value = math.min(definition.max, value)
+            end
+        end
+
         return value
     end
 
@@ -142,7 +156,12 @@ function Database:GetSpecSettings(provider)
         return nil
     end
 
-    return self:ApplyProviderDefaults(provider)
+    local specDb = addon.specDb[provider.id]
+    if type(specDb) ~= "table" then
+        return self:ApplyProviderDefaults(provider)
+    end
+
+    return specDb
 end
 
 function Database:ApplyDefaults()
