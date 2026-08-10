@@ -48,7 +48,8 @@ function ReadinessService:IsActionCooldownReady(action)
         return false
     end
 
-    if remaining <= 0.15 then
+    local lookahead = addon.db and addon.db.cooldownLookahead or addon.DEFAULTS.cooldownLookahead
+    if remaining <= lookahead then
         return true
     end
 

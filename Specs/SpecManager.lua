@@ -4,87 +4,96 @@ local SpecManager = addon:CreateModule("SpecManager")
 SpecManager.activeProvider = nil
 SpecManager.classToken = nil
 SpecManager.talentTab = nil
+SpecManager.RESOLUTION_READY = "ready"
+SpecManager.RESOLUTION_NOT_READY = "not_ready"
 
 local TALENT_TAB_COUNT = 3
+local TRANSIENT_EMPTY_REASONS = {
+    initialize = true,
+    PLAYER_ENTERING_WORLD = true,
+    ACTIVE_TALENT_GROUP_CHANGED = true,
+}
 
-function SpecManager:DetectTalentTab(classToken)
+local function IsTransientEmptyReason(reason)
+    if TRANSIENT_EMPTY_REASONS[reason] then
+        return true
+    end
+
+    return string.find(tostring(reason or ""), "^retry:") ~= nil
+end
+
+function SpecManager:DetectTalentTab(reason)
     local talentGroup = addon.GameApi:GetActiveTalentGroup()
     local pointsByTab = {}
-    local maximumPoints = -1
+    local totalPoints = 0
     local tabIndex
 
     for tabIndex = 1, TALENT_TAB_COUNT do
         local points = addon.GameApi:GetTalentPoints(tabIndex, talentGroup)
         if points == nil then
-            return nil
+            return nil, self.RESOLUTION_NOT_READY
         end
 
         pointsByTab[tabIndex] = points
-        maximumPoints = math.max(maximumPoints, points)
+        totalPoints = totalPoints + points
     end
 
-    if maximumPoints <= 0 then
-        return nil
+    if totalPoints <= 0 then
+        if IsTransientEmptyReason(reason) then
+            return nil, self.RESOLUTION_NOT_READY
+        end
+
+        return nil, self.RESOLUTION_READY
     end
 
-    local candidates = {}
+    local selectedTab
+    local maximumShare = -1
+    local hasTie = false
+
     for tabIndex = 1, TALENT_TAB_COUNT do
-        if pointsByTab[tabIndex] == maximumPoints then
-            table.insert(candidates, tabIndex)
+        local share = pointsByTab[tabIndex] / totalPoints
+        if share > maximumShare then
+            selectedTab = tabIndex
+            maximumShare = share
+            hasTie = false
+        elseif share == maximumShare then
+            hasTie = true
         end
     end
 
-    if #candidates == 1 then
-        return candidates[1]
+    if hasTie then
+        return nil, self.RESOLUTION_READY
     end
 
-    -- При ничьей не дёргаем активный provider без необходимости.
-    if self.activeProvider and self.activeProvider.classToken == classToken then
-        local index
-        for index = 1, #candidates do
-            if candidates[index] == self.activeProvider.talentTab then
-                return candidates[index]
-            end
-        end
-    end
-
-    local defaultProvider = addon.SpecRegistry:GetDefaultForClass(classToken)
-    if defaultProvider then
-        local index
-        for index = 1, #candidates do
-            if candidates[index] == defaultProvider.talentTab then
-                return candidates[index]
-            end
-        end
-    end
-
-    return candidates[1]
+    return selectedTab, self.RESOLUTION_READY
 end
 
-function SpecManager:ResolveProvider()
+function SpecManager:ResolveProvider(reason)
     local _, classToken = UnitClass("player")
     if not classToken then
-        return nil, nil, nil
+        return nil, nil, nil, self.RESOLUTION_NOT_READY
     end
 
-    local defaultProvider = addon.SpecRegistry:GetDefaultForClass(classToken)
     local playerLevel = UnitLevel("player") or 0
-
     if playerLevel < 10 then
-        return defaultProvider, classToken, defaultProvider and defaultProvider.talentTab or nil
+        return nil, classToken, nil, self.RESOLUTION_READY
     end
 
-    local talentTab = self:DetectTalentTab(classToken)
-    if not talentTab then
-        return defaultProvider, classToken, defaultProvider and defaultProvider.talentTab or nil
+    local talentTab, resolution = self:DetectTalentTab(reason)
+    if resolution == self.RESOLUTION_NOT_READY then
+        return nil, classToken, nil, resolution
     end
 
-    return addon.SpecRegistry:Get(classToken, talentTab), classToken, talentTab
+    return addon.SpecRegistry:Get(classToken, talentTab), classToken, talentTab, self.RESOLUTION_READY
 end
 
 function SpecManager:Refresh(reason)
     local previousProvider = self.activeProvider
-    local provider, classToken, talentTab = self:ResolveProvider()
+    local provider, classToken, talentTab, resolution = self:ResolveProvider(reason)
+
+    if resolution == self.RESOLUTION_NOT_READY then
+        return false, resolution
+    end
 
     self.activeProvider = provider
     self.classToken = classToken
@@ -109,11 +118,11 @@ function SpecManager:Refresh(reason)
         )
     end
 
-    return changed
+    return changed, resolution
 end
 
 function SpecManager:Initialize()
-    self:Refresh("initialize")
+    return self:Refresh("initialize")
 end
 
 function SpecManager:GetActive()

@@ -2,9 +2,15 @@ local addon = TopDps
 
 local Bootstrap = addon:CreateModule("Bootstrap")
 local eventFrame = CreateFrame("Frame")
+local SPEC_RETRY_DELAY = 0.5
+local SPEC_RETRY_MAX_ATTEMPTS = 10
+
 Bootstrap.eventFrame = eventFrame
 Bootstrap.initialized = false
 Bootstrap.updateElapsed = 0
+Bootstrap.specRetryRemaining = nil
+Bootstrap.specRetryAttempts = 0
+Bootstrap.specRetryReason = nil
 
 function Bootstrap:RegisterSlashCommands()
     SLASH_TOPDPS1 = "/topdps"
@@ -14,6 +20,54 @@ function Bootstrap:RegisterSlashCommands()
     end
 end
 
+function Bootstrap:CancelSpecializationRetry()
+    self.specRetryRemaining = nil
+    self.specRetryAttempts = 0
+    self.specRetryReason = nil
+end
+
+function Bootstrap:ScheduleSpecializationRetry(reason)
+    if self.specRetryAttempts >= SPEC_RETRY_MAX_ATTEMPTS then
+        addon.Logger:Info(
+            "Specialization detection retry limit reached: reason=%s",
+            tostring(self.specRetryReason or reason or "unknown")
+        )
+        self:CancelSpecializationRetry()
+        return
+    end
+
+    self.specRetryRemaining = SPEC_RETRY_DELAY
+    self.specRetryReason = self.specRetryReason or reason
+end
+
+function Bootstrap:HandleSpecializationChanged(event, isRetry)
+    if not isRetry then
+        self.specRetryAttempts = 0
+        self.specRetryReason = event
+    end
+
+    local changed, resolution = addon.SpecManager:Refresh(event)
+    if resolution == addon.SpecManager.RESOLUTION_NOT_READY then
+        self:ScheduleSpecializationRetry(event)
+        return
+    end
+
+    self:CancelSpecializationRetry()
+    addon.SpecManager:RefreshSpellData()
+
+    if changed then
+        addon.RecommendationPresenter:Clear()
+    end
+end
+
+function Bootstrap:RetrySpecializationDetection()
+    self.specRetryRemaining = nil
+    self.specRetryAttempts = self.specRetryAttempts + 1
+
+    local reason = "retry:" .. tostring(self.specRetryReason or "unknown")
+    self:HandleSpecializationChanged(reason, true)
+end
+
 function Bootstrap:Initialize()
     if self.initialized then
         return
@@ -21,7 +75,7 @@ function Bootstrap:Initialize()
 
     self.initialized = true
 
-    addon.SpecManager:Initialize()
+    self:HandleSpecializationChanged("initialize")
     addon.ActionBarService:CollectButtons()
     addon.CenterIcons:Initialize()
     addon.MinimapButton:Initialize()
@@ -30,15 +84,6 @@ function Bootstrap:Initialize()
 
     addon.Logger:Info("Addon initialized, version %s", addon.VERSION)
     addon.Logger:WriteDiagnosticSnapshot()
-end
-
-function Bootstrap:HandleSpecializationChanged(event)
-    local changed = addon.SpecManager:Refresh(event)
-    addon.SpecManager:RefreshSpellData()
-
-    if changed then
-        addon.RecommendationPresenter:Clear()
-    end
 end
 
 function Bootstrap:HandleEvent(event, ...)
@@ -138,6 +183,13 @@ end)
 eventFrame:SetScript("OnUpdate", function(_, elapsed)
     if not Bootstrap.initialized then
         return
+    end
+
+    if Bootstrap.specRetryRemaining then
+        Bootstrap.specRetryRemaining = Bootstrap.specRetryRemaining - elapsed
+        if Bootstrap.specRetryRemaining <= 0 then
+            Bootstrap:RetrySpecializationDetection()
+        end
     end
 
     Bootstrap.updateElapsed = Bootstrap.updateElapsed + elapsed

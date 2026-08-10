@@ -3,7 +3,7 @@
 ## Notes: Расширяемый помощник приоритетов для WoW 3.3.5a
 ## Notes-ruRU: Расширяемый помощник приоритетов для WoW 3.3.5a
 ## Author: Johnyyyk
-## Version: 1.0.0
+## Version: 1.1.0
 ## SavedVariables: TopDpsDB, RpalTopDpsDB
 
 Core\Namespace.lua
@@ -41,6 +41,7 @@ Specs\Paladin\Retribution.lua
 UI\OptionsWidgets.lua
 UI\MinimapButton.lua
 UI\GeneralOptions.lua
+UI\RotationOptions.lua
 UI\DebugOptions.lua
 UI\OptionsController.lua
 
