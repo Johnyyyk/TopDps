@@ -114,6 +114,22 @@ function Settings:IsSpecEnabled(provider)
     return enabled == true
 end
 
+function Settings:GetCooldownPanelSpecSettings()
+    if not addon.Database then
+        return nil
+    end
+
+    local classToken = addon.SpecManager and addon.SpecManager.classToken or nil
+    local talentTab = addon.SpecManager and addon.SpecManager.talentTab or nil
+
+    if not classToken then
+        local _
+        _, classToken = UnitClass("player")
+    end
+
+    return addon.Database:GetCooldownSpecSettings(classToken, talentTab)
+end
+
 function Settings:SetEnabled(enabled)
     addon.db.enabled = enabled and true or false
 
@@ -244,8 +260,22 @@ function Settings:SetCooldownPanelEnabled(enabled)
     end
 end
 
+function Settings:IsCooldownPanelCombatOnly()
+    local specSettings = self:GetCooldownPanelSpecSettings()
+    if not specSettings then
+        return addon.DEFAULTS.cooldownPanelCombatOnly
+    end
+
+    return specSettings.combatOnly == true
+end
+
 function Settings:SetCooldownPanelCombatOnly(combatOnly)
-    addon.db.cooldownPanelCombatOnly = combatOnly and true or false
+    local specSettings = self:GetCooldownPanelSpecSettings()
+    if not specSettings then
+        return
+    end
+
+    specSettings.combatOnly = combatOnly and true or false
 
     if addon.OptionsController then
         addon.OptionsController:Refresh()
@@ -301,11 +331,12 @@ function Settings:SetCooldownPanelOpacity(opacity)
 end
 
 function Settings:IsCooldownElementEnabled(settingId, defaultEnabled)
-    if not addon.db or not addon.db.cooldownElementEnabled then
+    local specSettings = self:GetCooldownPanelSpecSettings()
+    if not specSettings or type(specSettings.elementEnabled) ~= "table" then
         return defaultEnabled ~= false
     end
 
-    local value = addon.db.cooldownElementEnabled[settingId]
+    local value = specSettings.elementEnabled[settingId]
     if value == nil then
         return defaultEnabled ~= false
     end
@@ -318,7 +349,12 @@ function Settings:SetCooldownElementEnabled(settingId, enabled)
         return
     end
 
-    addon.db.cooldownElementEnabled[settingId] = enabled and true or false
+    local specSettings = self:GetCooldownPanelSpecSettings()
+    if not specSettings then
+        return
+    end
+
+    specSettings.elementEnabled[settingId] = enabled and true or false
 
     if addon.CooldownTracker then
         addon.CooldownTracker:RefreshConfiguration()
@@ -326,11 +362,12 @@ function Settings:SetCooldownElementEnabled(settingId, enabled)
 end
 
 function Settings:GetCooldownElementOrder(settingId, defaultOrder)
-    if not addon.db or not addon.db.cooldownElementOrder then
+    local specSettings = self:GetCooldownPanelSpecSettings()
+    if not specSettings or type(specSettings.elementOrder) ~= "table" then
         return tonumber(defaultOrder) or 100
     end
 
-    return tonumber(addon.db.cooldownElementOrder[settingId]) or tonumber(defaultOrder) or 100
+    return tonumber(specSettings.elementOrder[settingId]) or tonumber(defaultOrder) or 100
 end
 
 function Settings:SetCooldownElementOrder(settingId, order)
@@ -338,7 +375,12 @@ function Settings:SetCooldownElementOrder(settingId, order)
         return
     end
 
-    addon.db.cooldownElementOrder[settingId] = tonumber(order)
+    local specSettings = self:GetCooldownPanelSpecSettings()
+    if not specSettings then
+        return
+    end
+
+    specSettings.elementOrder[settingId] = tonumber(order)
 
     if addon.CooldownTracker then
         addon.CooldownTracker:RefreshConfiguration()

@@ -209,7 +209,7 @@ function CooldownOptions:Refresh()
     end
 
     self.enabledCheck:SetChecked(addon.db.showCooldownPanel and 1 or nil)
-    self.combatOnlyCheck:SetChecked(addon.db.cooldownPanelCombatOnly and 1 or nil)
+    self.combatOnlyCheck:SetChecked(addon.Settings:IsCooldownPanelCombatOnly() and 1 or nil)
     self.lockedCheck:SetChecked(addon.db.cooldownPanelLocked and 1 or nil)
     self.sizeSlider:SetValue(addon.db.cooldownPanelIconSize)
     self.opacitySlider:SetValue(addon.db.cooldownPanelOpacity)

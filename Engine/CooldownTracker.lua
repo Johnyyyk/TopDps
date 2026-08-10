@@ -489,7 +489,7 @@ function CooldownTracker:Update()
         return
     end
 
-    if addon.db.cooldownPanelCombatOnly and not UnitAffectingCombat("player") and not previewUnlocked then
+    if addon.Settings:IsCooldownPanelCombatOnly() and not UnitAffectingCombat("player") and not previewUnlocked then
         addon.CooldownPanel:Hide()
         return
     end
