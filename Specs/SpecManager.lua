@@ -38,21 +38,10 @@ function SpecManager:DetectTalentTab(classToken)
         return candidates[1]
     end
 
-    -- При ничьей не дёргаем активный provider без необходимости.
     if self.activeProvider and self.activeProvider.classToken == classToken then
         local index
         for index = 1, #candidates do
             if candidates[index] == self.activeProvider.talentTab then
-                return candidates[index]
-            end
-        end
-    end
-
-    local defaultProvider = addon.SpecRegistry:GetDefaultForClass(classToken)
-    if defaultProvider then
-        local index
-        for index = 1, #candidates do
-            if candidates[index] == defaultProvider.talentTab then
                 return candidates[index]
             end
         end
@@ -67,16 +56,14 @@ function SpecManager:ResolveProvider()
         return nil, nil, nil
     end
 
-    local defaultProvider = addon.SpecRegistry:GetDefaultForClass(classToken)
     local playerLevel = UnitLevel("player") or 0
-
     if playerLevel < 10 then
-        return defaultProvider, classToken, defaultProvider and defaultProvider.talentTab or nil
+        return nil, classToken, nil
     end
 
     local talentTab = self:DetectTalentTab(classToken)
     if not talentTab then
-        return defaultProvider, classToken, defaultProvider and defaultProvider.talentTab or nil
+        return nil, classToken, nil
     end
 
     return addon.SpecRegistry:Get(classToken, talentTab), classToken, talentTab
