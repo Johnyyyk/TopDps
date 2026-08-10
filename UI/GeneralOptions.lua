@@ -10,9 +10,13 @@ local function GetHighlightStyleText(style)
     return addon.L["HIGHLIGHT_" .. style] or style
 end
 
+local function FormatCooldownLookahead(value)
+    return string.format(addon.L.COOLDOWN_LOOKAHEAD_FORMAT, value)
+end
+
 function GeneralOptions:Create()
     local panel = Widgets:CreatePanel("TopDpsOptionsPanel", addon.NAME)
-    local _, content = Widgets:CreateScrollArea(panel, "TopDpsOptionsScrollFrame", 690)
+    local _, content = Widgets:CreateScrollArea(panel, "TopDpsOptionsScrollFrame", 790)
 
     local title = Widgets:CreateText(
         content,
@@ -64,11 +68,32 @@ function GeneralOptions:Create()
         end
     end)
 
-    Widgets:CreateSectionHeader(content, addon.L.VISUAL_SETTINGS, -274)
-    Widgets:CreateText(content, "GameFontNormal", 8, -302, Widgets.TEXT_WIDTH, addon.L.HIGHLIGHT_STYLE)
+    local cooldownLookaheadSlider = CreateFrame(
+        "Slider",
+        "TopDpsOptionsCooldownLookahead",
+        content,
+        "OptionsSliderTemplate"
+    )
+    cooldownLookaheadSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -286)
+    cooldownLookaheadSlider:SetWidth(300)
+    cooldownLookaheadSlider:SetMinMaxValues(addon.COOLDOWN_LOOKAHEAD_MIN, addon.COOLDOWN_LOOKAHEAD_MAX)
+    cooldownLookaheadSlider:SetValueStep(addon.COOLDOWN_LOOKAHEAD_STEP)
+
+    _G[cooldownLookaheadSlider:GetName() .. "Low"]:SetText(addon.L.COOLDOWN_LOOKAHEAD_LOW)
+    _G[cooldownLookaheadSlider:GetName() .. "High"]:SetText(addon.L.COOLDOWN_LOOKAHEAD_HIGH)
+
+    cooldownLookaheadSlider:SetScript("OnValueChanged", function(self, value)
+        local steps = math.floor(value / addon.COOLDOWN_LOOKAHEAD_STEP + 0.5)
+        local rounded = steps * addon.COOLDOWN_LOOKAHEAD_STEP
+        addon.Settings:SetCooldownLookahead(rounded)
+        _G[self:GetName() .. "Text"]:SetText(FormatCooldownLookahead(rounded))
+    end)
+
+    Widgets:CreateSectionHeader(content, addon.L.VISUAL_SETTINGS, -360)
+    Widgets:CreateText(content, "GameFontNormal", 8, -388, Widgets.TEXT_WIDTH, addon.L.HIGHLIGHT_STYLE)
 
     local highlightDropdown = CreateFrame("Frame", "TopDpsOptionsHighlightDropDown", content, "UIDropDownMenuTemplate")
-    highlightDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -318)
+    highlightDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -404)
     UIDropDownMenu_SetWidth(highlightDropdown, 270)
 
     UIDropDownMenu_Initialize(highlightDropdown, function(_, level)
@@ -90,7 +115,7 @@ function GeneralOptions:Create()
         content,
         "TopDpsOptionsCenterIcons",
         6,
-        -378,
+        -464,
         addon.L.SHOW_CENTER_ICONS
     )
     centerIconsCheck:SetScript("OnClick", function(self)
@@ -98,7 +123,7 @@ function GeneralOptions:Create()
     end)
 
     local opacitySlider = CreateFrame("Slider", "TopDpsOptionsCenterOpacity", content, "OptionsSliderTemplate")
-    opacitySlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -446)
+    opacitySlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -532)
     opacitySlider:SetWidth(300)
     opacitySlider:SetMinMaxValues(0.2, 1)
     opacitySlider:SetValueStep(0.05)
@@ -113,7 +138,7 @@ function GeneralOptions:Create()
     end)
 
     local sizeSlider = CreateFrame("Slider", "TopDpsOptionsCenterSize", content, "OptionsSliderTemplate")
-    sizeSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -520)
+    sizeSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -606)
     sizeSlider:SetWidth(300)
     sizeSlider:SetMinMaxValues(addon.CENTER_ICON_SIZE_MIN, addon.CENTER_ICON_SIZE_MAX)
     sizeSlider:SetValueStep(2)
@@ -126,7 +151,7 @@ function GeneralOptions:Create()
         addon.Settings:SetCenterIconsSize(math.floor(value / 2 + 0.5) * 2)
     end)
 
-    Widgets:CreateText(content, "GameFontHighlightSmall", 8, -600, Widgets.TEXT_WIDTH, addon.L.OPTIONS_HINT)
+    Widgets:CreateText(content, "GameFontHighlightSmall", 8, -686, Widgets.TEXT_WIDTH, addon.L.OPTIONS_HINT)
 
     panel:SetScript("OnShow", function()
         addon.OptionsController:Refresh()
@@ -138,6 +163,7 @@ function GeneralOptions:Create()
     self.enabledCheck = enabledCheck
     self.showMinimapCheck = showMinimap
     self.modeDropdown = modeDropdown
+    self.cooldownLookaheadSlider = cooldownLookaheadSlider
     self.highlightDropdown = highlightDropdown
     self.centerIconsCheck = centerIconsCheck
     self.opacitySlider = opacitySlider
@@ -154,6 +180,11 @@ function GeneralOptions:Refresh()
 
     UIDropDownMenu_SetSelectedValue(self.modeDropdown, addon.db.mode)
     UIDropDownMenu_SetText(self.modeDropdown, GetModeText(addon.db.mode))
+
+    self.cooldownLookaheadSlider:SetValue(addon.db.cooldownLookahead)
+    _G[self.cooldownLookaheadSlider:GetName() .. "Text"]:SetText(
+        FormatCooldownLookahead(addon.db.cooldownLookahead)
+    )
 
     UIDropDownMenu_SetSelectedValue(self.highlightDropdown, addon.db.highlightStyle)
     UIDropDownMenu_SetText(self.highlightDropdown, GetHighlightStyleText(addon.db.highlightStyle))

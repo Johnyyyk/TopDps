@@ -1,6 +1,29 @@
 local addon = TopDps
 local GameApi = addon:CreateModule("GameApi")
 
+local function GetTalentInfoData(tabIndex, talentIndex, talentGroup)
+    local ok, name, _, _, _, rank
+
+    if talentGroup then
+        ok, name, _, _, _, rank = pcall(GetTalentInfo, tabIndex, talentIndex, false, false, talentGroup)
+        if ok and name then
+            return name, tonumber(rank) or 0
+        end
+    end
+
+    ok, name, _, _, _, rank = pcall(GetTalentInfo, tabIndex, talentIndex, false, false)
+    if ok and name then
+        return name, tonumber(rank) or 0
+    end
+
+    ok, name, _, _, _, rank = pcall(GetTalentInfo, tabIndex, talentIndex, false)
+    if ok and name then
+        return name, tonumber(rank) or 0
+    end
+
+    return nil, 0
+end
+
 function GameApi:GetInventoryItemId(slot)
     if GetInventoryItemID then
         return GetInventoryItemID("player", slot)
@@ -32,24 +55,59 @@ function GameApi:GetTalentPoints(tabIndex, talentGroup)
         return nil
     end
 
+    local tabPoints
+
     if talentGroup then
         local ok, _, _, points = pcall(GetTalentTabInfo, tabIndex, false, false, talentGroup)
         if ok and type(points) == "number" then
-            return points
+            tabPoints = points
         end
     end
 
-    local ok, _, _, points = pcall(GetTalentTabInfo, tabIndex, false, false)
-    if ok and type(points) == "number" then
-        return points
+    if tabPoints == nil then
+        local ok, _, _, points = pcall(GetTalentTabInfo, tabIndex, false, false)
+        if ok and type(points) == "number" then
+            tabPoints = points
+        end
     end
 
-    ok, _, _, points = pcall(GetTalentTabInfo, tabIndex, false)
-    if ok and type(points) == "number" then
-        return points
+    if tabPoints == nil then
+        local ok, _, _, points = pcall(GetTalentTabInfo, tabIndex, false)
+        if ok and type(points) == "number" then
+            tabPoints = points
+        end
     end
 
-    return nil
+    if tabPoints and tabPoints > 0 then
+        return tabPoints
+    end
+
+    if not GetTalentInfo then
+        return tabPoints
+    end
+
+    local maxTalents = 30
+    if GetNumTalents then
+        local ok, count = pcall(GetNumTalents, tabIndex, false, false)
+        if ok and type(count) == "number" and count > 0 then
+            maxTalents = count
+        end
+    end
+
+    local totalPoints = 0
+    local talentIndex
+    for talentIndex = 1, maxTalents do
+        local name, rank = GetTalentInfoData(tabIndex, talentIndex, talentGroup)
+        if name then
+            totalPoints = totalPoints + rank
+        end
+    end
+
+    if totalPoints > 0 then
+        return totalPoints
+    end
+
+    return tabPoints
 end
 
 function GameApi:GetTalentRankByName(tabIndex, talentName)
@@ -69,19 +127,9 @@ function GameApi:GetTalentRankByName(tabIndex, talentName)
 
     local index
     for index = 1, maxTalents do
-        local ok, name, _, _, _, rank
-        if talentGroup then
-            ok, name, _, _, _, rank = pcall(GetTalentInfo, tabIndex, index, false, false, talentGroup)
-        else
-            ok, name, _, _, _, rank = pcall(GetTalentInfo, tabIndex, index, false, false)
-        end
-
-        if not ok then
-            ok, name, _, _, _, rank = pcall(GetTalentInfo, tabIndex, index, false)
-        end
-
-        if ok and name == talentName then
-            return tonumber(rank) or 0
+        local name, rank = GetTalentInfoData(tabIndex, index, talentGroup)
+        if name == talentName then
+            return rank
         end
     end
 

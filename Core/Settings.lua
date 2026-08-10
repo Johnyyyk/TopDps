@@ -111,6 +111,12 @@ function Settings:SetHighlightStyle(style)
     addon.Logger:Info("Highlight style changed: %s", style)
 end
 
+function Settings:SetCooldownLookahead(seconds)
+    seconds = tonumber(seconds) or addon.DEFAULTS.cooldownLookahead
+    seconds = math.max(addon.COOLDOWN_LOOKAHEAD_MIN, math.min(addon.COOLDOWN_LOOKAHEAD_MAX, seconds))
+    addon.db.cooldownLookahead = seconds
+end
+
 function Settings:SetCenterIconsEnabled(enabled)
     addon.db.showCenterIcons = enabled and true or false
 
