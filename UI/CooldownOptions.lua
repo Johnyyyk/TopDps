@@ -67,6 +67,35 @@ function CooldownOptions:CreateElementsView(content, profile, entries)
             )
         end)
 
+        if entry.group == addon.COOLDOWN_GROUP_PROCS then
+            check.label:SetWidth(180)
+
+            local soundCheck = Widgets:CreateCheckButton(
+                view,
+                "TopDpsCooldownProcSound" .. tostring(index) .. tostring(self.elementsRevision or 1),
+                238,
+                y,
+                addon.L.COOLDOWN_PROC_SOUND,
+                72
+            )
+            soundCheck.entry = entry
+            soundCheck.profileKey = profile.key
+            soundCheck:SetScript("OnClick", function(self)
+                local selectedProfile = addon.CooldownRegistry:GetProfileByKey(self.profileKey)
+                if not selectedProfile then
+                    return
+                end
+
+                addon.Settings:SetCooldownProcSoundEnabled(
+                    self.entry.settingId,
+                    Widgets:GetCheckValue(self),
+                    selectedProfile.classToken,
+                    selectedProfile.talentTab
+                )
+            end)
+            check.soundCheck = soundCheck
+        end
+
         table.insert(controls, check)
         y = y - 36
     end
@@ -360,12 +389,28 @@ function CooldownOptions:Refresh()
     for index = 1, #(self.elementControls or {}) do
         local check = self.elementControls[index]
         local entry = check.entry
-        check:SetChecked(addon.Settings:IsCooldownElementEnabled(
+        local elementEnabled = addon.Settings:IsCooldownElementEnabled(
             entry.settingId,
             entry.defaultEnabled,
             profile.classToken,
             profile.talentTab
-        ) and 1 or nil)
+        )
+        check:SetChecked(elementEnabled and 1 or nil)
+
+        if check.soundCheck then
+            check.soundCheck:SetChecked(addon.Settings:IsCooldownProcSoundEnabled(
+                entry.settingId,
+                true,
+                profile.classToken,
+                profile.talentTab
+            ) and 1 or nil)
+
+            if elementEnabled then
+                check.soundCheck:Enable()
+            else
+                check.soundCheck:Disable()
+            end
+        end
     end
 
     if addon.db.showCooldownPanel then
