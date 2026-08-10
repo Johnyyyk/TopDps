@@ -41,6 +41,7 @@ Specs\Paladin\Retribution.lua
 UI\OptionsWidgets.lua
 UI\MinimapButton.lua
 UI\GeneralOptions.lua
+UI\RotationOptions.lua
 UI\DebugOptions.lua
 UI\OptionsController.lua
 

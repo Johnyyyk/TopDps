@@ -8,7 +8,120 @@ function SpecProvider:Create(definition)
         error("TopDps: specialization provider definition must be a table")
     end
 
-    return setmetatable(definition, { __index = self })
+    local provider = setmetatable(definition, { __index = self })
+    provider:BuildSettingsCatalog()
+
+    return provider
+end
+
+function SpecProvider:BuildSettingsCatalog()
+    self.settingDefinitionsByKey = {}
+    self.categorySettingKeys = {}
+    self.effectiveSettings = {
+        {
+            type = "checkbox",
+            key = "enabled",
+            labelKey = "ROTATION_ENABLED",
+            default = true,
+        },
+        {
+            type = "header",
+            labelKey = "ROTATION_ABILITIES",
+        },
+    }
+
+    local categories = self.categories or {}
+    local categoryIndex
+    for categoryIndex = 1, #categories do
+        local category = categories[categoryIndex]
+        table.insert(self.effectiveSettings, {
+            type = "checkbox",
+            key = "ability_" .. category,
+            category = category,
+            default = true,
+        })
+    end
+
+    local customSettings = self.settings or {}
+    local customIndex
+    for customIndex = 1, #customSettings do
+        table.insert(self.effectiveSettings, customSettings[customIndex])
+    end
+
+    local index
+    for index = 1, #self.effectiveSettings do
+        local definition = self.effectiveSettings[index]
+        if definition.key then
+            self.settingDefinitionsByKey[definition.key] = definition
+        end
+
+        if definition.category and definition.key then
+            self.categorySettingKeys[definition.category] = definition.key
+        end
+    end
+end
+
+function SpecProvider:GetSettingsDefinition()
+    return self.effectiveSettings or {}
+end
+
+function SpecProvider:GetSettingDefinition(key)
+    return self.settingDefinitionsByKey and self.settingDefinitionsByKey[key] or nil
+end
+
+function SpecProvider:GetSetting(key)
+    return addon.Settings:GetSpecSetting(self, key)
+end
+
+function SpecProvider:SetSetting(key, value)
+    addon.Settings:SetSpecSetting(self, key, value)
+end
+
+function SpecProvider:GetDisplayName()
+    if self.displayNameKey and addon.L[self.displayNameKey] then
+        return addon.L[self.displayNameKey]
+    end
+
+    local generatedKey = "SPEC_" .. self.id
+    if addon.L[generatedKey] then
+        return addon.L[generatedKey]
+    end
+
+    return self.displayName or self.id
+end
+
+function SpecProvider:GetCategoryDisplayName(category)
+    local localizationKey = "ABILITY_" .. string.upper(category)
+    if addon.L[localizationKey] then
+        return addon.L[localizationKey]
+    end
+
+    if self.spellNameByCategory and self.spellNameByCategory[category] then
+        return self.spellNameByCategory[category]
+    end
+
+    local ability = self.abilities and self.abilities[category] or nil
+    local spellIds = ability and ability.spellIds or nil
+    if spellIds then
+        local index
+        for index = #spellIds, 1, -1 do
+            local spellName = GetSpellInfo(spellIds[index])
+            if spellName then
+                return spellName
+            end
+        end
+    end
+
+    return category
+end
+
+function SpecProvider:IsCategoryEnabled(category)
+    local key = self.categorySettingKeys and self.categorySettingKeys[category] or nil
+    if not key then
+        return true
+    end
+
+    return self:GetSetting(key) ~= false
 end
 
 function SpecProvider:Initialize()

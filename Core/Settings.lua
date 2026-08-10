@@ -42,6 +42,78 @@ function Settings:IsModeActive()
     return false
 end
 
+function Settings:GetSpecSettings(provider)
+    if not addon.Database then
+        return nil
+    end
+
+    return addon.Database:GetSpecSettings(provider)
+end
+
+function Settings:GetSpecSetting(provider, key)
+    if not provider then
+        return nil
+    end
+
+    local specDb = self:GetSpecSettings(provider)
+    if not specDb then
+        return nil
+    end
+
+    return specDb[key]
+end
+
+function Settings:SetSpecSetting(provider, key, value)
+    if not provider then
+        return
+    end
+
+    local definition = provider:GetSettingDefinition(key)
+    if not definition then
+        return
+    end
+
+    local specDb = self:GetSpecSettings(provider)
+    if not specDb then
+        return
+    end
+
+    local normalized = addon.Database:NormalizeSpecSetting(definition, value)
+    if specDb[key] == normalized then
+        return
+    end
+
+    specDb[key] = normalized
+
+    if addon.RecommendationPresenter then
+        addon.RecommendationPresenter:Clear()
+    end
+
+    if addon.OptionsController then
+        addon.OptionsController:Refresh()
+    end
+
+    addon.Logger:Info(
+        "Specialization setting changed: provider=%s, key=%s, value=%s",
+        tostring(provider.id),
+        tostring(key),
+        tostring(normalized)
+    )
+end
+
+function Settings:IsSpecEnabled(provider)
+    if not provider then
+        return false
+    end
+
+    local enabled = self:GetSpecSetting(provider, "enabled")
+    if enabled == nil then
+        return true
+    end
+
+    return enabled == true
+end
+
 function Settings:SetEnabled(enabled)
     addon.db.enabled = enabled and true or false
 

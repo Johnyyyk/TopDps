@@ -1,6 +1,8 @@
 local addon = TopDps
 local Database = addon:CreateModule("Database")
 
+local SCHEMA_VERSION = 2
+
 local function IsValueInList(value, list)
     local index
     for index = 1, #list do
@@ -12,18 +14,7 @@ local function IsValueInList(value, list)
     return false
 end
 
-function Database:ApplyDefaults()
-    if type(TopDpsDB) ~= "table" then
-        -- Старое имя SavedVariables оставляем только для однократной миграции настроек.
-        if type(RpalTopDpsDB) == "table" then
-            TopDpsDB = RpalTopDpsDB
-        else
-            TopDpsDB = {}
-        end
-    end
-
-    local db = TopDpsDB
-
+local function ApplyGlobalDefaults(db)
     if type(db.enabled) ~= "boolean" then
         db.enabled = addon.DEFAULTS.enabled
     end
@@ -80,7 +71,146 @@ function Database:ApplyDefaults()
     if type(db.debugLog) ~= "table" then
         db.debugLog = {}
     end
+end
 
-    addon.db = db
-    return db
+function Database:NormalizeSpecSetting(definition, value)
+    if definition.type == "checkbox" then
+        if type(value) ~= "boolean" then
+            return definition.default and true or false
+        end
+
+        return value
+    end
+
+    if definition.type == "slider" then
+        value = tonumber(value)
+        if not value then
+            value = definition.default
+        end
+
+        if definition.min then
+            value = math.max(definition.min, value)
+        end
+
+        if definition.max then
+            value = math.min(definition.max, value)
+        end
+
+        local step = definition.step
+        if step and step > 0 then
+            local base = definition.min or 0
+            value = base + math.floor((value - base) / step + 0.5) * step
+
+            if definition.min then
+                value = math.max(definition.min, value)
+            end
+
+            if definition.max then
+                value = math.min(definition.max, value)
+            end
+        end
+
+        return value
+    end
+
+    if definition.type == "dropdown" then
+        if not IsValueInList(value, definition.values or {}) then
+            return definition.default
+        end
+
+        return value
+    end
+
+    if value == nil then
+        return definition.default
+    end
+
+    return value
+end
+
+function Database:ApplyProviderDefaults(provider)
+    if not provider or not addon.specDb then
+        return nil
+    end
+
+    local specDb = addon.specDb[provider.id]
+    if type(specDb) ~= "table" then
+        specDb = {}
+        addon.specDb[provider.id] = specDb
+    end
+
+    local definitions = provider:GetSettingsDefinition()
+    local index
+    for index = 1, #definitions do
+        local definition = definitions[index]
+        if definition.key then
+            specDb[definition.key] = self:NormalizeSpecSetting(definition, specDb[definition.key])
+        end
+    end
+
+    return specDb
+end
+
+function Database:GetSpecSettings(provider)
+    if not provider or not addon.specDb then
+        return nil
+    end
+
+    local specDb = addon.specDb[provider.id]
+    if type(specDb) ~= "table" then
+        return self:ApplyProviderDefaults(provider)
+    end
+
+    return specDb
+end
+
+function Database:ApplyDefaults()
+    local persisted = TopDpsDB
+
+    if type(persisted) ~= "table" then
+        -- Старое имя SavedVariables оставляем только для однократной миграции настроек.
+        if type(RpalTopDpsDB) == "table" then
+            persisted = RpalTopDpsDB
+        else
+            persisted = {}
+        end
+    end
+
+    local root
+    if type(persisted.global) == "table" or type(persisted.specs) == "table" then
+        root = persisted
+    else
+        -- До schema v2 все глобальные настройки хранились непосредственно в TopDpsDB.
+        root = {
+            global = persisted,
+            specs = {},
+        }
+    end
+
+    root.schemaVersion = SCHEMA_VERSION
+
+    if type(root.global) ~= "table" then
+        root.global = {}
+    end
+
+    if type(root.specs) ~= "table" then
+        root.specs = {}
+    end
+
+    TopDpsDB = root
+    addon.savedVariables = root
+    addon.db = root.global
+    addon.specDb = root.specs
+
+    ApplyGlobalDefaults(addon.db)
+
+    if addon.SpecRegistry then
+        local providers = addon.SpecRegistry:GetAll()
+        local index
+        for index = 1, #providers do
+            self:ApplyProviderDefaults(providers[index])
+        end
+    end
+
+    return addon.db
 end

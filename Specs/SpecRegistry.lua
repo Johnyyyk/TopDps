@@ -6,6 +6,96 @@ SpecRegistry.providersById = SpecRegistry.providersById or {}
 SpecRegistry.providersByClass = SpecRegistry.providersByClass or {}
 SpecRegistry.defaultByClass = SpecRegistry.defaultByClass or {}
 
+local SETTING_TYPES = {
+    checkbox = true,
+    slider = true,
+    dropdown = true,
+    header = true,
+}
+
+local function IsValueInList(value, list)
+    local index
+    for index = 1, #list do
+        if value == list[index] then
+            return true
+        end
+    end
+
+    return false
+end
+
+local function BuildReservedSettingKeys(provider)
+    local reservedKeys = {
+        enabled = true,
+    }
+
+    local categories = provider.categories or {}
+    local index
+    for index = 1, #categories do
+        reservedKeys["ability_" .. tostring(categories[index])] = true
+    end
+
+    return reservedKeys
+end
+
+local function ValidateSettings(provider)
+    local settings = provider.settings or {}
+    local reservedKeys = BuildReservedSettingKeys(provider)
+    local keys = {}
+    local index
+
+    for index = 1, #settings do
+        local definition = settings[index]
+        if type(definition) ~= "table" or not SETTING_TYPES[definition.type] then
+            error("TopDps: invalid setting definition for " .. tostring(provider.id))
+        end
+
+        if definition.type ~= "header" then
+            if type(definition.key) ~= "string" or definition.key == "" then
+                error("TopDps: specialization setting requires key for " .. tostring(provider.id))
+            end
+
+            if reservedKeys[definition.key] then
+                error("TopDps: specialization setting key is reserved: " .. tostring(definition.key))
+            end
+
+            if keys[definition.key] then
+                error("TopDps: duplicate specialization setting " .. tostring(definition.key))
+            end
+            keys[definition.key] = true
+        end
+
+        if definition.type == "checkbox" and type(definition.default) ~= "boolean" then
+            error("TopDps: checkbox setting requires boolean default")
+        end
+
+        if definition.type == "slider" then
+            if type(definition.default) ~= "number"
+                or type(definition.min) ~= "number"
+                or type(definition.max) ~= "number"
+                or definition.min > definition.max
+                or definition.default < definition.min
+                or definition.default > definition.max then
+                error("TopDps: slider setting requires valid numeric default/min/max")
+            end
+
+            if definition.step ~= nil and (type(definition.step) ~= "number" or definition.step <= 0) then
+                error("TopDps: slider setting step must be a positive number")
+            end
+        end
+
+        if definition.type == "dropdown" then
+            if type(definition.values) ~= "table" or #definition.values == 0 then
+                error("TopDps: dropdown setting requires values")
+            end
+
+            if not IsValueInList(definition.default, definition.values) then
+                error("TopDps: dropdown setting default must exist in values")
+            end
+        end
+    end
+end
+
 local function ValidateProvider(provider)
     if type(provider) ~= "table" then
         error("TopDps: specialization provider must be a table")
@@ -34,6 +124,8 @@ local function ValidateProvider(provider)
     if type(provider.GetPriority) ~= "function" then
         error("TopDps: specialization provider requires GetPriority(context)")
     end
+
+    ValidateSettings(provider)
 end
 
 function SpecRegistry:Register(provider)
@@ -82,4 +174,8 @@ end
 
 function SpecRegistry:GetById(providerId)
     return self.providersById[providerId]
+end
+
+function SpecRegistry:GetAll()
+    return self.providers
 end
