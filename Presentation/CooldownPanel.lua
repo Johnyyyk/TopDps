@@ -82,7 +82,7 @@ end
 function CooldownPanel:CreateIcon(index)
     local iconFrame = CreateFrame("Frame", "TopDpsCooldownIcon" .. tostring(index), self.frame)
     iconFrame:SetFrameLevel(self.frame:GetFrameLevel() + 2)
-    iconFrame:EnableMouse(true)
+    iconFrame:EnableMouse(not (addon.db and addon.db.cooldownPanelLocked))
     iconFrame:RegisterForDrag("LeftButton")
     iconFrame:SetScript("OnDragStart", function()
         if not addon.db.cooldownPanelLocked then
@@ -121,9 +121,23 @@ function CooldownPanel:CreateIcon(index)
             GameTooltip:SetSpellByID(self.stateSpellId)
         elseif entry.displaySpellId and GameTooltip.SetSpellByID then
             GameTooltip:SetSpellByID(entry.displaySpellId)
+        elseif entry.spellId and GameTooltip.SetSpellByID then
+            GameTooltip:SetSpellByID(entry.spellId)
         else
             GameTooltip:SetText(entry.name or addon.NAME)
         end
+
+        if self.stateUnitName then
+            GameTooltip:AddLine(string.format(addon.L.COOLDOWN_AURA_TARGET, self.stateUnitName), 1, 1, 1)
+        end
+
+        if self.stateBlockerSpellId then
+            local blockerName = GetSpellInfo(self.stateBlockerSpellId)
+            if blockerName then
+                GameTooltip:AddLine(string.format(addon.L.COOLDOWN_BLOCKED_BY, blockerName), 1, 0.35, 0.35)
+            end
+        end
+
         GameTooltip:Show()
     end)
 
@@ -160,6 +174,9 @@ function CooldownPanel:SetEntries(entries)
         local icon = self.icons[index] or self:CreateIcon(index)
         local entry = self.entries[index]
         icon.frame.entry = entry
+        icon.frame.stateSpellId = nil
+        icon.frame.stateUnitName = nil
+        icon.frame.stateBlockerSpellId = nil
         icon.texture:SetTexture(entry.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
         self:ResetIconVisualCache(icon)
         icon.frame:Show()
@@ -168,10 +185,14 @@ function CooldownPanel:SetEntries(entries)
     for index = #self.entries + 1, #self.icons do
         self.icons[index].frame:Hide()
         self.icons[index].frame.entry = nil
+        self.icons[index].frame.stateSpellId = nil
+        self.icons[index].frame.stateUnitName = nil
+        self.icons[index].frame.stateBlockerSpellId = nil
         self:ResetIconVisualCache(self.icons[index])
     end
 
     self:ApplyLayout()
+    self:ApplyLockState()
 end
 
 function CooldownPanel:ApplyLayout()
@@ -241,6 +262,11 @@ function CooldownPanel:ApplyLockState()
     local locked = addon.db.cooldownPanelLocked == true
     self.frame:EnableMouse(not locked)
 
+    local index
+    for index = 1, #self.icons do
+        self.icons[index].frame:EnableMouse(not locked)
+    end
+
     if locked then
         self.frame:SetBackdropColor(0, 0, 0, 0)
         self.frame:SetBackdropBorderColor(1, 1, 1, 0)
@@ -268,7 +294,8 @@ function CooldownPanel:UpdateIcon(icon, state)
     local isCooldown = state.state == "COOLDOWN"
     local isActive = state.state == "ACTIVE"
     local isInactive = state.state == "INACTIVE"
-    local desaturated = isCooldown or isInactive
+    local isBlocked = state.state == "BLOCKED"
+    local desaturated = isCooldown or isInactive or isBlocked
     local entry = icon.frame.entry
     local texture = state.icon
         or (entry and entry.icon)
@@ -279,6 +306,8 @@ function CooldownPanel:UpdateIcon(icon, state)
         icon.lastTexture = texture
     end
     icon.frame.stateSpellId = state.spellId
+    icon.frame.stateUnitName = state.unitName
+    icon.frame.stateBlockerSpellId = state.blockerSpellId
 
     if icon.lastDesaturated ~= desaturated then
         icon.texture:SetDesaturated(desaturated)
@@ -290,7 +319,7 @@ function CooldownPanel:UpdateIcon(icon, state)
         icon.lastReverse = isActive
     end
 
-    local hasSweep = (isCooldown or isActive) and state.duration and state.duration > 0
+    local hasSweep = (isCooldown or isActive or isBlocked) and state.duration and state.duration > 0
     local cooldownId = hasSweep and (state.cooldownId or table.concat({
         tostring(state.state),
         tostring(state.start or 0),

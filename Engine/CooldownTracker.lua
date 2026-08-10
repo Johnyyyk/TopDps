@@ -69,6 +69,22 @@ local function FindKnownSpell(spellIds, knownNames)
     return nil, nil, nil
 end
 
+local function HasTalentSpell(tabIndex, spellIds)
+    if not tabIndex or type(spellIds) ~= "table" or #spellIds == 0 then
+        return false
+    end
+
+    local index
+    for index = 1, #spellIds do
+        local talentName = GetSpellInfo(spellIds[index])
+        if talentName and addon.GameApi:GetTalentRankByName(tabIndex, talentName) > 0 then
+            return true
+        end
+    end
+
+    return false
+end
+
 local function GetSpellCooldownSafe(spellId, spellName)
     if not GetSpellCooldown then
         return 0, 0, 0
@@ -197,6 +213,13 @@ function CooldownTracker:GetConfigurableEntries()
 end
 
 function CooldownTracker:CreateDefinitionEntry(definition, knownNames)
+    if definition.requiredTalentSpellIds then
+        local talentTab = definition.requiredTalentTab or definition.talentTab
+        if not HasTalentSpell(talentTab, definition.requiredTalentSpellIds) then
+            return nil
+        end
+    end
+
     if definition.requiredSpellIds then
         local requiredSpellId = FindKnownSpell(definition.requiredSpellIds, knownNames)
         if not requiredSpellId then
@@ -216,9 +239,11 @@ function CooldownTracker:CreateDefinitionEntry(definition, knownNames)
             group = definition.group,
             order = definition.order,
             spellId = spellId,
+            displaySpellId = spellId,
             spellName = spellName,
             icon = icon,
             auraSpellIds = definition.auraSpellIds or { spellId },
+            blockedByAuraSpellIds = definition.blockedByAuraSpellIds,
             name = spellName or definition.id,
             showStacks = definition.showStacks == true,
             defaultEnabled = definition.defaultEnabled,
@@ -578,6 +603,11 @@ function CooldownTracker:GetActiveState(aura, fallbackDuration, showStacks, show
         remaining = 0
     end
 
+    local unitName
+    if aura.unit and aura.unit ~= "player" and UnitName then
+        unitName = UnitName(aura.unit)
+    end
+
     return {
         state = "ACTIVE",
         start = start,
@@ -587,6 +617,7 @@ function CooldownTracker:GetActiveState(aura, fallbackDuration, showStacks, show
         showStacks = showStacks == true,
         icon = aura.icon,
         spellId = aura.spellId,
+        unitName = unitName,
     }
 end
 
@@ -604,6 +635,17 @@ function CooldownTracker:GetSpellState(entry)
             duration = duration,
             remaining = math.max(0, start + duration - GetTime()),
         }
+    end
+
+    if entry.blockedByAuraSpellIds then
+        local blocker = self:FindAuraOnUnit("player", entry.blockedByAuraSpellIds, "HARMFUL", false)
+        if blocker then
+            local state = self:GetActiveState(blocker, nil, false, true)
+            state.state = "BLOCKED"
+            state.spellId = nil
+            state.blockerSpellId = blocker.spellId
+            return state
+        end
     end
 
     return {

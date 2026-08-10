@@ -303,6 +303,24 @@ function Settings:SetCooldownPanelCombatOnly(combatOnly, classToken, talentTab)
     end
 end
 
+function Settings:ResetCooldownPanelSpecSettings(classToken, talentTab)
+    classToken, talentTab = self:ResolveCooldownPanelSpec(classToken, talentTab)
+    local specSettings = self:GetCooldownPanelSpecSettings(classToken, talentTab)
+    if not specSettings then
+        return
+    end
+
+    specSettings.combatOnly = addon.DEFAULTS.cooldownPanelCombatOnly
+    specSettings.elementEnabled = {}
+    specSettings.elementOrder = {}
+
+    if self:IsCurrentCooldownPanelSpec(classToken, talentTab) and addon.CooldownTracker then
+        addon.CooldownTracker:RefreshConfiguration()
+    elseif addon.CooldownOptions then
+        addon.CooldownOptions:Refresh()
+    end
+end
+
 function Settings:SetCooldownPanelLocked(locked)
     addon.db.cooldownPanelLocked = locked and true or false
 

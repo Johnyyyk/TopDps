@@ -247,6 +247,25 @@ function CooldownOptions:Create()
         end
     end)
 
+    local resetSpecButton = CreateFrame(
+        "Button",
+        "TopDpsCooldownPanelResetSpec",
+        content,
+        "UIPanelButtonTemplate"
+    )
+    resetSpecButton:SetPoint("TOPLEFT", content, "TOPLEFT", 300, -488)
+    resetSpecButton:SetWidth(220)
+    resetSpecButton:SetHeight(24)
+    resetSpecButton:SetText(addon.L.COOLDOWN_SPEC_RESET)
+    resetSpecButton:SetScript("OnClick", function()
+        local profile = CooldownOptions:GetSelectedProfile()
+        if not profile then
+            return
+        end
+
+        addon.Settings:ResetCooldownPanelSpecSettings(profile.classToken, profile.talentTab)
+    end)
+
     local combatOnlyCheck = Widgets:CreateCheckButton(
         content,
         "TopDpsCooldownPanelCombatOnly",
@@ -284,6 +303,7 @@ function CooldownOptions:Create()
     self.combatOnlyCheck = combatOnlyCheck
     self.lockedCheck = lockedCheck
     self.resetButton = resetButton
+    self.resetSpecButton = resetSpecButton
     self.sizeSlider = sizeSlider
     self.opacitySlider = opacitySlider
 
