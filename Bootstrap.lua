@@ -58,6 +58,10 @@ function Bootstrap:HandleSpecializationChanged(event, isRetry)
     if changed then
         addon.RecommendationPresenter:Clear()
     end
+
+    if addon.CooldownTracker and addon.CooldownTracker.initialized then
+        addon.CooldownTracker:RefreshConfiguration()
+    end
 end
 
 function Bootstrap:RetrySpecializationDetection()
@@ -78,6 +82,8 @@ function Bootstrap:Initialize()
     self:HandleSpecializationChanged("initialize")
     addon.ActionBarService:CollectButtons()
     addon.CenterIcons:Initialize()
+    addon.CooldownPanel:Initialize()
+    addon.CooldownTracker:Initialize()
     addon.MinimapButton:Initialize()
     addon.OptionsController:Initialize()
     self:RegisterSlashCommands()
@@ -110,6 +116,7 @@ function Bootstrap:HandleEvent(event, ...)
 
     if event == "PLAYER_EQUIPMENT_CHANGED" then
         addon.SpecManager:RefreshEquipment()
+        addon.CooldownTracker:RefreshConfiguration()
 
         local provider = addon.SpecManager:GetActive()
         local providerState = provider and provider:GetDebugState() or nil
@@ -125,6 +132,7 @@ function Bootstrap:HandleEvent(event, ...)
         addon.CombatTracker:RecordCombatEvent(...)
     elseif event == "LEARNED_SPELL_IN_TAB" then
         addon.SpecManager:RefreshSpellData()
+        addon.CooldownTracker:RefreshConfiguration()
         addon.Logger:Info("Specialization spell catalog rebuilt")
     elseif event == "PLAYER_LEVEL_UP"
         or event == "ACTIVE_TALENT_GROUP_CHANGED"
@@ -203,7 +211,11 @@ eventFrame:SetScript("OnUpdate", function(_, elapsed)
         addon.Logger:SafeCall("UpdateRecommendation", function()
             addon.RotationEngine:UpdateRecommendation()
         end)
+        addon.Logger:SafeCall("UpdateCooldownPanel", function()
+            addon.CooldownTracker:Update()
+        end)
     else
         addon.RotationEngine:UpdateRecommendation()
+        addon.CooldownTracker:Update()
     end
 end)

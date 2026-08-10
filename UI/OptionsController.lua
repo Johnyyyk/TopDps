@@ -4,6 +4,7 @@ local OptionsController = addon:CreateModule("OptionsController")
 function OptionsController:Initialize()
     addon.GeneralOptions:Create()
     addon.RotationOptions:Create()
+    addon.CooldownOptions:Create()
 
     if addon.SHOW_DEBUG_OPTIONS then
         addon.DebugOptions:Create()
@@ -17,6 +18,10 @@ function OptionsController:Refresh()
 
     if addon.RotationOptions then
         addon.RotationOptions:Refresh()
+    end
+
+    if addon.CooldownOptions then
+        addon.CooldownOptions:Refresh()
     end
 
     if addon.SHOW_DEBUG_OPTIONS and addon.DebugOptions then

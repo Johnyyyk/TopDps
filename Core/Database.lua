@@ -60,6 +60,50 @@ local function ApplyGlobalDefaults(db)
         math.min(addon.CENTER_ICON_SIZE_MAX, db.centerIconsSize)
     )
 
+    if type(db.showCooldownPanel) ~= "boolean" then
+        db.showCooldownPanel = addon.DEFAULTS.showCooldownPanel
+    end
+
+    if type(db.cooldownPanelLocked) ~= "boolean" then
+        db.cooldownPanelLocked = addon.DEFAULTS.cooldownPanelLocked
+    end
+
+    if type(db.cooldownPanelX) ~= "number" then
+        db.cooldownPanelX = addon.DEFAULTS.cooldownPanelX
+    end
+
+    if type(db.cooldownPanelY) ~= "number" then
+        db.cooldownPanelY = addon.DEFAULTS.cooldownPanelY
+    end
+
+    if type(db.cooldownPanelIconSize) ~= "number" then
+        db.cooldownPanelIconSize = addon.DEFAULTS.cooldownPanelIconSize
+    end
+    db.cooldownPanelIconSize = math.max(
+        addon.COOLDOWN_PANEL_ICON_SIZE_MIN,
+        math.min(addon.COOLDOWN_PANEL_ICON_SIZE_MAX, db.cooldownPanelIconSize)
+    )
+
+    if type(db.cooldownPanelOpacity) ~= "number" then
+        db.cooldownPanelOpacity = addon.DEFAULTS.cooldownPanelOpacity
+    end
+    db.cooldownPanelOpacity = math.max(
+        addon.COOLDOWN_PANEL_OPACITY_MIN,
+        math.min(addon.COOLDOWN_PANEL_OPACITY_MAX, db.cooldownPanelOpacity)
+    )
+
+    if type(db.cooldownElementEnabled) ~= "table" then
+        db.cooldownElementEnabled = {}
+    end
+
+    if type(db.cooldownElementOrder) ~= "table" then
+        db.cooldownElementOrder = {}
+    end
+
+    if type(db.cooldownProcReadyAt) ~= "table" then
+        db.cooldownProcReadyAt = {}
+    end
+
     if type(db.debugChatRecommendations) ~= "boolean" then
         db.debugChatRecommendations = addon.DEFAULTS.debugChatRecommendations
     end

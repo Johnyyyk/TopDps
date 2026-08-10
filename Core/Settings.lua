@@ -117,8 +117,14 @@ end
 function Settings:SetEnabled(enabled)
     addon.db.enabled = enabled and true or false
 
-    if not addon.db.enabled and addon.RecommendationPresenter then
-        addon.RecommendationPresenter:Clear()
+    if not addon.db.enabled then
+        if addon.RecommendationPresenter then
+            addon.RecommendationPresenter:Clear()
+        end
+
+        if addon.CooldownPanel then
+            addon.CooldownPanel:Hide()
+        end
     end
 
     if addon.OptionsController then
@@ -141,6 +147,10 @@ function Settings:SetMode(mode, silent)
 
     if addon.RecommendationPresenter then
         addon.RecommendationPresenter:Clear()
+    end
+
+    if addon.CooldownPanel and not self:IsModeActive() then
+        addon.CooldownPanel:Hide()
     end
 
     if addon.OptionsController then
@@ -219,5 +229,110 @@ function Settings:SetCenterIconsSize(size)
 
     if addon.CenterIcons then
         addon.CenterIcons:ApplyLayout()
+    end
+end
+
+function Settings:SetCooldownPanelEnabled(enabled)
+    addon.db.showCooldownPanel = enabled and true or false
+
+    if not addon.db.showCooldownPanel and addon.CooldownPanel then
+        addon.CooldownPanel:Hide()
+    end
+
+    if addon.OptionsController then
+        addon.OptionsController:Refresh()
+    end
+end
+
+function Settings:SetCooldownPanelLocked(locked)
+    addon.db.cooldownPanelLocked = locked and true or false
+
+    if addon.CooldownPanel then
+        addon.CooldownPanel:ApplyLockState()
+    end
+
+    if addon.OptionsController then
+        addon.OptionsController:Refresh()
+    end
+end
+
+function Settings:SetCooldownPanelPosition(x, y)
+    addon.db.cooldownPanelX = tonumber(x) or addon.DEFAULTS.cooldownPanelX
+    addon.db.cooldownPanelY = tonumber(y) or addon.DEFAULTS.cooldownPanelY
+
+    if addon.CooldownPanel then
+        addon.CooldownPanel:ApplyLayout()
+    end
+end
+
+function Settings:SetCooldownPanelIconSize(size)
+    size = tonumber(size) or addon.DEFAULTS.cooldownPanelIconSize
+    size = math.floor(size + 0.5)
+    size = math.max(
+        addon.COOLDOWN_PANEL_ICON_SIZE_MIN,
+        math.min(addon.COOLDOWN_PANEL_ICON_SIZE_MAX, size)
+    )
+    addon.db.cooldownPanelIconSize = size
+
+    if addon.CooldownPanel then
+        addon.CooldownPanel:ApplyLayout()
+    end
+end
+
+function Settings:SetCooldownPanelOpacity(opacity)
+    opacity = tonumber(opacity) or addon.DEFAULTS.cooldownPanelOpacity
+    opacity = math.max(
+        addon.COOLDOWN_PANEL_OPACITY_MIN,
+        math.min(addon.COOLDOWN_PANEL_OPACITY_MAX, opacity)
+    )
+    addon.db.cooldownPanelOpacity = opacity
+
+    if addon.CooldownPanel then
+        addon.CooldownPanel:ApplyLayout()
+    end
+end
+
+function Settings:IsCooldownElementEnabled(settingId, defaultEnabled)
+    if not addon.db or not addon.db.cooldownElementEnabled then
+        return defaultEnabled ~= false
+    end
+
+    local value = addon.db.cooldownElementEnabled[settingId]
+    if value == nil then
+        return defaultEnabled ~= false
+    end
+
+    return value == true
+end
+
+function Settings:SetCooldownElementEnabled(settingId, enabled)
+    if not settingId then
+        return
+    end
+
+    addon.db.cooldownElementEnabled[settingId] = enabled and true or false
+
+    if addon.CooldownTracker then
+        addon.CooldownTracker:RefreshConfiguration()
+    end
+end
+
+function Settings:GetCooldownElementOrder(settingId, defaultOrder)
+    if not addon.db or not addon.db.cooldownElementOrder then
+        return tonumber(defaultOrder) or 100
+    end
+
+    return tonumber(addon.db.cooldownElementOrder[settingId]) or tonumber(defaultOrder) or 100
+end
+
+function Settings:SetCooldownElementOrder(settingId, order)
+    if not settingId then
+        return
+    end
+
+    addon.db.cooldownElementOrder[settingId] = tonumber(order)
+
+    if addon.CooldownTracker then
+        addon.CooldownTracker:RefreshConfiguration()
     end
 end
