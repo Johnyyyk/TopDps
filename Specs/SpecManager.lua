@@ -7,10 +7,10 @@ SpecManager.talentTab = nil
 
 local TALENT_TAB_COUNT = 3
 
-function SpecManager:DetectTalentTab(classToken)
+function SpecManager:DetectTalentTab()
     local talentGroup = addon.GameApi:GetActiveTalentGroup()
     local pointsByTab = {}
-    local maximumPoints = -1
+    local totalPoints = 0
     local tabIndex
 
     for tabIndex = 1, TALENT_TAB_COUNT do
@@ -20,34 +20,33 @@ function SpecManager:DetectTalentTab(classToken)
         end
 
         pointsByTab[tabIndex] = points
-        maximumPoints = math.max(maximumPoints, points)
+        totalPoints = totalPoints + points
     end
 
-    if maximumPoints <= 0 then
+    if totalPoints <= 0 then
         return nil
     end
 
-    local candidates = {}
+    local selectedTab
+    local maximumShare = -1
+    local hasTie = false
+
     for tabIndex = 1, TALENT_TAB_COUNT do
-        if pointsByTab[tabIndex] == maximumPoints then
-            table.insert(candidates, tabIndex)
+        local share = pointsByTab[tabIndex] / totalPoints
+        if share > maximumShare then
+            selectedTab = tabIndex
+            maximumShare = share
+            hasTie = false
+        elseif share == maximumShare then
+            hasTie = true
         end
     end
 
-    if #candidates == 1 then
-        return candidates[1]
+    if hasTie then
+        return nil
     end
 
-    if self.activeProvider and self.activeProvider.classToken == classToken then
-        local index
-        for index = 1, #candidates do
-            if candidates[index] == self.activeProvider.talentTab then
-                return candidates[index]
-            end
-        end
-    end
-
-    return candidates[1]
+    return selectedTab
 end
 
 function SpecManager:ResolveProvider()
@@ -61,7 +60,7 @@ function SpecManager:ResolveProvider()
         return nil, classToken, nil
     end
 
-    local talentTab = self:DetectTalentTab(classToken)
+    local talentTab = self:DetectTalentTab()
     if not talentTab then
         return nil, classToken, nil
     end
