@@ -14,7 +14,7 @@ local function BuildEntriesSignature(entries)
         local entry = entries[index]
         parts[index] = table.concat({
             entry.settingId or "",
-            tostring(entry.itemId or entry.spellId or ""),
+            tostring(entry.itemId or entry.spellId or entry.displaySpellId or ""),
             entry.name or "",
         }, ":")
     end
@@ -28,7 +28,7 @@ function CooldownOptions:CreateElementsView(content, entries)
     end
 
     local view = CreateFrame("Frame", nil, content)
-    view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -420)
+    view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -456)
     view:SetWidth(Widgets.SCROLL_CONTENT_WIDTH)
 
     local controls = {}
@@ -93,7 +93,7 @@ end
 
 function CooldownOptions:Create()
     local panel = Widgets:CreatePanel("TopDpsCooldownOptionsPanel", addon.L.COOLDOWN_PAGE, addon.NAME)
-    local _, content = Widgets:CreateScrollArea(panel, "TopDpsCooldownOptionsScrollFrame", 1050)
+    local _, content = Widgets:CreateScrollArea(panel, "TopDpsCooldownOptionsScrollFrame", 1120)
 
     Widgets:CreateText(
         content,
@@ -125,11 +125,22 @@ function CooldownOptions:Create()
         addon.Settings:SetCooldownPanelEnabled(Widgets:GetCheckValue(self))
     end)
 
+    local combatOnlyCheck = Widgets:CreateCheckButton(
+        content,
+        "TopDpsCooldownPanelCombatOnly",
+        6,
+        -154,
+        addon.L.COOLDOWN_PANEL_COMBAT_ONLY
+    )
+    combatOnlyCheck:SetScript("OnClick", function(self)
+        addon.Settings:SetCooldownPanelCombatOnly(Widgets:GetCheckValue(self))
+    end)
+
     local lockedCheck = Widgets:CreateCheckButton(
         content,
         "TopDpsCooldownPanelLocked",
         6,
-        -154,
+        -190,
         addon.L.COOLDOWN_PANEL_LOCKED
     )
     lockedCheck:SetScript("OnClick", function(self)
@@ -137,7 +148,7 @@ function CooldownOptions:Create()
     end)
 
     local resetButton = CreateFrame("Button", "TopDpsCooldownPanelResetPosition", content, "UIPanelButtonTemplate")
-    resetButton:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -202)
+    resetButton:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -238)
     resetButton:SetWidth(180)
     resetButton:SetHeight(24)
     resetButton:SetText(addon.L.COOLDOWN_PANEL_RESET_POSITION)
@@ -146,7 +157,7 @@ function CooldownOptions:Create()
     end)
 
     local sizeSlider = CreateFrame("Slider", "TopDpsCooldownPanelIconSize", content, "OptionsSliderTemplate")
-    sizeSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -270)
+    sizeSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -306)
     sizeSlider:SetWidth(300)
     sizeSlider:SetMinMaxValues(addon.COOLDOWN_PANEL_ICON_SIZE_MIN, addon.COOLDOWN_PANEL_ICON_SIZE_MAX)
     sizeSlider:SetValueStep(addon.COOLDOWN_PANEL_ICON_SIZE_STEP)
@@ -160,7 +171,7 @@ function CooldownOptions:Create()
     end)
 
     local opacitySlider = CreateFrame("Slider", "TopDpsCooldownPanelOpacity", content, "OptionsSliderTemplate")
-    opacitySlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -344)
+    opacitySlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -380)
     opacitySlider:SetWidth(300)
     opacitySlider:SetMinMaxValues(addon.COOLDOWN_PANEL_OPACITY_MIN, addon.COOLDOWN_PANEL_OPACITY_MAX)
     opacitySlider:SetValueStep(addon.COOLDOWN_PANEL_OPACITY_STEP)
@@ -172,7 +183,7 @@ function CooldownOptions:Create()
         _G[self:GetName() .. "Text"]:SetText(string.format(addon.L.COOLDOWN_PANEL_OPACITY, rounded * 100))
     end)
 
-    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_ELEMENTS, -396)
+    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_ELEMENTS, -432)
 
     panel:SetScript("OnShow", function()
         self:Refresh()
@@ -183,6 +194,7 @@ function CooldownOptions:Create()
     self.panel = panel
     self.content = content
     self.enabledCheck = enabledCheck
+    self.combatOnlyCheck = combatOnlyCheck
     self.lockedCheck = lockedCheck
     self.resetButton = resetButton
     self.sizeSlider = sizeSlider
@@ -197,6 +209,7 @@ function CooldownOptions:Refresh()
     end
 
     self.enabledCheck:SetChecked(addon.db.showCooldownPanel and 1 or nil)
+    self.combatOnlyCheck:SetChecked(addon.db.cooldownPanelCombatOnly and 1 or nil)
     self.lockedCheck:SetChecked(addon.db.cooldownPanelLocked and 1 or nil)
     self.sizeSlider:SetValue(addon.db.cooldownPanelIconSize)
     self.opacitySlider:SetValue(addon.db.cooldownPanelOpacity)
@@ -208,7 +221,7 @@ function CooldownOptions:Refresh()
         string.format(addon.L.COOLDOWN_PANEL_OPACITY, addon.db.cooldownPanelOpacity * 100)
     )
 
-    local entries = self:EnsureElementsView()
+    self:EnsureElementsView()
     local index
     for index = 1, #(self.elementControls or {}) do
         local check = self.elementControls[index]
@@ -217,11 +230,13 @@ function CooldownOptions:Refresh()
     end
 
     if addon.db.showCooldownPanel then
+        self.combatOnlyCheck:Enable()
         self.lockedCheck:Enable()
         self.resetButton:Enable()
         self.sizeSlider:Enable()
         self.opacitySlider:Enable()
     else
+        self.combatOnlyCheck:Disable()
         self.lockedCheck:Disable()
         self.resetButton:Disable()
         self.sizeSlider:Disable()

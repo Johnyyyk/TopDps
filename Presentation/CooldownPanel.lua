@@ -117,6 +117,8 @@ function CooldownPanel:CreateIcon(index)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         if entry.type == "trinket" and entry.slot and GameTooltip.SetInventoryItem then
             GameTooltip:SetInventoryItem("player", entry.slot)
+        elseif entry.displaySpellId and GameTooltip.SetSpellByID then
+            GameTooltip:SetSpellByID(entry.displaySpellId)
         else
             GameTooltip:SetText(entry.name or addon.NAME)
         end
@@ -139,6 +141,14 @@ function CooldownPanel:CreateIcon(index)
     return icon
 end
 
+function CooldownPanel:ResetIconVisualCache(icon)
+    icon.lastDesaturated = nil
+    icon.lastReverse = nil
+    icon.lastCooldownId = nil
+    icon.lastTimeText = nil
+    icon.lastStackText = nil
+end
+
 function CooldownPanel:SetEntries(entries)
     self.entries = entries or {}
 
@@ -148,12 +158,14 @@ function CooldownPanel:SetEntries(entries)
         local entry = self.entries[index]
         icon.frame.entry = entry
         icon.texture:SetTexture(entry.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
+        self:ResetIconVisualCache(icon)
         icon.frame:Show()
     end
 
     for index = #self.entries + 1, #self.icons do
         self.icons[index].frame:Hide()
         self.icons[index].frame.entry = nil
+        self:ResetIconVisualCache(self.icons[index])
     end
 
     self:ApplyLayout()
@@ -252,22 +264,53 @@ function CooldownPanel:UpdateIcon(icon, state)
 
     local isCooldown = state.state == "COOLDOWN"
     local isActive = state.state == "ACTIVE"
+    local isInactive = state.state == "INACTIVE"
+    local desaturated = isCooldown or isInactive
 
-    icon.texture:SetDesaturated(isCooldown)
-    icon.cooldown:SetReverse(isActive)
-
-    if (isCooldown or isActive) and state.duration and state.duration > 0 then
-        icon.cooldown:SetCooldown(state.start or GetTime(), state.duration)
-    else
-        icon.cooldown:SetCooldown(0, 0)
+    if icon.lastDesaturated ~= desaturated then
+        icon.texture:SetDesaturated(desaturated)
+        icon.lastDesaturated = desaturated
     end
 
-    icon.timeText:SetText(FormatRemaining(state.remaining))
+    if icon.lastReverse ~= isActive then
+        icon.cooldown:SetReverse(isActive)
+        icon.lastReverse = isActive
+    end
 
-    if state.stacks and state.stacks > 1 then
-        icon.stackText:SetText(tostring(state.stacks))
-    else
-        icon.stackText:SetText("")
+    local hasSweep = (isCooldown or isActive) and state.duration and state.duration > 0
+    local cooldownId = hasSweep and (state.cooldownId or table.concat({
+        tostring(state.state),
+        tostring(state.start or 0),
+        tostring(state.duration or 0),
+    }, ":")) or "NONE"
+
+    if icon.lastCooldownId ~= cooldownId then
+        if hasSweep then
+            icon.cooldown:SetCooldown(state.start or GetTime(), state.duration)
+        else
+            icon.cooldown:SetCooldown(0, 0)
+        end
+        icon.lastCooldownId = cooldownId
+    end
+
+    local timeText = FormatRemaining(state.remaining)
+    if icon.lastTimeText ~= timeText then
+        icon.timeText:SetText(timeText)
+        icon.lastTimeText = timeText
+    end
+
+    local stackText = ""
+    if state.stacks then
+        if state.showStacks and state.stacks > 0 then
+            stackText = tostring(state.stacks)
+        elseif state.stacks > 1 then
+            stackText = tostring(state.stacks)
+        end
+    end
+
+    if icon.lastStackText ~= stackText then
+        icon.stackText:SetText(stackText)
+        icon.lastStackText = stackText
     end
 end
 
@@ -276,7 +319,9 @@ function CooldownPanel:Update(states)
         return
     end
 
-    self.frame:Show()
+    if not self.frame:IsShown() then
+        self.frame:Show()
+    end
 
     local index
     for index = 1, #self.entries do
@@ -285,13 +330,13 @@ function CooldownPanel:Update(states)
 end
 
 function CooldownPanel:Show()
-    if self.frame then
+    if self.frame and not self.frame:IsShown() then
         self.frame:Show()
     end
 end
 
 function CooldownPanel:Hide()
-    if self.frame then
+    if self.frame and self.frame:IsShown() then
         self.frame:Hide()
     end
 end

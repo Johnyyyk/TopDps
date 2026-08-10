@@ -64,6 +64,10 @@ local function ApplyGlobalDefaults(db)
         db.showCooldownPanel = addon.DEFAULTS.showCooldownPanel
     end
 
+    if type(db.cooldownPanelCombatOnly) ~= "boolean" then
+        db.cooldownPanelCombatOnly = addon.DEFAULTS.cooldownPanelCombatOnly
+    end
+
     if type(db.cooldownPanelLocked) ~= "boolean" then
         db.cooldownPanelLocked = addon.DEFAULTS.cooldownPanelLocked
     end

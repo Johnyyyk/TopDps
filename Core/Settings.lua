@@ -244,6 +244,14 @@ function Settings:SetCooldownPanelEnabled(enabled)
     end
 end
 
+function Settings:SetCooldownPanelCombatOnly(combatOnly)
+    addon.db.cooldownPanelCombatOnly = combatOnly and true or false
+
+    if addon.OptionsController then
+        addon.OptionsController:Refresh()
+    end
+end
+
 function Settings:SetCooldownPanelLocked(locked)
     addon.db.cooldownPanelLocked = locked and true or false
 

@@ -6,6 +6,8 @@ CooldownRegistry.definitions = CooldownRegistry.definitions or {}
 addon.COOLDOWN_GROUP_OFFENSIVE = "OFFENSIVE"
 addon.COOLDOWN_GROUP_DEFENSIVE = "DEFENSIVE"
 addon.COOLDOWN_GROUP_UTILITY = "UTILITY"
+addon.COOLDOWN_GROUP_PROCS = "PROCS"
+addon.COOLDOWN_GROUP_RESOURCES = "RESOURCES"
 addon.COOLDOWN_GROUP_TRINKETS = "TRINKETS"
 addon.COOLDOWN_GROUP_ITEMS = "ITEMS"
 
@@ -13,25 +15,55 @@ addon.COOLDOWN_GROUP_ORDER = {
     [addon.COOLDOWN_GROUP_OFFENSIVE] = 10,
     [addon.COOLDOWN_GROUP_DEFENSIVE] = 20,
     [addon.COOLDOWN_GROUP_UTILITY] = 30,
-    [addon.COOLDOWN_GROUP_TRINKETS] = 40,
-    [addon.COOLDOWN_GROUP_ITEMS] = 50,
+    [addon.COOLDOWN_GROUP_PROCS] = 40,
+    [addon.COOLDOWN_GROUP_RESOURCES] = 50,
+    [addon.COOLDOWN_GROUP_TRINKETS] = 60,
+    [addon.COOLDOWN_GROUP_ITEMS] = 70,
 }
+
+local SUPPORTED_TYPES = {
+    spell = true,
+    aura = true,
+    counter = true,
+}
+
+local function ValidateSpellEntry(entry)
+    if type(entry.spellIds) ~= "table" or #entry.spellIds == 0 then
+        error("TopDps: spell cooldown entry requires spellIds")
+    end
+end
+
+local function ValidateAuraEntry(entry)
+    if type(entry.auraSpellIds) ~= "table" or #entry.auraSpellIds == 0 then
+        error("TopDps: aura panel entry requires auraSpellIds")
+    end
+end
+
+local function ValidateCounterEntry(entry)
+    if type(entry.getValue) ~= "function" then
+        error("TopDps: counter panel entry requires getValue")
+    end
+end
 
 local function ValidateEntry(definition, entry)
     if type(entry) ~= "table" then
-        error("TopDps: cooldown entry must be a table")
+        error("TopDps: panel entry must be a table")
     end
 
     if type(entry.id) ~= "string" or entry.id == "" then
-        error("TopDps: cooldown entry id must be a non-empty string")
+        error("TopDps: panel entry id must be a non-empty string")
     end
 
-    if entry.type ~= "spell" then
-        error("TopDps: unsupported cooldown entry type: " .. tostring(entry.type))
+    if not SUPPORTED_TYPES[entry.type] then
+        error("TopDps: unsupported panel entry type: " .. tostring(entry.type))
     end
 
-    if type(entry.spellIds) ~= "table" or #entry.spellIds == 0 then
-        error("TopDps: spell cooldown entry requires spellIds")
+    if entry.type == "spell" then
+        ValidateSpellEntry(entry)
+    elseif entry.type == "aura" then
+        ValidateAuraEntry(entry)
+    elseif entry.type == "counter" then
+        ValidateCounterEntry(entry)
     end
 
     entry.classToken = definition.classToken
@@ -44,11 +76,11 @@ end
 
 function CooldownRegistry:Register(definition)
     if type(definition) ~= "table" then
-        error("TopDps: cooldown definition must be a table")
+        error("TopDps: panel definition must be a table")
     end
 
     if type(definition.classToken) ~= "string" or definition.classToken == "" then
-        error("TopDps: cooldown definition requires classToken")
+        error("TopDps: panel definition requires classToken")
     end
 
     local entries = definition.entries or {}

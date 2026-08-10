@@ -88,6 +88,19 @@ local function GetSpellCooldownSafe(spellId, spellName)
     return 0, 0, 0
 end
 
+local function GetDisplaySpellData(definition)
+    local displaySpellId = definition.displaySpellId
+        or (definition.auraSpellIds and definition.auraSpellIds[1])
+        or (definition.spellIds and definition.spellIds[#definition.spellIds])
+
+    if not displaySpellId then
+        return nil, nil, nil
+    end
+
+    local name, _, icon = GetSpellInfo(displaySpellId)
+    return displaySpellId, name, icon
+end
+
 function CooldownTracker:Initialize()
     self.initialized = true
     self:RefreshConfiguration()
@@ -101,7 +114,70 @@ function CooldownTracker:GetConfigurableEntries()
     return self.availableEntries or {}
 end
 
-function CooldownTracker:CreateSpellEntries()
+function CooldownTracker:CreateDefinitionEntry(definition, knownNames)
+    if definition.requiredSpellIds then
+        local requiredSpellId = FindKnownSpell(definition.requiredSpellIds, knownNames)
+        if not requiredSpellId then
+            return nil
+        end
+    end
+
+    if definition.type == "spell" then
+        local spellId, spellName, icon = FindKnownSpell(definition.spellIds, knownNames)
+        if not spellId then
+            return nil
+        end
+
+        return {
+            settingId = definition.settingId,
+            type = "spell",
+            group = definition.group,
+            order = definition.order,
+            spellId = spellId,
+            spellName = spellName,
+            icon = icon,
+            auraSpellIds = definition.auraSpellIds or { spellId },
+            name = spellName or definition.id,
+            defaultEnabled = definition.defaultEnabled,
+        }
+    end
+
+    local displaySpellId, displayName, displayIcon = GetDisplaySpellData(definition)
+
+    if definition.type == "aura" then
+        return {
+            settingId = definition.settingId,
+            type = "aura",
+            group = definition.group,
+            order = definition.order,
+            auraSpellIds = definition.auraSpellIds,
+            icon = definition.icon or displayIcon,
+            name = definition.name or displayName or definition.id,
+            fallbackDuration = definition.fallbackDuration,
+            showStacks = definition.showStacks == true,
+            defaultEnabled = definition.defaultEnabled,
+            displaySpellId = displaySpellId,
+        }
+    end
+
+    if definition.type == "counter" then
+        return {
+            settingId = definition.settingId,
+            type = "counter",
+            group = definition.group,
+            order = definition.order,
+            icon = definition.icon or displayIcon,
+            name = definition.name or displayName or definition.id,
+            getValue = definition.getValue,
+            defaultEnabled = definition.defaultEnabled,
+            displaySpellId = displaySpellId,
+        }
+    end
+
+    return nil
+end
+
+function CooldownTracker:CreateClassEntries()
     local _, classToken = UnitClass("player")
     if not classToken then
         return {}
@@ -115,21 +191,9 @@ function CooldownTracker:CreateSpellEntries()
     local index
 
     for index = 1, #definitions do
-        local definition = definitions[index]
-        local spellId, spellName, icon = FindKnownSpell(definition.spellIds, knownNames)
-        if spellId then
-            table.insert(result, {
-                settingId = definition.settingId,
-                type = "spell",
-                group = definition.group,
-                order = definition.order,
-                spellId = spellId,
-                spellName = spellName,
-                icon = icon,
-                auraSpellIds = definition.auraSpellIds or { spellId },
-                name = spellName or definition.id,
-                defaultEnabled = definition.defaultEnabled,
-            })
+        local entry = self:CreateDefinitionEntry(definitions[index], knownNames)
+        if entry then
+            table.insert(result, entry)
         end
     end
 
@@ -171,7 +235,7 @@ function CooldownTracker:RefreshConfiguration()
         return
     end
 
-    local entries = self:CreateSpellEntries()
+    local entries = self:CreateClassEntries()
     local index
     for index = 1, #TRINKET_SLOTS do
         local entry = self:CreateTrinketEntry(TRINKET_SLOTS[index], index * 10)
@@ -257,7 +321,7 @@ function CooldownTracker:FindActiveAura(spellIds)
     return nil, nil
 end
 
-function CooldownTracker:GetActiveState(aura, fallbackDuration)
+function CooldownTracker:GetActiveState(aura, fallbackDuration, showStacks)
     local now = GetTime()
     local duration = tonumber(aura.duration) or 0
     local expirationTime = tonumber(aura.expirationTime) or 0
@@ -275,6 +339,7 @@ function CooldownTracker:GetActiveState(aura, fallbackDuration)
         duration = duration,
         remaining = remaining,
         stacks = aura.stacks or 0,
+        showStacks = showStacks == true,
     }
 end
 
@@ -297,6 +362,39 @@ function CooldownTracker:GetSpellState(entry)
     return {
         state = "READY",
         remaining = 0,
+    }
+end
+
+function CooldownTracker:GetAuraState(entry)
+    local aura = self:FindActiveAura(entry.auraSpellIds)
+    if aura then
+        return self:GetActiveState(aura, entry.fallbackDuration, entry.showStacks)
+    end
+
+    return {
+        state = "INACTIVE",
+        remaining = 0,
+        stacks = 0,
+        showStacks = entry.showStacks,
+    }
+end
+
+function CooldownTracker:GetCounterState(entry)
+    local ok, value = pcall(entry.getValue)
+    if not ok then
+        value = 0
+    end
+
+    value = tonumber(value) or 0
+    if value < 0 then
+        value = 0
+    end
+
+    return {
+        state = value > 0 and "ACTIVE" or "INACTIVE",
+        remaining = 0,
+        stacks = value,
+        showStacks = true,
     }
 end
 
@@ -339,6 +437,7 @@ function CooldownTracker:GetRememberedProcState(entry)
         start = GetTime() - elapsed,
         duration = internalCooldown,
         remaining = remaining,
+        cooldownId = "PROC:" .. tostring(entry.itemId) .. ":" .. tostring(readyAt),
     }
 end
 
@@ -375,13 +474,22 @@ function CooldownTracker:GetTrinketState(entry)
     }
 end
 
+function CooldownTracker:IsPanelAllowedOutsideCombat()
+    return addon.db.enabled and addon.db.cooldownPanelLocked == false
+end
+
 function CooldownTracker:Update()
     if not addon.CooldownPanel or not addon.db then
         return
     end
 
-    local previewUnlocked = addon.db.enabled and addon.db.cooldownPanelLocked == false
+    local previewUnlocked = self:IsPanelAllowedOutsideCombat()
     if not addon.db.showCooldownPanel or (not addon.Settings:IsModeActive() and not previewUnlocked) then
+        addon.CooldownPanel:Hide()
+        return
+    end
+
+    if addon.db.cooldownPanelCombatOnly and not UnitAffectingCombat("player") and not previewUnlocked then
         addon.CooldownPanel:Hide()
         return
     end
@@ -399,6 +507,10 @@ function CooldownTracker:Update()
         local entry = self.entries[index]
         if entry.type == "spell" then
             states[index] = self:GetSpellState(entry)
+        elseif entry.type == "aura" then
+            states[index] = self:GetAuraState(entry)
+        elseif entry.type == "counter" then
+            states[index] = self:GetCounterState(entry)
         elseif entry.type == "trinket" then
             states[index] = self:GetTrinketState(entry)
         end
