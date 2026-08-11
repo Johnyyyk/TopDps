@@ -55,6 +55,7 @@ UI\MinimapButton.lua
 UI\GeneralOptions.lua
 UI\RotationOptions.lua
 UI\CooldownOptions.lua
+UI\CooldownOptionsUx.lua
 UI\DebugOptions.lua
 UI\OptionsController.lua
 
