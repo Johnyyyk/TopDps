@@ -10,7 +10,8 @@ function GeneralOptions:Create()
     local panel = Widgets:CreatePanel("TopDpsOptionsPanel", addon.NAME)
     local content = CreateFrame("Frame", nil, panel)
     content:SetPoint("TOPLEFT", panel, "TOPLEFT", 8, -8)
-    content:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -8, 8)
+    content:SetWidth(Widgets.SCROLL_CONTENT_WIDTH)
+    content:SetHeight(Widgets.PANEL_HEIGHT - 16)
 
     local title = Widgets:CreateText(
         content,
