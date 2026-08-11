@@ -39,6 +39,7 @@ Layout.Size = {
     BUTTON_WIDTH = 84,
     BUTTON_HEIGHT = 22,
     BUTTON_GAP = 6,
+    BUTTON_TEXT_HORIZONTAL_PADDING = 18,
 }
 
 function Layout:GetFrameWidth(frame)
@@ -206,11 +207,32 @@ function Layout:CreateDropdownField(parent, name, rowTop, labelText)
     return label, dropdown
 end
 
+function Layout:ApplyButtonTextWidth(button, parent, minimumWidth)
+    if not button then
+        return
+    end
+
+    local fontString = button:GetFontString()
+    local textWidth = fontString and fontString:GetStringWidth() or 0
+    local width = math.max(
+        minimumWidth or self.Size.BUTTON_WIDTH,
+        textWidth + self.Size.BUTTON_TEXT_HORIZONTAL_PADDING * 2
+    )
+    local parentWidth = self:GetFrameWidth(parent)
+
+    if parentWidth then
+        width = math.min(width, math.max(1, parentWidth - self.Size.CONTENT_INSET * 2))
+    end
+
+    button:SetWidth(width)
+end
+
 function Layout:CreateButton(parent, name, text)
     local button = CreateFrame("Button", name, parent, "UIPanelButtonTemplate")
     button:SetWidth(self.Size.BUTTON_WIDTH)
     button:SetHeight(self.Size.BUTTON_HEIGHT)
     button:SetText(text)
+    self:ApplyButtonTextWidth(button, parent)
 
     return button
 end
