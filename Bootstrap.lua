@@ -187,7 +187,7 @@ for index = 1, #EVENTS do
 end
 
 eventFrame:SetScript("OnEvent", function(_, event, ...)
-    if addon.db and addon.db.debugLogging then
+    if addon.db and addon.db.debug.logging then
         addon.Logger:SafeCall("event " .. tostring(event), function(...)
             Bootstrap:HandleEvent(...)
         end, event, ...)
@@ -215,7 +215,7 @@ eventFrame:SetScript("OnUpdate", function(_, elapsed)
 
     Bootstrap.updateElapsed = 0
 
-    if addon.db and addon.db.debugLogging then
+    if addon.db and addon.db.debug.logging then
         addon.Logger:SafeCall("UpdateRecommendation", function()
             addon.RotationEngine:UpdateRecommendation()
         end)

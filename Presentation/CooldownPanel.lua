@@ -40,7 +40,7 @@ function CooldownPanel:GetCategoryOrder(category)
 end
 
 function CooldownPanel:SavePosition()
-    if not self.frame or not addon.db or addon.db.cooldownPanelLocked then
+    if not self.frame or not addon.db or addon.db.panel.locked then
         return
     end
 
@@ -78,7 +78,7 @@ function CooldownPanel:Initialize()
     title:SetText(addon.L.COOLDOWN_PANEL_DRAG_HINT)
 
     frame:SetScript("OnDragStart", function(self)
-        if not addon.db.cooldownPanelLocked then
+        if not addon.db.panel.locked then
             self:StartMoving()
         end
     end)
@@ -98,10 +98,10 @@ end
 function CooldownPanel:CreateIcon(index)
     local iconFrame = CreateFrame("Frame", "TopDpsCooldownIcon" .. tostring(index), self.frame)
     iconFrame:SetFrameLevel(self.frame:GetFrameLevel() + 2)
-    iconFrame:EnableMouse(not (addon.db and addon.db.cooldownPanelLocked))
+    iconFrame:EnableMouse(not (addon.db and addon.db.panel.locked))
     iconFrame:RegisterForDrag("LeftButton")
     iconFrame:SetScript("OnDragStart", function()
-        if not addon.db.cooldownPanelLocked then
+        if not addon.db.panel.locked then
             CooldownPanel.frame:StartMoving()
         end
     end)
@@ -198,6 +198,10 @@ function CooldownPanel:InvalidateLayout()
 end
 
 function CooldownPanel:SetEntries(entries)
+    if addon.ProcSoundAlerts then
+        addon.ProcSoundAlerts:Reset()
+    end
+
     self.entries = entries or {}
     self.states = {}
 
@@ -237,7 +241,7 @@ function CooldownPanel:ApplyLockState()
         return
     end
 
-    local locked = addon.db.cooldownPanelLocked == true
+    local locked = addon.db.panel.locked == true
     self.frame:EnableMouse(not locked)
 
     local index
@@ -272,6 +276,10 @@ function CooldownPanel:Show()
 end
 
 function CooldownPanel:Hide()
+    if addon.ProcSoundAlerts then
+        addon.ProcSoundAlerts:Reset()
+    end
+
     if self.frame and self.frame:IsShown() then
         self.frame:Hide()
     end

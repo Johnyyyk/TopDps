@@ -1,7 +1,7 @@
 local addon = TopDps
 local Database = addon:CreateModule("Database")
 
-local SCHEMA_VERSION = 3
+local SCHEMA_VERSION = 4
 
 local function IsValueInList(value, list)
     local index
@@ -12,6 +12,10 @@ local function IsValueInList(value, list)
     end
 
     return false
+end
+
+local function Clamp(value, minimum, maximum)
+    return math.max(minimum, math.min(maximum, value))
 end
 
 local function CopyTable(source)
@@ -26,6 +30,16 @@ local function CopyTable(source)
     end
 
     return result
+end
+
+local function EnsureTable(parent, key)
+    local value = parent[key]
+    if type(value) ~= "table" then
+        value = {}
+        parent[key] = value
+    end
+
+    return value
 end
 
 local function NormalizeCooldownSpecSettings(settings, template)
@@ -46,103 +60,115 @@ local function NormalizeCooldownSpecSettings(settings, template)
     end
 end
 
-local function ApplyGlobalDefaults(db)
-    if type(db.enabled) ~= "boolean" then
-        db.enabled = addon.DEFAULTS.enabled
+local function NormalizeGlobalSettings(global)
+    if not IsValueInList(global.mode, addon.MODE_ORDER) then
+        global.mode = addon.DEFAULTS.mode
     end
 
-    if type(db.showMinimap) ~= "boolean" then
-        db.showMinimap = addon.DEFAULTS.showMinimap
+    local minimap = EnsureTable(global, "minimap")
+    if type(minimap.show) ~= "boolean" then
+        minimap.show = addon.DEFAULTS.showMinimap
+    end
+    if type(minimap.angle) ~= "number" then
+        minimap.angle = addon.DEFAULTS.minimapAngle
     end
 
-    if type(db.minimapAngle) ~= "number" then
-        db.minimapAngle = addon.DEFAULTS.minimapAngle
+    local rotation = EnsureTable(global, "rotation")
+    if not IsValueInList(rotation.highlightStyle, addon.HIGHLIGHT_STYLE_ORDER) then
+        rotation.highlightStyle = addon.DEFAULTS.highlightStyle
     end
-
-    if not IsValueInList(db.mode, addon.MODE_ORDER) then
-        db.mode = addon.DEFAULTS.mode
+    if type(rotation.cooldownLookahead) ~= "number" then
+        rotation.cooldownLookahead = addon.DEFAULTS.cooldownLookahead
     end
-
-    if not IsValueInList(db.highlightStyle, addon.HIGHLIGHT_STYLE_ORDER) then
-        db.highlightStyle = addon.DEFAULTS.highlightStyle
-    end
-
-    if type(db.cooldownLookahead) ~= "number" then
-        db.cooldownLookahead = addon.DEFAULTS.cooldownLookahead
-    end
-    db.cooldownLookahead = math.max(
+    rotation.cooldownLookahead = Clamp(
+        rotation.cooldownLookahead,
         addon.COOLDOWN_LOOKAHEAD_MIN,
-        math.min(addon.COOLDOWN_LOOKAHEAD_MAX, db.cooldownLookahead)
+        addon.COOLDOWN_LOOKAHEAD_MAX
     )
 
-    if type(db.showCenterIcons) ~= "boolean" then
-        db.showCenterIcons = addon.DEFAULTS.showCenterIcons
+    local centerIcons = EnsureTable(rotation, "centerIcons")
+    if type(centerIcons.enabled) ~= "boolean" then
+        centerIcons.enabled = addon.DEFAULTS.showCenterIcons
     end
-
-    if type(db.centerIconsOpacity) ~= "number" then
-        db.centerIconsOpacity = addon.DEFAULTS.centerIconsOpacity
+    if type(centerIcons.opacity) ~= "number" then
+        centerIcons.opacity = addon.DEFAULTS.centerIconsOpacity
     end
-    db.centerIconsOpacity = math.max(0.2, math.min(1, db.centerIconsOpacity))
-
-    if type(db.centerIconsSize) ~= "number" then
-        db.centerIconsSize = addon.DEFAULTS.centerIconsSize
+    centerIcons.opacity = Clamp(centerIcons.opacity, 0.2, 1)
+    if type(centerIcons.size) ~= "number" then
+        centerIcons.size = addon.DEFAULTS.centerIconsSize
     end
-    db.centerIconsSize = math.max(
+    centerIcons.size = Clamp(
+        centerIcons.size,
         addon.CENTER_ICON_SIZE_MIN,
-        math.min(addon.CENTER_ICON_SIZE_MAX, db.centerIconsSize)
+        addon.CENTER_ICON_SIZE_MAX
     )
 
-    if type(db.showCooldownPanel) ~= "boolean" then
-        db.showCooldownPanel = addon.DEFAULTS.showCooldownPanel
+    local panel = EnsureTable(global, "panel")
+    if type(panel.procSoundsEnabled) ~= "boolean" then
+        panel.procSoundsEnabled = addon.DEFAULTS.cooldownProcSoundsEnabled
     end
-
-    if type(db.cooldownProcSoundsEnabled) ~= "boolean" then
-        db.cooldownProcSoundsEnabled = addon.DEFAULTS.cooldownProcSoundsEnabled
+    if type(panel.locked) ~= "boolean" then
+        panel.locked = addon.DEFAULTS.cooldownPanelLocked
     end
-
-    if type(db.cooldownPanelLocked) ~= "boolean" then
-        db.cooldownPanelLocked = addon.DEFAULTS.cooldownPanelLocked
+    if type(panel.iconSize) ~= "number" then
+        panel.iconSize = addon.DEFAULTS.cooldownPanelIconSize
     end
-
-    if type(db.cooldownPanelX) ~= "number" then
-        db.cooldownPanelX = addon.DEFAULTS.cooldownPanelX
-    end
-
-    if type(db.cooldownPanelY) ~= "number" then
-        db.cooldownPanelY = addon.DEFAULTS.cooldownPanelY
-    end
-
-    if type(db.cooldownPanelIconSize) ~= "number" then
-        db.cooldownPanelIconSize = addon.DEFAULTS.cooldownPanelIconSize
-    end
-    db.cooldownPanelIconSize = math.max(
+    panel.iconSize = Clamp(
+        panel.iconSize,
         addon.COOLDOWN_PANEL_ICON_SIZE_MIN,
-        math.min(addon.COOLDOWN_PANEL_ICON_SIZE_MAX, db.cooldownPanelIconSize)
+        addon.COOLDOWN_PANEL_ICON_SIZE_MAX
     )
-
-    if type(db.cooldownPanelOpacity) ~= "number" then
-        db.cooldownPanelOpacity = addon.DEFAULTS.cooldownPanelOpacity
+    if type(panel.opacity) ~= "number" then
+        panel.opacity = addon.DEFAULTS.cooldownPanelOpacity
     end
-    db.cooldownPanelOpacity = math.max(
+    panel.opacity = Clamp(
+        panel.opacity,
         addon.COOLDOWN_PANEL_OPACITY_MIN,
-        math.min(addon.COOLDOWN_PANEL_OPACITY_MAX, db.cooldownPanelOpacity)
+        addon.COOLDOWN_PANEL_OPACITY_MAX
     )
-
-    if type(db.cooldownProcReadyAt) ~= "table" then
-        db.cooldownProcReadyAt = {}
+    if type(panel.procReadyAt) ~= "table" then
+        panel.procReadyAt = {}
     end
 
-    if type(db.debugChatRecommendations) ~= "boolean" then
-        db.debugChatRecommendations = addon.DEFAULTS.debugChatRecommendations
+    local position = EnsureTable(panel, "position")
+    if type(position.x) ~= "number" then
+        position.x = addon.DEFAULTS.cooldownPanelX
+    end
+    if type(position.y) ~= "number" then
+        position.y = addon.DEFAULTS.cooldownPanelY
     end
 
-    if type(db.debugLogging) ~= "boolean" then
-        db.debugLogging = addon.DEFAULTS.debugLogging
+    local debug = EnsureTable(global, "debug")
+    if type(debug.chatRecommendations) ~= "boolean" then
+        debug.chatRecommendations = addon.DEFAULTS.debugChatRecommendations
     end
+    if type(debug.logging) ~= "boolean" then
+        debug.logging = addon.DEFAULTS.debugLogging
+    end
+    if type(debug.log) ~= "table" then
+        debug.log = {}
+    end
+end
 
-    if type(db.debugLog) ~= "table" then
-        db.debugLog = {}
-    end
+local function IsCurrentSchema(root)
+    return type(root) == "table"
+        and tonumber(root.schemaVersion) == SCHEMA_VERSION
+        and type(root.global) == "table"
+        and type(root.specs) == "table"
+        and type(root.cooldownSpecs) == "table"
+        and root.migration == nil
+end
+
+local function CreateRoot()
+    return {
+        schemaVersion = SCHEMA_VERSION,
+        global = {},
+        specs = {},
+        cooldownSpecs = {},
+        cooldownSpecTemplate = {
+            panel = {},
+        },
+    }
 end
 
 function Database:NormalizeSpecSetting(definition, value)
@@ -205,22 +231,23 @@ function Database:ApplyProviderDefaults(provider)
         return nil
     end
 
-    local specDb = addon.specDb[provider.id]
-    if type(specDb) ~= "table" then
-        specDb = {}
-        addon.specDb[provider.id] = specDb
+    local specRoot = addon.specDb[provider.id]
+    if type(specRoot) ~= "table" then
+        specRoot = { rotation = {} }
+        addon.specDb[provider.id] = specRoot
     end
 
+    local rotation = EnsureTable(specRoot, "rotation")
     local definitions = provider:GetSettingsDefinition()
     local index
     for index = 1, #definitions do
         local definition = definitions[index]
         if definition.key then
-            specDb[definition.key] = self:NormalizeSpecSetting(definition, specDb[definition.key])
+            rotation[definition.key] = self:NormalizeSpecSetting(definition, rotation[definition.key])
         end
     end
 
-    return specDb
+    return rotation
 end
 
 function Database:GetSpecSettings(provider)
@@ -228,12 +255,12 @@ function Database:GetSpecSettings(provider)
         return nil
     end
 
-    local specDb = addon.specDb[provider.id]
-    if type(specDb) ~= "table" then
+    local specRoot = addon.specDb[provider.id]
+    if type(specRoot) ~= "table" or type(specRoot.rotation) ~= "table" then
         return self:ApplyProviderDefaults(provider)
     end
 
-    return specDb
+    return specRoot.rotation
 end
 
 function Database:GetCooldownSpecKey(classToken, talentTab)
@@ -254,86 +281,59 @@ function Database:GetCooldownSpecSettings(classToken, talentTab)
         return nil
     end
 
-    local settings = addon.cooldownSpecDb[key]
-    if type(settings) ~= "table" then
-        local template = addon.cooldownSpecTemplate or {}
-        settings = {
-            combatOnly = type(template.combatOnly) == "boolean"
-                and template.combatOnly
-                or addon.DEFAULTS.cooldownPanelCombatOnly,
-            elementEnabled = CopyTable(template.elementEnabled),
-            elementOrder = CopyTable(template.elementOrder),
-        }
-        addon.cooldownSpecDb[key] = settings
+    local specRoot = addon.cooldownSpecDb[key]
+    if type(specRoot) ~= "table" then
+        specRoot = { panel = {} }
+        addon.cooldownSpecDb[key] = specRoot
     end
 
+    local settings = EnsureTable(specRoot, "panel")
     NormalizeCooldownSpecSettings(settings, addon.cooldownSpecTemplate or {})
+
     return settings, key
 end
 
 function Database:ApplyDefaults()
-    local persisted = TopDpsDB
-
-    if type(persisted) ~= "table" then
-        -- Старое имя SavedVariables оставляем только для однократной миграции настроек.
-        if type(RpalTopDpsDB) == "table" then
-            persisted = RpalTopDpsDB
-        else
-            persisted = {}
-        end
+    local root = TopDpsDB
+    if not IsCurrentSchema(root) then
+        root = CreateRoot()
     end
 
-    local root
-    if type(persisted.global) == "table" or type(persisted.specs) == "table" then
-        root = persisted
-    else
-        -- До schema v2 все глобальные настройки хранились непосредственно в TopDpsDB.
-        root = {
-            global = persisted,
-            specs = {},
-        }
-    end
-
-    if type(root.global) ~= "table" then
-        root.global = {}
-    end
-
-    if type(root.specs) ~= "table" then
-        root.specs = {}
-    end
-
-    if type(root.cooldownSpecs) ~= "table" then
-        root.cooldownSpecs = {}
-    end
-
-    local previousSchemaVersion = tonumber(root.schemaVersion) or 1
-    if previousSchemaVersion < 3 then
-        root.cooldownSpecTemplate = {
-            combatOnly = type(root.global.cooldownPanelCombatOnly) == "boolean"
-                and root.global.cooldownPanelCombatOnly
-                or addon.DEFAULTS.cooldownPanelCombatOnly,
-            elementEnabled = CopyTable(root.global.cooldownElementEnabled),
-            elementOrder = CopyTable(root.global.cooldownElementOrder),
-        }
-
-        root.global.cooldownPanelCombatOnly = nil
-        root.global.cooldownElementEnabled = nil
-        root.global.cooldownElementOrder = nil
-    elseif type(root.cooldownSpecTemplate) ~= "table" then
-        root.cooldownSpecTemplate = {}
-    end
-
-    NormalizeCooldownSpecSettings(root.cooldownSpecTemplate, {})
     root.schemaVersion = SCHEMA_VERSION
+    root.global = type(root.global) == "table" and root.global or {}
+    root.specs = type(root.specs) == "table" and root.specs or {}
+    root.cooldownSpecs = type(root.cooldownSpecs) == "table" and root.cooldownSpecs or {}
+
+    local templateRoot = root.cooldownSpecTemplate
+    if type(templateRoot) ~= "table" then
+        templateRoot = {}
+        root.cooldownSpecTemplate = templateRoot
+    end
+
+    local template = EnsureTable(templateRoot, "panel")
+    NormalizeCooldownSpecSettings(template, {})
+    NormalizeGlobalSettings(root.global)
+
+    local character = TopDpsCharDB
+    if type(character) ~= "table" then
+        character = {}
+    end
+    if type(character.rotationEnabled) ~= "boolean" then
+        character.rotationEnabled = true
+    end
+    if type(character.panelEnabled) ~= "boolean" then
+        character.panelEnabled = addon.DEFAULTS.showCooldownPanel
+    end
 
     TopDpsDB = root
+    TopDpsCharDB = character
+
     addon.savedVariables = root
     addon.db = root.global
+    addon.charDb = character
     addon.specDb = root.specs
     addon.cooldownSpecDb = root.cooldownSpecs
-    addon.cooldownSpecTemplate = root.cooldownSpecTemplate
-
-    ApplyGlobalDefaults(addon.db)
+    addon.cooldownSpecTemplate = template
 
     if addon.SpecRegistry then
         local providers = addon.SpecRegistry:GetAll()

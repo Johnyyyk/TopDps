@@ -72,7 +72,6 @@ addon.COOLDOWN_PANEL_GROUP_GAP_STEP = 1
 addon.COOLDOWN_PANEL_WARNING_SCALE = 1.7
 
 addon.DEFAULTS = {
-    enabled = true,
     showMinimap = true,
     minimapAngle = 135,
     mode = addon.MODE_EVERYWHERE,

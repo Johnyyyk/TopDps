@@ -40,7 +40,7 @@ function CenterIcons:Initialize()
     }
 
     self:ApplyLayout()
-    self:SetOpacity(addon.db.centerIconsOpacity)
+    self:SetOpacity(addon.db.rotation.centerIcons.opacity)
 end
 
 function CenterIcons:ApplyLayout()
@@ -48,7 +48,7 @@ function CenterIcons:ApplyLayout()
         return
     end
 
-    local size = tonumber(addon.db.centerIconsSize) or addon.DEFAULTS.centerIconsSize
+    local size = tonumber(addon.db.rotation.centerIcons.size) or addon.DEFAULTS.centerIconsSize
     size = math.max(addon.CENTER_ICON_SIZE_MIN, math.min(addon.CENTER_ICON_SIZE_MAX, size))
 
     local index
@@ -85,7 +85,11 @@ end
 function CenterIcons:Show(entries)
     self.currentEntries = entries
 
-    if not entries or not entries[1] or not addon.db.enabled or not addon.db.showCenterIcons then
+    if not entries
+        or not entries[1]
+        or not addon.Settings:IsRotationEnabled()
+        or not addon.Settings:IsModeActive()
+        or not addon.db.rotation.centerIcons.enabled then
         self:Hide()
         return
     end
@@ -101,7 +105,7 @@ function CenterIcons:Show(entries)
         local frame = self.frames[index]
         frame.icon:SetTexture(texture)
         frame.elapsed = index == 1 and 0 or 0.65
-        frame:SetAlpha(addon.db.centerIconsOpacity)
+        frame:SetAlpha(addon.db.rotation.centerIcons.opacity)
         frame:Show()
     end
 end

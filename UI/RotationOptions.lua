@@ -222,6 +222,7 @@ function RotationOptions:ApplyLayout()
         Layout:ApplyTextWidth(entry.frame, entry.parent, entry.x)
     end
 
+    Layout:ApplyCheckLabelWidth(self.characterEnabledCheck, self.content, Size.CONTENT_INSET)
     Layout:ApplySliderWidth(self.cooldownLookaheadSlider, self.content)
     Layout:ApplyDropdownWidth(self.highlightDropdown, self.content)
     Layout:ApplyCheckLabelWidth(self.centerIconsCheck, self.content, 6)
@@ -265,7 +266,19 @@ function RotationOptions:Create()
     )
 
     local generalHeaderY = Layout:TakeRow(cursor, Size.SECTION_ROW_HEIGHT, Size.ROW_GAP)
-    Layout:CreateSectionHeader(content, addon.L.GENERAL_SETTINGS, generalHeaderY)
+    Layout:CreateSectionHeader(content, addon.L.ROTATION_GENERAL_SETTINGS, generalHeaderY)
+
+    local enabledY = Layout:TakeRow(cursor, Size.CHECKBOX_ROW_HEIGHT, Size.ROW_GAP)
+    local characterEnabledCheck = Layout:CreateCheckButton(
+        content,
+        "TopDpsRotationCharacterEnabled",
+        Size.CONTENT_INSET,
+        enabledY,
+        addon.L.ROTATION_ENABLED
+    )
+    characterEnabledCheck:SetScript("OnClick", function(self)
+        addon.Settings:SetRotationEnabled(Widgets:GetCheckValue(self))
+    end)
 
     local cooldownRowTop = Layout:TakeRow(cursor, Size.SLIDER_ROW_HEIGHT, Size.SECTION_GAP)
     local cooldownLookaheadSlider = Layout:CreateSlider(
@@ -304,7 +317,7 @@ function RotationOptions:Create()
             local info = UIDropDownMenu_CreateInfo()
             info.text = GetHighlightStyleText(style)
             info.value = style
-            info.checked = addon.db.highlightStyle == style
+            info.checked = addon.db.rotation.highlightStyle == style
             info.func = function()
                 addon.Settings:SetHighlightStyle(style)
             end
@@ -403,6 +416,7 @@ function RotationOptions:Create()
     self.providerViews = providerViews
     self.providerDropdown = providerDropdown
     self.activeSpecText = activeSpecText
+    self.characterEnabledCheck = characterEnabledCheck
     self.cooldownLookaheadSlider = cooldownLookaheadSlider
     self.highlightDropdown = highlightDropdown
     self.centerIconsCheck = centerIconsCheck
@@ -473,19 +487,21 @@ function RotationOptions:Refresh()
 
     self:ApplyLayout()
 
-    self.cooldownLookaheadSlider:SetValue(addon.db.cooldownLookahead)
+    self.characterEnabledCheck:SetChecked(addon.Settings:IsRotationEnabled() and 1 or nil)
+
+    self.cooldownLookaheadSlider:SetValue(addon.db.rotation.cooldownLookahead)
     _G[self.cooldownLookaheadSlider:GetName() .. "Text"]:SetText(
-        FormatCooldownLookahead(addon.db.cooldownLookahead)
+        FormatCooldownLookahead(addon.db.rotation.cooldownLookahead)
     )
 
-    UIDropDownMenu_SetSelectedValue(self.highlightDropdown, addon.db.highlightStyle)
-    UIDropDownMenu_SetText(self.highlightDropdown, GetHighlightStyleText(addon.db.highlightStyle))
+    UIDropDownMenu_SetSelectedValue(self.highlightDropdown, addon.db.rotation.highlightStyle)
+    UIDropDownMenu_SetText(self.highlightDropdown, GetHighlightStyleText(addon.db.rotation.highlightStyle))
 
-    self.centerIconsCheck:SetChecked(addon.db.showCenterIcons and 1 or nil)
-    self.opacitySlider:SetValue(addon.db.centerIconsOpacity)
-    self.sizeSlider:SetValue(addon.db.centerIconsSize)
+    self.centerIconsCheck:SetChecked(addon.db.rotation.centerIcons.enabled and 1 or nil)
+    self.opacitySlider:SetValue(addon.db.rotation.centerIcons.opacity)
+    self.sizeSlider:SetValue(addon.db.rotation.centerIcons.size)
 
-    if addon.db.showCenterIcons then
+    if addon.db.rotation.centerIcons.enabled then
         self.opacitySlider:Enable()
         self.sizeSlider:Enable()
     else

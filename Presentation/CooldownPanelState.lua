@@ -30,7 +30,7 @@ end
 
 function CooldownPanel:UpdateAccent(icon, entry, state)
     local missingBuff = self:IsMissingBuff(entry, state)
-    local visualGroup = self:ResolveVisualGroup(entry, state, addon.db.cooldownPanelLocked == false)
+    local visualGroup = self:ResolveVisualGroup(entry, state, addon.db.panel.locked == false)
     icon.frame.isMissingBuff = missingBuff
 
     if missingBuff then
@@ -161,6 +161,10 @@ end
 function CooldownPanel:Update(states)
     if not self.frame then
         return
+    end
+
+    if addon.ProcSoundAlerts then
+        addon.ProcSoundAlerts:Update(self.entries, states)
     end
 
     self.states = states or {}

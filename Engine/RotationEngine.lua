@@ -2,8 +2,8 @@ local addon = TopDps
 local RotationEngine = addon:CreateModule("RotationEngine")
 
 function RotationEngine:GetAvailability(provider)
-    if not addon.db.enabled then
-        return false, "addon_disabled"
+    if not addon.Settings:IsRotationEnabled() then
+        return false, "rotation_disabled"
     end
 
     if not addon.Settings:IsModeActive() then
@@ -12,10 +12,6 @@ function RotationEngine:GetAvailability(provider)
 
     if not provider then
         return false, "unsupported_specialization"
-    end
-
-    if not addon.Settings:IsSpecEnabled(provider) then
-        return false, "specialization_disabled"
     end
 
     if UnitIsDeadOrGhost("player") then

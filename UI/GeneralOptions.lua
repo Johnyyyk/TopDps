@@ -17,7 +17,6 @@ function GeneralOptions:ApplyLayout()
     Layout:ApplyTextWidth(self.title, self.content, Size.CONTENT_INSET)
     Layout:ApplyTextWidth(self.description, self.content, Size.CONTENT_INSET)
     Layout:ApplyTextWidth(self.modeLabel, self.content, Size.CONTENT_INSET)
-    Layout:ApplyCheckLabelWidth(self.enabledCheck, self.content, 6)
     Layout:ApplyCheckLabelWidth(self.showMinimapCheck, self.content, 6)
     Layout:ApplyDropdownWidth(self.modeDropdown, self.content)
 end
@@ -48,12 +47,6 @@ function GeneralOptions:Create()
     local generalHeaderY = Layout:TakeRow(cursor, Size.SECTION_ROW_HEIGHT, Size.ROW_GAP)
     Layout:CreateSectionHeader(content, addon.L.GENERAL_SETTINGS, generalHeaderY)
 
-    local enabledY = Layout:TakeRow(cursor, Size.CHECKBOX_ROW_HEIGHT, Size.ROW_GAP)
-    local enabledCheck = Layout:CreateCheckButton(content, "TopDpsOptionsEnabled", 6, enabledY, addon.L.ENABLED)
-    enabledCheck:SetScript("OnClick", function(self)
-        addon.Settings:SetEnabled(Widgets:GetCheckValue(self))
-    end)
-
     local minimapY = Layout:TakeRow(cursor, Size.CHECKBOX_ROW_HEIGHT)
     local showMinimap = Layout:CreateCheckButton(
         content,
@@ -63,7 +56,7 @@ function GeneralOptions:Create()
         addon.L.SHOW_MINIMAP
     )
     showMinimap:SetScript("OnClick", function(self)
-        addon.db.showMinimap = Widgets:GetCheckValue(self)
+        addon.db.minimap.show = Widgets:GetCheckValue(self)
         addon.MinimapButton:Refresh()
     end)
 
@@ -97,7 +90,6 @@ function GeneralOptions:Create()
     self.title = title
     self.description = description
     self.modeLabel = modeLabel
-    self.enabledCheck = enabledCheck
     self.showMinimapCheck = showMinimap
     self.modeDropdown = modeDropdown
 
@@ -121,8 +113,7 @@ function GeneralOptions:Refresh()
 
     self:ApplyLayout()
 
-    self.enabledCheck:SetChecked(addon.db.enabled and 1 or nil)
-    self.showMinimapCheck:SetChecked(addon.db.showMinimap and 1 or nil)
+    self.showMinimapCheck:SetChecked(addon.db.minimap.show and 1 or nil)
 
     UIDropDownMenu_SetSelectedValue(self.modeDropdown, addon.db.mode)
     UIDropDownMenu_SetText(self.modeDropdown, GetModeText(addon.db.mode))
