@@ -11,13 +11,16 @@ Core\Constants.lua
 Core\Database.lua
 Localization.lua
 LocalizationPanel.lua
+LocalizationPanelExtra.lua
 Core\GameApi.lua
 Core\Logger.lua
 Core\Settings.lua
 Core\PanelSettings.lua
+Core\PanelSettingsRows.lua
 
 Cooldowns\CooldownRegistry.lua
 Cooldowns\TrinketDatabase.lua
+Cooldowns\EquipmentProcDatabase.lua
 
 Engine\ActionBarService.lua
 Engine\ReadinessService.lua
@@ -26,6 +29,7 @@ Engine\ContextBuilder.lua
 Engine\RotationEngine.lua
 Engine\CooldownTracker.lua
 Engine\CooldownTrackerPresentation.lua
+Engine\CooldownTrackerEquipment.lua
 
 Specs\SpecProvider.lua
 Specs\SpecRegistry.lua
@@ -42,6 +46,7 @@ Presentation\RecommendationPresenter.lua
 Presentation\CooldownPanel.lua
 Presentation\CooldownPanelLayout.lua
 Presentation\CooldownPanelState.lua
+Presentation\CooldownPanelUxFixes.lua
 Presentation\ProcSoundAlerts.lua
 
 # TopDps-Specs-Start
@@ -58,6 +63,7 @@ UI\GeneralOptions.lua
 UI\RotationOptions.lua
 UI\CooldownOptions.lua
 UI\CooldownOptionsUx.lua
+UI\CooldownOptionsExtraUx.lua
 UI\DebugOptions.lua
 UI\OptionsController.lua
 
