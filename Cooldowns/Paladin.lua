@@ -126,6 +126,8 @@ addon.CooldownRegistry:Register({
             inactiveText = "—",
             showDuration = false,
             group = addon.COOLDOWN_GROUP_STATES,
+            panelCategory = addon.PANEL_CATEGORY_BUFFS,
+            panelBehavior = addon.PANEL_BEHAVIOR_SELECTABLE_BUFF,
             order = 10,
         },
         {
@@ -290,6 +292,8 @@ addon.CooldownRegistry:Register({
             inactiveText = "—",
             showDuration = false,
             group = addon.COOLDOWN_GROUP_STATES,
+            panelCategory = addon.PANEL_CATEGORY_BUFFS,
+            panelBehavior = addon.PANEL_BEHAVIOR_REQUIRED_BUFF,
             order = 30,
         },
         {

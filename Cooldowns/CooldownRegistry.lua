@@ -4,6 +4,7 @@ local CooldownRegistry = addon:CreateModule("CooldownRegistry")
 CooldownRegistry.definitions = CooldownRegistry.definitions or {}
 CooldownRegistry.profiles = CooldownRegistry.profiles or {}
 CooldownRegistry.profilesByKey = CooldownRegistry.profilesByKey or {}
+CooldownRegistry.entriesBySettingId = CooldownRegistry.entriesBySettingId or {}
 
 addon.COOLDOWN_GROUP_OFFENSIVE = "OFFENSIVE"
 addon.COOLDOWN_GROUP_DEFENSIVE = "DEFENSIVE"
@@ -31,6 +32,55 @@ local SUPPORTED_TYPES = {
     counter = true,
 }
 
+local SUPPORTED_PANEL_CATEGORIES = {
+    [addon.PANEL_CATEGORY_BUFFS] = true,
+    [addon.PANEL_CATEGORY_PROCS] = true,
+    [addon.PANEL_CATEGORY_ABILITIES] = true,
+    [addon.PANEL_CATEGORY_COOLDOWNS] = true,
+}
+
+local SUPPORTED_PANEL_BEHAVIORS = {
+    [addon.PANEL_BEHAVIOR_ALWAYS] = true,
+    [addon.PANEL_BEHAVIOR_ACTIVE_ONLY] = true,
+    [addon.PANEL_BEHAVIOR_REQUIRED_BUFF] = true,
+    [addon.PANEL_BEHAVIOR_SELECTABLE_BUFF] = true,
+}
+
+local DEFAULT_PRESENTATION_BY_GROUP = {
+    [addon.COOLDOWN_GROUP_OFFENSIVE] = {
+        category = addon.PANEL_CATEGORY_COOLDOWNS,
+        behavior = addon.PANEL_BEHAVIOR_ALWAYS,
+    },
+    [addon.COOLDOWN_GROUP_DEFENSIVE] = {
+        category = addon.PANEL_CATEGORY_ABILITIES,
+        behavior = addon.PANEL_BEHAVIOR_ALWAYS,
+    },
+    [addon.COOLDOWN_GROUP_UTILITY] = {
+        category = addon.PANEL_CATEGORY_ABILITIES,
+        behavior = addon.PANEL_BEHAVIOR_ALWAYS,
+    },
+    [addon.COOLDOWN_GROUP_STATES] = {
+        category = addon.PANEL_CATEGORY_ABILITIES,
+        behavior = addon.PANEL_BEHAVIOR_ALWAYS,
+    },
+    [addon.COOLDOWN_GROUP_PROCS] = {
+        category = addon.PANEL_CATEGORY_PROCS,
+        behavior = addon.PANEL_BEHAVIOR_ACTIVE_ONLY,
+    },
+    [addon.COOLDOWN_GROUP_RESOURCES] = {
+        category = addon.PANEL_CATEGORY_PROCS,
+        behavior = addon.PANEL_BEHAVIOR_ACTIVE_ONLY,
+    },
+    [addon.COOLDOWN_GROUP_TRINKETS] = {
+        category = addon.PANEL_CATEGORY_COOLDOWNS,
+        behavior = addon.PANEL_BEHAVIOR_ALWAYS,
+    },
+    [addon.COOLDOWN_GROUP_ITEMS] = {
+        category = addon.PANEL_CATEGORY_COOLDOWNS,
+        behavior = addon.PANEL_BEHAVIOR_ALWAYS,
+    },
+}
+
 local function GetProfileKey(classToken, talentTab)
     if not classToken or not talentTab then
         return nil
@@ -55,6 +105,14 @@ local function ValidateCounterEntry(entry)
     if type(entry.getValue) ~= "function" then
         error("TopDps: counter panel entry requires getValue")
     end
+end
+
+local function ResolveDefaultPresentation(group)
+    return DEFAULT_PRESENTATION_BY_GROUP[group]
+        or {
+            category = addon.PANEL_CATEGORY_ABILITIES,
+            behavior = addon.PANEL_BEHAVIOR_ALWAYS,
+        }
 end
 
 local function ValidateEntry(definition, entry)
@@ -84,6 +142,18 @@ local function ValidateEntry(definition, entry)
     entry.order = tonumber(entry.order) or 100
     entry.defaultEnabled = entry.defaultEnabled ~= false
     entry.settingId = definition.classToken .. ":" .. (definition.talentTab or "ALL") .. ":" .. entry.id
+
+    local defaultPresentation = ResolveDefaultPresentation(entry.group)
+    entry.panelCategory = entry.panelCategory or defaultPresentation.category
+    entry.panelBehavior = entry.panelBehavior or defaultPresentation.behavior
+
+    if not SUPPORTED_PANEL_CATEGORIES[entry.panelCategory] then
+        error("TopDps: unsupported panel category: " .. tostring(entry.panelCategory))
+    end
+
+    if not SUPPORTED_PANEL_BEHAVIORS[entry.panelBehavior] then
+        error("TopDps: unsupported panel behavior: " .. tostring(entry.panelBehavior))
+    end
 end
 
 function CooldownRegistry:RegisterProfile(profile)
@@ -168,9 +238,29 @@ function CooldownRegistry:Register(definition)
     local index
     for index = 1, #entries do
         ValidateEntry(definition, entries[index])
+
+        if self.entriesBySettingId[entries[index].settingId] then
+            error("TopDps: duplicate panel entry: " .. entries[index].settingId)
+        end
+
+        self.entriesBySettingId[entries[index].settingId] = entries[index]
     end
 
     table.insert(self.definitions, definition)
+end
+
+function CooldownRegistry:GetPanelPresentation(entry)
+    if not entry then
+        return addon.PANEL_CATEGORY_ABILITIES, addon.PANEL_BEHAVIOR_ALWAYS
+    end
+
+    local definition = entry.settingId and self.entriesBySettingId[entry.settingId] or nil
+    if definition then
+        return definition.panelCategory, definition.panelBehavior
+    end
+
+    local defaultPresentation = ResolveDefaultPresentation(entry.group)
+    return defaultPresentation.category, defaultPresentation.behavior
 end
 
 function CooldownRegistry:GetEntries(classToken, talentTab)

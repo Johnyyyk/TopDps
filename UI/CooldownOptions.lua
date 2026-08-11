@@ -1,6 +1,8 @@
 local addon = TopDps
 local CooldownOptions = addon:CreateModule("CooldownOptions")
 local Widgets = addon.OptionsWidgets
+local Layout = addon.OptionsLayout
+local Size = Layout.Size
 
 local function GetGroupLabel(group)
     return addon.L["COOLDOWN_GROUP_" .. tostring(group)] or tostring(group)
@@ -22,33 +24,115 @@ local function BuildEntriesSignature(profile, entries)
     return table.concat(parts, "|")
 end
 
+local function SetSliderValue(slider, value)
+    slider.suppressChange = true
+    slider:SetValue(value)
+    slider.suppressChange = false
+end
+
+function CooldownOptions:RegisterLayoutControl(controlType, frame, parent, x, label)
+    self.layoutControls[#self.layoutControls + 1] = {
+        type = controlType,
+        frame = frame,
+        parent = parent,
+        x = x,
+        label = label,
+    }
+end
+
+function CooldownOptions:RegisterElementLayoutControl(controlType, frame, parent, x, label)
+    self.elementLayoutControls[#self.elementLayoutControls + 1] = {
+        type = controlType,
+        frame = frame,
+        parent = parent,
+        x = x,
+        label = label,
+    }
+end
+
+function CooldownOptions:ApplyRegisteredLayout(controls)
+    local index
+    for index = 1, #(controls or {}) do
+        local control = controls[index]
+
+        if control.type == "text" then
+            Layout:ApplyTextWidth(control.frame, control.parent, control.x)
+        elseif control.type == "checkbox" then
+            Layout:ApplyCheckLabelWidth(control.frame, control.parent, control.x)
+        elseif control.type == "slider" then
+            Layout:ApplySliderWidth(control.frame, control.parent)
+        elseif control.type == "dropdown" then
+            if control.label then
+                Layout:ApplyTextWidth(control.label, control.parent, Size.CONTENT_INSET)
+            end
+            Layout:ApplyDropdownWidth(control.frame, control.parent)
+        end
+    end
+end
+
+function CooldownOptions:UpdateRequiredContentHeight()
+    if not self.elementsViewTop then
+        return
+    end
+
+    local viewHeight = self.elementsViewHeight or 1
+    self.requiredContentHeight = -self.elementsViewTop + viewHeight + Size.BOTTOM_INSET
+end
+
+function CooldownOptions:ApplyLayout()
+    if not self.scrollFrame or not self.content then
+        return
+    end
+
+    Layout:ApplyScrollContentWidth(self.content, self.scrollFrame)
+
+    if self.elementsView then
+        Layout:ApplyFrameWidth(
+            self.elementsView,
+            self.content,
+            0,
+            0,
+            Size.FALLBACK_CONTENT_WIDTH
+        )
+    end
+
+    self:ApplyRegisteredLayout(self.layoutControls)
+    self:ApplyRegisteredLayout(self.elementLayoutControls)
+
+    local scrollHeight = self.scrollFrame:GetHeight() or 0
+    self.content:SetHeight(math.max(scrollHeight, self.requiredContentHeight or 1))
+end
+
 function CooldownOptions:CreateElementsView(content, profile, entries)
     if self.elementsView then
         self.elementsView:Hide()
     end
 
+    self.elementLayoutControls = {}
+
     local view = CreateFrame("Frame", nil, content)
-    view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -686)
-    view:SetWidth(Widgets.SCROLL_CONTENT_WIDTH)
+    view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, self.elementsViewTop or 0)
+    Layout:ApplyFrameWidth(view, content, 0, 0, Size.FALLBACK_CONTENT_WIDTH)
 
     local controls = {}
-    local y = -2
+    local cursor = Layout:CreateCursor(-2)
     local previousGroup
     local index
 
     for index = 1, #entries do
         local entry = entries[index]
         if entry.group ~= previousGroup then
-            Widgets:CreateSectionHeader(view, GetGroupLabel(entry.group), y)
-            y = y - 34
+            local groupHeaderY = Layout:TakeRow(cursor, Size.SECTION_ROW_HEIGHT, Size.ROW_GAP)
+            Layout:CreateSectionHeader(view, GetGroupLabel(entry.group), groupHeaderY)
             previousGroup = entry.group
         end
 
-        local check = Widgets:CreateCheckButton(
+        local rowTop = Layout:TakeRow(cursor, Size.CHECKBOX_ROW_HEIGHT, Size.ROW_GAP)
+        local check = Layout:CreateCheckButton(
             view,
             "TopDpsCooldownElement" .. tostring(index) .. tostring(self.elementsRevision or 1),
-            6,
-            y,
+            Size.CONTENT_INSET,
+            rowTop,
             entry.name
         )
         check.entry = entry
@@ -67,16 +151,22 @@ function CooldownOptions:CreateElementsView(content, profile, entries)
             )
         end)
 
-        if entry.group == addon.COOLDOWN_GROUP_PROCS then
-            check.label:SetWidth(180)
+        self:RegisterElementLayoutControl(
+            "checkbox",
+            check,
+            view,
+            Size.CONTENT_INSET
+        )
 
-            local soundCheck = Widgets:CreateCheckButton(
+        if entry.group == addon.COOLDOWN_GROUP_PROCS then
+            local soundRowTop = Layout:TakeRow(cursor, Size.CHECKBOX_ROW_HEIGHT, Size.ROW_GAP)
+            local soundX = Size.CONTENT_INSET + Size.CHECKBOX_SIZE
+            local soundCheck = Layout:CreateCheckButton(
                 view,
                 "TopDpsCooldownProcSound" .. tostring(index) .. tostring(self.elementsRevision or 1),
-                238,
-                y,
-                addon.L.COOLDOWN_PROC_SOUND,
-                72
+                soundX,
+                soundRowTop,
+                addon.L.COOLDOWN_PROC_SOUND
             )
             soundCheck.entry = entry
             soundCheck.profileKey = profile.key
@@ -94,27 +184,39 @@ function CooldownOptions:CreateElementsView(content, profile, entries)
                 )
             end)
             check.soundCheck = soundCheck
+
+            self:RegisterElementLayoutControl("checkbox", soundCheck, view, soundX)
         end
 
-        table.insert(controls, check)
-        y = y - 36
+        controls[#controls + 1] = check
     end
 
     if #entries == 0 then
-        Widgets:CreateText(
+        local emptyY = Layout:TakeRow(cursor, Size.TEXT_ROW_HEIGHT, Size.ROW_GAP)
+        local emptyText = Layout:CreateText(
             view,
             "GameFontHighlightSmall",
-            8,
-            y,
-            Widgets.TEXT_WIDTH,
+            Size.CONTENT_INSET,
+            emptyY,
             addon.L.COOLDOWN_NO_ELEMENTS
         )
-        y = y - 36
+        self:RegisterElementLayoutControl(
+            "text",
+            emptyText,
+            view,
+            Size.CONTENT_INSET
+        )
     end
 
-    view:SetHeight(math.max(1, -y + 20))
+    local viewHeight = Layout:GetRequiredHeight(cursor)
+    view:SetHeight(viewHeight)
+
     self.elementsView = view
+    self.elementsViewHeight = viewHeight
     self.elementControls = controls
+
+    self:UpdateRequiredContentHeight()
+    self:ApplyLayout()
 end
 
 function CooldownOptions:EnsureElementsView(profile)
@@ -166,109 +268,173 @@ end
 function CooldownOptions:Create()
     local panel = Widgets:CreatePanel("TopDpsCooldownOptionsPanel", addon.L.COOLDOWN_PAGE, addon.NAME)
     local profiles = addon.CooldownRegistry:GetProfiles()
-    local _, content = Widgets:CreateScrollArea(panel, "TopDpsCooldownOptionsScrollFrame", 1420)
+    local scrollFrame, content = Layout:CreateScrollArea(
+        panel,
+        "TopDpsCooldownOptionsScrollFrame",
+        1
+    )
+    local cursor = Layout:CreateCursor(-8)
 
-    Widgets:CreateText(
+    self.layoutControls = {}
+    self.elementLayoutControls = {}
+
+    local titleY = Layout:TakeRow(cursor, Size.TITLE_ROW_HEIGHT)
+    local title = Layout:CreateText(
         content,
         "GameFontNormalLarge",
-        8,
-        -8,
-        Widgets.TEXT_WIDTH,
+        Size.CONTENT_INSET,
+        titleY,
         addon.NAME .. " - " .. addon.L.COOLDOWN_PAGE
     )
-    Widgets:CreateText(
+    self:RegisterLayoutControl("text", title, content, Size.CONTENT_INSET)
+
+    local descriptionY = Layout:TakeRow(cursor, Size.DESCRIPTION_ROW_HEIGHT, Size.SECTION_GAP)
+    local description = Layout:CreateText(
         content,
         "GameFontHighlightSmall",
-        8,
-        -40,
-        Widgets.TEXT_WIDTH,
+        Size.CONTENT_INSET,
+        descriptionY,
         addon.L.COOLDOWN_DESCRIPTION
     )
+    self:RegisterLayoutControl("text", description, content, Size.CONTENT_INSET)
 
-    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_PANEL_SETTINGS, -92)
+    local panelHeaderY = Layout:TakeRow(cursor, Size.SECTION_ROW_HEIGHT, Size.ROW_GAP)
+    Layout:CreateSectionHeader(content, addon.L.COOLDOWN_PANEL_SETTINGS, panelHeaderY)
 
-    local enabledCheck = Widgets:CreateCheckButton(
+    local enabledY = Layout:TakeRow(cursor, Size.CHECKBOX_ROW_HEIGHT, Size.ROW_GAP)
+    local enabledCheck = Layout:CreateCheckButton(
         content,
         "TopDpsCooldownPanelEnabled",
-        6,
-        -118,
+        Size.CONTENT_INSET,
+        enabledY,
         addon.L.COOLDOWN_PANEL_ENABLED
     )
     enabledCheck:SetScript("OnClick", function(self)
         addon.Settings:SetCooldownPanelEnabled(Widgets:GetCheckValue(self))
     end)
+    self:RegisterLayoutControl("checkbox", enabledCheck, content, Size.CONTENT_INSET)
 
-    local procSoundsEnabledCheck = Widgets:CreateCheckButton(
+    local procSoundsY = Layout:TakeRow(cursor, Size.CHECKBOX_ROW_HEIGHT, Size.ROW_GAP)
+    local procSoundsEnabledCheck = Layout:CreateCheckButton(
         content,
         "TopDpsCooldownProcSoundsEnabled",
-        6,
-        -154,
+        Size.CONTENT_INSET,
+        procSoundsY,
         addon.L.COOLDOWN_PROC_SOUNDS_ENABLED
     )
     procSoundsEnabledCheck:SetScript("OnClick", function(self)
         addon.Settings:SetCooldownProcSoundsEnabled(Widgets:GetCheckValue(self))
     end)
+    self:RegisterLayoutControl(
+        "checkbox",
+        procSoundsEnabledCheck,
+        content,
+        Size.CONTENT_INSET
+    )
 
-    local lockedCheck = Widgets:CreateCheckButton(
+    local lockedY = Layout:TakeRow(cursor, Size.CHECKBOX_ROW_HEIGHT, Size.ROW_GAP)
+    local lockedCheck = Layout:CreateCheckButton(
         content,
         "TopDpsCooldownPanelLocked",
-        6,
-        -190,
+        Size.CONTENT_INSET,
+        lockedY,
         addon.L.COOLDOWN_PANEL_LOCKED
     )
     lockedCheck:SetScript("OnClick", function(self)
         addon.Settings:SetCooldownPanelLocked(Widgets:GetCheckValue(self))
     end)
+    self:RegisterLayoutControl("checkbox", lockedCheck, content, Size.CONTENT_INSET)
 
-    local resetButton = CreateFrame("Button", "TopDpsCooldownPanelResetPosition", content, "UIPanelButtonTemplate")
-    resetButton:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -238)
-    resetButton:SetWidth(180)
-    resetButton:SetHeight(24)
-    resetButton:SetText(addon.L.COOLDOWN_PANEL_RESET_POSITION)
+    local resetPositionY = Layout:TakeRow(
+        cursor,
+        Size.BUTTON_HEIGHT + Size.ROW_GAP,
+        Size.SECTION_GAP
+    )
+    local resetButton = Layout:CreateButton(
+        content,
+        "TopDpsCooldownPanelResetPosition",
+        addon.L.COOLDOWN_PANEL_RESET_POSITION
+    )
+    resetButton:SetPoint("TOPLEFT", content, "TOPLEFT", Size.CONTENT_INSET, resetPositionY)
+    resetButton:SetWidth(Size.BUTTON_WIDTH * 2 + Size.BUTTON_GAP * 6)
     resetButton:SetScript("OnClick", function()
         addon.CooldownPanel:ResetPosition()
     end)
 
-    local sizeSlider = CreateFrame("Slider", "TopDpsCooldownPanelIconSize", content, "OptionsSliderTemplate")
-    sizeSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -306)
-    sizeSlider:SetWidth(300)
-    sizeSlider:SetMinMaxValues(addon.COOLDOWN_PANEL_ICON_SIZE_MIN, addon.COOLDOWN_PANEL_ICON_SIZE_MAX)
+    local sizeRowTop = Layout:TakeRow(cursor, Size.SLIDER_ROW_HEIGHT, Size.ROW_GAP)
+    local sizeSlider = Layout:CreateSlider(content, "TopDpsCooldownPanelIconSize", sizeRowTop)
+    sizeSlider:SetMinMaxValues(
+        addon.COOLDOWN_PANEL_ICON_SIZE_MIN,
+        addon.COOLDOWN_PANEL_ICON_SIZE_MAX
+    )
     sizeSlider:SetValueStep(addon.COOLDOWN_PANEL_ICON_SIZE_STEP)
     _G[sizeSlider:GetName() .. "Low"]:SetText(tostring(addon.COOLDOWN_PANEL_ICON_SIZE_MIN))
     _G[sizeSlider:GetName() .. "High"]:SetText(tostring(addon.COOLDOWN_PANEL_ICON_SIZE_MAX))
     sizeSlider:SetScript("OnValueChanged", function(self, value)
+        if self.suppressChange then
+            return
+        end
+
         local rounded = math.floor(value / addon.COOLDOWN_PANEL_ICON_SIZE_STEP + 0.5)
             * addon.COOLDOWN_PANEL_ICON_SIZE_STEP
         addon.Settings:SetCooldownPanelIconSize(rounded)
-        _G[self:GetName() .. "Text"]:SetText(string.format(addon.L.COOLDOWN_PANEL_ICON_SIZE, rounded))
+        _G[self:GetName() .. "Text"]:SetText(string.format(
+            addon.L.COOLDOWN_PANEL_ICON_SIZE,
+            rounded
+        ))
     end)
+    self:RegisterLayoutControl("slider", sizeSlider, content)
 
-    local opacitySlider = CreateFrame("Slider", "TopDpsCooldownPanelOpacity", content, "OptionsSliderTemplate")
-    opacitySlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -380)
-    opacitySlider:SetWidth(300)
-    opacitySlider:SetMinMaxValues(addon.COOLDOWN_PANEL_OPACITY_MIN, addon.COOLDOWN_PANEL_OPACITY_MAX)
+    local opacityRowTop = Layout:TakeRow(cursor, Size.SLIDER_ROW_HEIGHT, Size.SECTION_GAP)
+    local opacitySlider = Layout:CreateSlider(content, "TopDpsCooldownPanelOpacity", opacityRowTop)
+    opacitySlider:SetMinMaxValues(
+        addon.COOLDOWN_PANEL_OPACITY_MIN,
+        addon.COOLDOWN_PANEL_OPACITY_MAX
+    )
     opacitySlider:SetValueStep(addon.COOLDOWN_PANEL_OPACITY_STEP)
     _G[opacitySlider:GetName() .. "Low"]:SetText("30%")
     _G[opacitySlider:GetName() .. "High"]:SetText("100%")
     opacitySlider:SetScript("OnValueChanged", function(self, value)
+        if self.suppressChange then
+            return
+        end
+
         local rounded = math.floor(value * 20 + 0.5) / 20
         addon.Settings:SetCooldownPanelOpacity(rounded)
-        _G[self:GetName() .. "Text"]:SetText(string.format(addon.L.COOLDOWN_PANEL_OPACITY, rounded * 100))
+        _G[self:GetName() .. "Text"]:SetText(string.format(
+            addon.L.COOLDOWN_PANEL_OPACITY,
+            rounded * 100
+        ))
     end)
+    self:RegisterLayoutControl("slider", opacitySlider, content)
 
-    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_SPEC_SETTINGS, -440)
+    local specHeaderY = Layout:TakeRow(cursor, Size.SECTION_ROW_HEIGHT, Size.ROW_GAP)
+    Layout:CreateSectionHeader(content, addon.L.COOLDOWN_SPEC_SETTINGS, specHeaderY)
 
-    local activeSpecText = Widgets:CreateText(content, "GameFontNormal", 8, -470, Widgets.TEXT_WIDTH, "")
-    Widgets:CreateText(content, "GameFontNormal", 8, -504, Widgets.TEXT_WIDTH, addon.L.CONFIGURE_SPEC)
-
-    local profileDropdown = CreateFrame(
-        "Frame",
-        "TopDpsCooldownProfileDropDown",
+    local activeSpecY = Layout:TakeRow(cursor, Size.TEXT_ROW_HEIGHT, Size.ROW_GAP)
+    local activeSpecText = Layout:CreateText(
         content,
-        "UIDropDownMenuTemplate"
+        "GameFontNormal",
+        Size.CONTENT_INSET,
+        activeSpecY,
+        ""
     )
-    profileDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -520)
-    UIDropDownMenu_SetWidth(profileDropdown, 270)
+    self:RegisterLayoutControl("text", activeSpecText, content, Size.CONTENT_INSET)
+
+    local profileRowTop = Layout:TakeRow(cursor, Size.DROPDOWN_ROW_HEIGHT, Size.ROW_GAP)
+    local configureSpecText, profileDropdown = Layout:CreateDropdownField(
+        content,
+        "TopDpsCooldownProfileDropDown",
+        profileRowTop,
+        addon.L.CONFIGURE_SPEC
+    )
+    self:RegisterLayoutControl(
+        "dropdown",
+        profileDropdown,
+        content,
+        nil,
+        configureSpecText
+    )
 
     UIDropDownMenu_Initialize(profileDropdown, function(_, level)
         local index
@@ -287,16 +453,18 @@ function CooldownOptions:Create()
         end
     end)
 
-    local resetSpecButton = CreateFrame(
-        "Button",
-        "TopDpsCooldownPanelResetSpec",
-        content,
-        "UIPanelButtonTemplate"
+    local resetSpecY = Layout:TakeRow(
+        cursor,
+        Size.BUTTON_HEIGHT + Size.ROW_GAP,
+        Size.ROW_GAP
     )
-    resetSpecButton:SetPoint("TOPLEFT", content, "TOPLEFT", 8, -566)
-    resetSpecButton:SetWidth(220)
-    resetSpecButton:SetHeight(24)
-    resetSpecButton:SetText(addon.L.COOLDOWN_SPEC_RESET)
+    local resetSpecButton = Layout:CreateButton(
+        content,
+        "TopDpsCooldownPanelResetSpec",
+        addon.L.COOLDOWN_SPEC_RESET
+    )
+    resetSpecButton:SetPoint("TOPLEFT", content, "TOPLEFT", Size.CONTENT_INSET, resetSpecY)
+    resetSpecButton:SetWidth(Size.BUTTON_WIDTH * 2 + Size.BUTTON_GAP * 6)
     resetSpecButton:SetScript("OnClick", function()
         local profile = CooldownOptions:GetSelectedProfile()
         if not profile then
@@ -306,11 +474,12 @@ function CooldownOptions:Create()
         addon.Settings:ResetCooldownPanelSpecSettings(profile.classToken, profile.talentTab)
     end)
 
-    local combatOnlyCheck = Widgets:CreateCheckButton(
+    local combatOnlyY = Layout:TakeRow(cursor, Size.CHECKBOX_ROW_HEIGHT, Size.SECTION_GAP)
+    local combatOnlyCheck = Layout:CreateCheckButton(
         content,
         "TopDpsCooldownPanelCombatOnly",
-        6,
-        -610,
+        Size.CONTENT_INSET,
+        combatOnlyY,
         addon.L.COOLDOWN_PANEL_COMBAT_ONLY
     )
     combatOnlyCheck:SetScript("OnClick", function(self)
@@ -325,16 +494,10 @@ function CooldownOptions:Create()
             profile.talentTab
         )
     end)
-
-    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_ELEMENTS, -658)
-
-    panel:SetScript("OnShow", function()
-        self:Refresh()
-    end)
-
-    InterfaceOptions_AddCategory(panel)
+    self:RegisterLayoutControl("checkbox", combatOnlyCheck, content, Size.CONTENT_INSET)
 
     self.panel = panel
+    self.scrollFrame = scrollFrame
     self.content = content
     self.profiles = profiles
     self.profileDropdown = profileDropdown
@@ -348,10 +511,38 @@ function CooldownOptions:Create()
     self.sizeSlider = sizeSlider
     self.opacitySlider = opacitySlider
 
+    if self.CreateUxControls then
+        self:CreateUxControls(content, cursor)
+    end
+
+    local elementsHeaderY = Layout:TakeRow(cursor, Size.SECTION_ROW_HEIGHT, Size.ROW_GAP)
+    Layout:CreateSectionHeader(content, addon.L.COOLDOWN_ELEMENTS, elementsHeaderY)
+
+    self.elementsViewTop = cursor.y
+    self:UpdateRequiredContentHeight()
+
     local profile = self:GetSelectedProfile()
     if profile then
         self:EnsureElementsView(profile)
     end
+
+    scrollFrame:SetScript("OnSizeChanged", function()
+        self:ApplyLayout()
+    end)
+
+    panel:SetScript("OnShow", function()
+        if self.SelectDetectedProfile then
+            self:SelectDetectedProfile()
+        end
+
+        self:Refresh()
+        Layout:RequestNextFrame(panel, function()
+            self:ApplyLayout()
+        end)
+    end)
+
+    InterfaceOptions_AddCategory(panel)
+    self:ApplyLayout()
 end
 
 function CooldownOptions:Refresh()
@@ -375,20 +566,30 @@ function CooldownOptions:Refresh()
     local profile = self:GetSelectedProfile()
     if not profile then
         UIDropDownMenu_SetText(self.profileDropdown, addon.L.NO_SUPPORTED_SPECS)
+        self:ApplyLayout()
         return
     end
 
     UIDropDownMenu_SetSelectedValue(self.profileDropdown, profile.key)
-    UIDropDownMenu_SetText(self.profileDropdown, addon.CooldownRegistry:GetProfileDisplayName(profile))
+    UIDropDownMenu_SetText(
+        self.profileDropdown,
+        addon.CooldownRegistry:GetProfileDisplayName(profile)
+    )
 
     self.enabledCheck:SetChecked(addon.db.showCooldownPanel and 1 or nil)
-    self.procSoundsEnabledCheck:SetChecked(addon.Settings:AreCooldownProcSoundsEnabled() and 1 or nil)
+    self.procSoundsEnabledCheck:SetChecked(
+        addon.Settings:AreCooldownProcSoundsEnabled() and 1 or nil
+    )
     self.combatOnlyCheck:SetChecked(
-        addon.Settings:IsCooldownPanelCombatOnly(profile.classToken, profile.talentTab) and 1 or nil
+        addon.Settings:IsCooldownPanelCombatOnly(
+            profile.classToken,
+            profile.talentTab
+        ) and 1 or nil
     )
     self.lockedCheck:SetChecked(addon.db.cooldownPanelLocked and 1 or nil)
-    self.sizeSlider:SetValue(addon.db.cooldownPanelIconSize)
-    self.opacitySlider:SetValue(addon.db.cooldownPanelOpacity)
+
+    SetSliderValue(self.sizeSlider, addon.db.cooldownPanelIconSize)
+    SetSliderValue(self.opacitySlider, addon.db.cooldownPanelOpacity)
 
     _G[self.sizeSlider:GetName() .. "Text"]:SetText(
         string.format(addon.L.COOLDOWN_PANEL_ICON_SIZE, addon.db.cooldownPanelIconSize)
@@ -398,6 +599,7 @@ function CooldownOptions:Refresh()
     )
 
     self:EnsureElementsView(profile)
+
     local index
     for index = 1, #(self.elementControls or {}) do
         local check = self.elementControls[index]
@@ -426,6 +628,10 @@ function CooldownOptions:Refresh()
         end
     end
 
+    if self.RefreshUxControls then
+        self:RefreshUxControls()
+    end
+
     if addon.db.showCooldownPanel then
         self.procSoundsEnabledCheck:Enable()
         self.combatOnlyCheck:Enable()
@@ -441,4 +647,6 @@ function CooldownOptions:Refresh()
         self.sizeSlider:Disable()
         self.opacitySlider:Disable()
     end
+
+    self:ApplyLayout()
 end
