@@ -151,6 +151,65 @@ function Settings:IsCurrentCooldownPanelSpec(classToken, talentTab)
         and talentTab == currentTalentTab
 end
 
+function Settings:AreCooldownProcSoundsEnabled()
+    if not addon.db then
+        return addon.DEFAULTS.cooldownProcSoundsEnabled
+    end
+
+    return addon.db.cooldownProcSoundsEnabled ~= false
+end
+
+function Settings:SetCooldownProcSoundsEnabled(enabled)
+    addon.db.cooldownProcSoundsEnabled = enabled and true or false
+
+    if addon.OptionsController then
+        addon.OptionsController:Refresh()
+    end
+end
+
+function Settings:IsCooldownProcSoundEnabled(settingId, defaultEnabled, classToken, talentTab)
+    if not settingId then
+        return false
+    end
+
+    local specSettings = self:GetCooldownPanelSpecSettings(classToken, talentTab)
+    if not specSettings then
+        return defaultEnabled ~= false
+    end
+
+    if type(specSettings.procSoundEnabled) ~= "table" then
+        specSettings.procSoundEnabled = {}
+    end
+
+    local value = specSettings.procSoundEnabled[settingId]
+    if value == nil then
+        return defaultEnabled ~= false
+    end
+
+    return value == true
+end
+
+function Settings:SetCooldownProcSoundEnabled(settingId, enabled, classToken, talentTab)
+    if not settingId then
+        return
+    end
+
+    local specSettings = self:GetCooldownPanelSpecSettings(classToken, talentTab)
+    if not specSettings then
+        return
+    end
+
+    if type(specSettings.procSoundEnabled) ~= "table" then
+        specSettings.procSoundEnabled = {}
+    end
+
+    specSettings.procSoundEnabled[settingId] = enabled and true or false
+
+    if addon.OptionsController then
+        addon.OptionsController:Refresh()
+    end
+end
+
 function Settings:SetEnabled(enabled)
     addon.db.enabled = enabled and true or false
 
@@ -313,6 +372,11 @@ function Settings:ResetCooldownPanelSpecSettings(classToken, talentTab)
     specSettings.combatOnly = addon.DEFAULTS.cooldownPanelCombatOnly
     specSettings.elementEnabled = {}
     specSettings.elementOrder = {}
+    specSettings.procSoundEnabled = {}
+
+    if addon.ProcSoundAlerts then
+        addon.ProcSoundAlerts:Reset()
+    end
 
     if self:IsCurrentCooldownPanelSpec(classToken, talentTab) and addon.CooldownTracker then
         addon.CooldownTracker:RefreshConfiguration()
