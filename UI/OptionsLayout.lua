@@ -3,7 +3,9 @@ local Layout = addon:CreateModule("OptionsLayout")
 
 -- Единые размеры и интервалы для страниц настроек TopDps.
 -- Значения шаблонов соответствуют FrameXML WoW 3.3.5a:
--- OptionsCheckButtonTemplate = 26x26, UIDropDownMenu_SetWidth добавляет 25 px к frame.
+-- OptionsCheckButtonTemplate = 26x26.
+-- UIDropDownMenuTemplate визуально состоит из Left(25) + Middle + Right(25).
+-- UIDropDownMenu_SetWidth задаёт ширину Middle и добавляет 25 px к ширине самого frame.
 Layout.Size = {
     CONTENT_INSET = 8,
     FALLBACK_CONTENT_WIDTH = 350,
@@ -20,18 +22,22 @@ Layout.Size = {
 
     CHECKBOX_SIZE = 26,
     CHECKBOX_LABEL_GAP = 4,
-    CHECKBOX_ROW_HEIGHT = 32,
+    CHECKBOX_ROW_HEIGHT = 30,
 
     SLIDER_LEFT_INSET = 20,
     SLIDER_RIGHT_INSET = 20,
-    SLIDER_BAR_TOP_OFFSET = 18,
-    SLIDER_ROW_HEIGHT = 54,
+    SLIDER_BAR_TOP_OFFSET = 16,
+    SLIDER_ROW_HEIGHT = 46,
 
     DROPDOWN_LEFT_OFFSET = -8,
+    DROPDOWN_RIGHT_INSET = 8,
     DROPDOWN_LABEL_TO_FRAME = 16,
-    DROPDOWN_RIGHT_INSET = 48,
-    DROPDOWN_FRAME_PADDING = 25,
+    DROPDOWN_VISIBLE_CHROME_WIDTH = 50,
     DROPDOWN_ROW_HEIGHT = 48,
+
+    BUTTON_WIDTH = 84,
+    BUTTON_HEIGHT = 22,
+    BUTTON_GAP = 6,
 }
 
 function Layout:GetFrameWidth(frame)
@@ -104,7 +110,7 @@ function Layout:CreateSectionHeader(parent, text, y)
     line:SetPoint("RIGHT", parent, "RIGHT", -self.Size.CONTENT_INSET, 0)
     line:SetHeight(1)
 
-    return label
+    return label, line
 end
 
 function Layout:ApplyCheckLabelWidth(check, parent, x)
@@ -114,7 +120,9 @@ function Layout:ApplyCheckLabelWidth(check, parent, x)
     end
 
     local labelOffset = x + self.Size.CHECKBOX_SIZE + self.Size.CHECKBOX_LABEL_GAP
-    check.label:SetWidth(math.max(1, width - labelOffset - self.Size.CONTENT_INSET))
+    local labelWidth = math.max(1, width - labelOffset - self.Size.CONTENT_INSET)
+    check.label:SetWidth(labelWidth)
+    check:SetHitRectInsets(0, -(labelWidth + self.Size.CHECKBOX_LABEL_GAP), 0, 0)
 end
 
 function Layout:CreateCheckButton(parent, name, x, y, text)
@@ -129,9 +137,9 @@ function Layout:CreateCheckButton(parent, name, x, y, text)
     end
 
     label:ClearAllPoints()
-    label:SetPoint("TOPLEFT", check, "TOPRIGHT", self.Size.CHECKBOX_LABEL_GAP, -3)
+    label:SetPoint("LEFT", check, "RIGHT", self.Size.CHECKBOX_LABEL_GAP, 0)
     label:SetJustifyH("LEFT")
-    label:SetJustifyV("TOP")
+    label:SetJustifyV("MIDDLE")
     label:SetText(text)
     check.label = label
 
@@ -169,8 +177,10 @@ function Layout:ApplyDropdownWidth(dropdown, parent)
         return
     end
 
-    local outerWidth = parentWidth - self.Size.DROPDOWN_RIGHT_INSET
-    local menuWidth = outerWidth - self.Size.DROPDOWN_FRAME_PADDING
+    local visibleWidth = parentWidth
+        - self.Size.DROPDOWN_RIGHT_INSET
+        - self.Size.DROPDOWN_LEFT_OFFSET
+    local menuWidth = visibleWidth - self.Size.DROPDOWN_VISIBLE_CHROME_WIDTH
     UIDropDownMenu_SetWidth(dropdown, math.max(1, menuWidth))
 end
 
@@ -193,6 +203,15 @@ function Layout:CreateDropdownField(parent, name, rowTop, labelText)
     local dropdown = self:CreateDropdown(parent, name, rowTop)
 
     return label, dropdown
+end
+
+function Layout:CreateButton(parent, name, text)
+    local button = CreateFrame("Button", name, parent, "UIPanelButtonTemplate")
+    button:SetWidth(self.Size.BUTTON_WIDTH)
+    button:SetHeight(self.Size.BUTTON_HEIGHT)
+    button:SetText(text)
+
+    return button
 end
 
 function Layout:CreatePanelContent(panel)
