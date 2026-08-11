@@ -12,7 +12,7 @@ local ITEM_PROCS = {
     [42853] = { procSpellIds = { 60634 }, durationFallback = 10 },
     [42854] = { procSpellIds = { 60635 }, durationFallback = 10 },
     [45145] = { procSpellIds = { 65182 }, durationFallback = 20 },
-    [47661] = { procSpellIds = { 67365 }, durationFallback = 15, internalCooldown = 8 },
+    [47661] = { procSpellIds = { 67371, 67365 }, durationFallback = 16, internalCooldown = 8 },
     [50455] = { procSpellIds = { 71187 }, durationFallback = 15, showStacks = true },
     [51478] = { procSpellIds = { 60636 }, durationFallback = 10 },
 
@@ -94,7 +94,7 @@ local ENCHANT_PROCS = {
     [3730] = { procSpellIds = { 55775 }, durationFallback = 15, internalCooldown = 55 },
 
     -- Актуальные оружейные чары WotLK.
-    [3789] = { procSpellIds = { 59620 }, durationFallback = 15 }, -- Berserking
+    [3789] = { procSpellIds = { 59620 }, durationFallback = 15 }, -- Berserking: 1 PPM, без фиксированного ICD
     [3790] = { procSpellIds = { 59626 }, durationFallback = 10, internalCooldown = 35 }, -- Black Magic
     [3869] = { procSpellIds = { 64440 }, durationFallback = 10, showStacks = true }, -- Blade Ward
     [3870] = { procSpellIds = { 64568 }, durationFallback = 20, showStacks = true }, -- Blood Draining
