@@ -1,33 +1,77 @@
 local addon = TopDps
 local DebugOptions = addon:CreateModule("DebugOptions")
 local Widgets = addon.OptionsWidgets
+local Layout = addon.OptionsLayout
+local Size = Layout.Size
+
+local LOG_BORDER_INSET = 8
+local LOG_SCROLL_RIGHT_INSET = 28
+local LOG_EDIT_HORIZONTAL_INSET = 8
+local LOG_EDIT_MIN_HEIGHT = 180
+local LOG_BOTTOM_INSET = 34
+local COPY_HINT_BOTTOM_INSET = 8
+
+function DebugOptions:ApplyLayout()
+    if not self.panel or not self.content then
+        return
+    end
+
+    Layout:ApplyPanelContent(self.content, self.panel)
+    Layout:ApplyTextWidth(self.title, self.content, Size.CONTENT_INSET)
+    Layout:ApplyTextWidth(self.description, self.content, Size.CONTENT_INSET)
+    Layout:ApplyTextWidth(self.copyHint, self.content, Size.CONTENT_INSET)
+    Layout:ApplyCheckLabelWidth(self.chatCheck, self.content, 6)
+    Layout:ApplyCheckLabelWidth(self.loggingCheck, self.content, 6)
+
+    local scrollWidth = Layout:GetFrameWidth(self.logScrollFrame)
+    if scrollWidth then
+        self.editBox:SetWidth(math.max(1, scrollWidth - LOG_EDIT_HORIZONTAL_INSET))
+    end
+end
 
 function DebugOptions:Create()
     local panel = Widgets:CreatePanel("TopDpsDebugOptionsPanel", addon.L.DEBUG_PAGE, addon.NAME)
+    local content = Layout:CreatePanelContent(panel)
+    local cursor = Layout:CreateCursor(-8)
 
-    Widgets:CreateText(panel, "GameFontNormalLarge", 16, -16, 365, addon.NAME .. " - " .. addon.L.DEBUG_PAGE)
-    Widgets:CreateText(panel, "GameFontHighlightSmall", 16, -48, 365, addon.L.DEBUG_DESCRIPTION)
+    local titleY = Layout:TakeRow(cursor, Size.TITLE_ROW_HEIGHT)
+    local title = Layout:CreateText(
+        content,
+        "GameFontNormalLarge",
+        Size.CONTENT_INSET,
+        titleY,
+        addon.NAME .. " - " .. addon.L.DEBUG_PAGE
+    )
 
-    local chatCheck = Widgets:CreateCheckButton(
-        panel,
+    local descriptionY = Layout:TakeRow(cursor, Size.DESCRIPTION_ROW_HEIGHT, Size.SECTION_GAP)
+    local description = Layout:CreateText(
+        content,
+        "GameFontHighlightSmall",
+        Size.CONTENT_INSET,
+        descriptionY,
+        addon.L.DEBUG_DESCRIPTION
+    )
+
+    local chatCheckY = Layout:TakeRow(cursor, Size.CHECKBOX_ROW_HEIGHT, Size.ROW_GAP)
+    local chatCheck = Layout:CreateCheckButton(
+        content,
         "TopDpsDebugChatCheck",
-        14,
-        -82,
-        addon.L.DEBUG_CHAT_RECOMMENDATIONS,
-        340
+        6,
+        chatCheckY,
+        addon.L.DEBUG_CHAT_RECOMMENDATIONS
     )
     chatCheck:SetScript("OnClick", function(self)
         addon.db.debugChatRecommendations = Widgets:GetCheckValue(self)
         addon.RecommendationPresenter:ResetChatSignature()
     end)
 
-    local loggingCheck = Widgets:CreateCheckButton(
-        panel,
+    local loggingCheckY = Layout:TakeRow(cursor, Size.CHECKBOX_ROW_HEIGHT, Size.SECTION_GAP)
+    local loggingCheck = Layout:CreateCheckButton(
+        content,
         "TopDpsDebugLoggingCheck",
-        14,
-        -118,
-        addon.L.DEBUG_LOGGING,
-        340
+        6,
+        loggingCheckY,
+        addon.L.DEBUG_LOGGING
     )
     loggingCheck:SetScript("OnClick", function(self)
         local enabled = Widgets:GetCheckValue(self)
@@ -41,30 +85,27 @@ function DebugOptions:Create()
         DebugOptions:RefreshLog(true)
     end)
 
-    Widgets:CreateSectionHeader(panel, addon.L.DEBUG_LOG_TITLE, -166, 205)
+    local logHeaderY = Layout:TakeRow(cursor, Size.SECTION_ROW_HEIGHT, Size.ROW_GAP)
+    Layout:CreateSectionHeader(content, addon.L.DEBUG_LOG_TITLE, logHeaderY)
 
-    local refreshButton = CreateFrame("Button", "TopDpsDebugRefreshButton", panel, "UIPanelButtonTemplate")
-    refreshButton:SetWidth(84)
-    refreshButton:SetHeight(22)
-    refreshButton:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -108, -154)
-    refreshButton:SetText(addon.L.DEBUG_REFRESH)
+    local buttonRowY = Layout:TakeRow(cursor, Size.BUTTON_HEIGHT, Size.SECTION_GAP)
+
+    local clearButton = Layout:CreateButton(content, "TopDpsDebugClearButton", addon.L.DEBUG_CLEAR)
+    clearButton:SetPoint("TOPRIGHT", content, "TOPRIGHT", -Size.CONTENT_INSET, buttonRowY)
+    clearButton:SetScript("OnClick", function()
+        addon.Logger:Clear()
+    end)
+
+    local refreshButton = Layout:CreateButton(content, "TopDpsDebugRefreshButton", addon.L.DEBUG_REFRESH)
+    refreshButton:SetPoint("RIGHT", clearButton, "LEFT", -Size.BUTTON_GAP, 0)
     refreshButton:SetScript("OnClick", function()
         addon.Logger:WriteDiagnosticSnapshot()
         DebugOptions:RefreshLog(true)
     end)
 
-    local clearButton = CreateFrame("Button", "TopDpsDebugClearButton", panel, "UIPanelButtonTemplate")
-    clearButton:SetWidth(84)
-    clearButton:SetHeight(22)
-    clearButton:SetPoint("LEFT", refreshButton, "RIGHT", 6, 0)
-    clearButton:SetText(addon.L.DEBUG_CLEAR)
-    clearButton:SetScript("OnClick", function()
-        addon.Logger:Clear()
-    end)
-
-    local logBorder = CreateFrame("Frame", nil, panel)
-    logBorder:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -194)
-    logBorder:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -18, 48)
+    local logBorder = CreateFrame("Frame", nil, content)
+    logBorder:SetPoint("TOPLEFT", content, "TOPLEFT", Size.CONTENT_INSET, cursor.y)
+    logBorder:SetPoint("BOTTOMRIGHT", content, "BOTTOMRIGHT", -Size.CONTENT_INSET, LOG_BOTTOM_INSET)
     logBorder:SetBackdrop({
         bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -76,43 +117,78 @@ function DebugOptions:Create()
     logBorder:SetBackdropColor(0, 0, 0, 0.72)
     logBorder:SetBackdropBorderColor(0.35, 0.35, 0.35, 0.9)
 
-    local scrollFrame = CreateFrame("ScrollFrame", "TopDpsDebugLogScrollFrame", logBorder, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetPoint("TOPLEFT", logBorder, "TOPLEFT", 8, -8)
-    scrollFrame:SetPoint("BOTTOMRIGHT", logBorder, "BOTTOMRIGHT", -28, 8)
+    local logScrollFrame = CreateFrame(
+        "ScrollFrame",
+        "TopDpsDebugLogScrollFrame",
+        logBorder,
+        "UIPanelScrollFrameTemplate"
+    )
+    logScrollFrame:SetPoint("TOPLEFT", logBorder, "TOPLEFT", LOG_BORDER_INSET, -LOG_BORDER_INSET)
+    logScrollFrame:SetPoint(
+        "BOTTOMRIGHT",
+        logBorder,
+        "BOTTOMRIGHT",
+        -LOG_SCROLL_RIGHT_INSET,
+        LOG_BORDER_INSET
+    )
 
-    local editBox = CreateFrame("EditBox", "TopDpsDebugLogEditBox", scrollFrame)
+    local editBox = CreateFrame("EditBox", "TopDpsDebugLogEditBox", logScrollFrame)
     editBox:SetMultiLine(true)
     editBox:SetAutoFocus(false)
     editBox:SetFontObject(ChatFontNormal)
-    editBox:SetWidth(330)
-    editBox:SetHeight(180)
+    editBox:SetWidth(1)
+    editBox:SetHeight(LOG_EDIT_MIN_HEIGHT)
     editBox:SetTextInsets(4, 4, 4, 4)
     editBox:SetScript("OnEscapePressed", function(self)
         self:ClearFocus()
     end)
     editBox:SetScript("OnTextChanged", function(self)
-        local height = 180
+        local height = LOG_EDIT_MIN_HEIGHT
         if self.GetStringHeight then
             height = math.max(height, self:GetStringHeight() + 24)
         end
         self:SetHeight(height)
     end)
 
-    scrollFrame:SetScrollChild(editBox)
+    logScrollFrame:SetScrollChild(editBox)
 
-    Widgets:CreateText(panel, "GameFontHighlightSmall", 18, -392, 365, addon.L.DEBUG_COPY_HINT)
+    local copyHint = content:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    copyHint:SetPoint(
+        "BOTTOMLEFT",
+        content,
+        "BOTTOMLEFT",
+        Size.CONTENT_INSET,
+        COPY_HINT_BOTTOM_INSET
+    )
+    copyHint:SetJustifyH("LEFT")
+    copyHint:SetJustifyV("BOTTOM")
+    copyHint:SetText(addon.L.DEBUG_COPY_HINT)
 
+    self.panel = panel
+    self.content = content
+    self.title = title
+    self.description = description
+    self.chatCheck = chatCheck
+    self.loggingCheck = loggingCheck
+    self.logScrollFrame = logScrollFrame
+    self.editBox = editBox
+    self.copyHint = copyHint
+
+    panel:SetScript("OnSizeChanged", function()
+        self:ApplyLayout()
+    end)
+    logScrollFrame:SetScript("OnSizeChanged", function()
+        self:ApplyLayout()
+    end)
     panel:SetScript("OnShow", function()
         addon.OptionsController:Refresh()
         DebugOptions:RefreshLog(true)
+        Layout:RequestNextFrame(panel, function()
+            self:ApplyLayout()
+        end)
     end)
 
     InterfaceOptions_AddCategory(panel)
-
-    self.panel = panel
-    self.chatCheck = chatCheck
-    self.loggingCheck = loggingCheck
-    self.editBox = editBox
 end
 
 function DebugOptions:Refresh()
@@ -120,6 +196,7 @@ function DebugOptions:Refresh()
         return
     end
 
+    self:ApplyLayout()
     self.chatCheck:SetChecked(addon.db.debugChatRecommendations and 1 or nil)
     self.loggingCheck:SetChecked(addon.db.debugLogging and 1 or nil)
 end
@@ -139,7 +216,7 @@ function DebugOptions:RefreshLog(force)
 
     self.editBox:SetText(addon.Logger:GetText())
 
-    local height = 180
+    local height = LOG_EDIT_MIN_HEIGHT
     if self.editBox.GetStringHeight then
         height = math.max(height, self.editBox:GetStringHeight() + 24)
     end
