@@ -424,4 +424,8 @@ function Settings:ResetCooldownPanelSpecSettings(classToken, talentTab)
     end
 
     RefreshPanelForSpec(classToken, talentTab, true)
+
+    if addon.OptionsController then
+        addon.OptionsController:Refresh()
+    end
 end
