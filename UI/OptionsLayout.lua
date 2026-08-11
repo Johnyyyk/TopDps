@@ -1,6 +1,7 @@
 local addon = TopDps
 local Layout = addon:CreateModule("OptionsLayout")
 
+-- Правила разработки страниц настроек: docs/UI_GUIDELINES.md.
 -- Единые размеры и интервалы для страниц настроек TopDps.
 -- Значения шаблонов соответствуют FrameXML WoW 3.3.5a:
 -- OptionsCheckButtonTemplate = 26x26.
