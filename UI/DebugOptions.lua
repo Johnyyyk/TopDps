@@ -43,7 +43,7 @@ function DebugOptions:Create()
         addon.NAME .. " - " .. addon.L.DEBUG_PAGE
     )
 
-    local descriptionY = Layout:TakeRow(cursor, Size.DESCRIPTION_ROW_HEIGHT, Size.SECTION_GAP)
+    local descriptionY = Layout:TakeRow(cursor, Size.TEXT_ROW_HEIGHT, Size.ROW_GAP)
     local description = Layout:CreateText(
         content,
         "GameFontHighlightSmall",
