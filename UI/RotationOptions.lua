@@ -6,6 +6,14 @@ local function MakeFrameToken(value)
     return string.gsub(tostring(value or ""), "[^%w]", "")
 end
 
+local function GetHighlightStyleText(style)
+    return addon.L["HIGHLIGHT_" .. style] or style
+end
+
+local function FormatCooldownLookahead(value)
+    return string.format(addon.L.COOLDOWN_LOOKAHEAD_FORMAT, value)
+end
+
 local function GetSettingLabel(provider, definition)
     if definition.labelKey and addon.L[definition.labelKey] then
         return addon.L[definition.labelKey]
@@ -146,7 +154,7 @@ end
 
 function RotationOptions:CreateProviderView(content, provider)
     local view = CreateFrame("Frame", nil, content)
-    view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -214)
+    view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -704)
     view:SetWidth(Widgets.SCROLL_CONTENT_WIDTH)
 
     local controls = {}
@@ -197,7 +205,7 @@ function RotationOptions:Create()
     local _, content = Widgets:CreateScrollArea(
         panel,
         "TopDpsRotationOptionsScrollFrame",
-        250 + maximumSettingsHeight
+        760 + maximumSettingsHeight
     )
 
     Widgets:CreateText(
@@ -217,8 +225,95 @@ function RotationOptions:Create()
         addon.L.ROTATION_DESCRIPTION
     )
 
-    local activeSpecText = Widgets:CreateText(content, "GameFontNormal", 8, -88, Widgets.TEXT_WIDTH, "")
-    Widgets:CreateText(content, "GameFontNormal", 8, -122, Widgets.TEXT_WIDTH, addon.L.CONFIGURE_SPEC)
+    Widgets:CreateSectionHeader(content, addon.L.GENERAL_SETTINGS, -92)
+
+    local cooldownLookaheadSlider = CreateFrame(
+        "Slider",
+        "TopDpsOptionsCooldownLookahead",
+        content,
+        "OptionsSliderTemplate"
+    )
+    cooldownLookaheadSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -132)
+    cooldownLookaheadSlider:SetWidth(300)
+    cooldownLookaheadSlider:SetMinMaxValues(addon.COOLDOWN_LOOKAHEAD_MIN, addon.COOLDOWN_LOOKAHEAD_MAX)
+    cooldownLookaheadSlider:SetValueStep(addon.COOLDOWN_LOOKAHEAD_STEP)
+
+    _G[cooldownLookaheadSlider:GetName() .. "Low"]:SetText(addon.L.COOLDOWN_LOOKAHEAD_LOW)
+    _G[cooldownLookaheadSlider:GetName() .. "High"]:SetText(addon.L.COOLDOWN_LOOKAHEAD_HIGH)
+
+    cooldownLookaheadSlider:SetScript("OnValueChanged", function(self, value)
+        local steps = math.floor(value / addon.COOLDOWN_LOOKAHEAD_STEP + 0.5)
+        local rounded = steps * addon.COOLDOWN_LOOKAHEAD_STEP
+        addon.Settings:SetCooldownLookahead(rounded)
+        _G[self:GetName() .. "Text"]:SetText(FormatCooldownLookahead(rounded))
+    end)
+
+    Widgets:CreateSectionHeader(content, addon.L.VISUAL_SETTINGS, -210)
+    Widgets:CreateText(content, "GameFontNormal", 8, -238, Widgets.TEXT_WIDTH, addon.L.HIGHLIGHT_STYLE)
+
+    local highlightDropdown = CreateFrame("Frame", "TopDpsOptionsHighlightDropDown", content, "UIDropDownMenuTemplate")
+    highlightDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -254)
+    UIDropDownMenu_SetWidth(highlightDropdown, 270)
+
+    UIDropDownMenu_Initialize(highlightDropdown, function(_, level)
+        local index
+        for index = 1, #addon.HIGHLIGHT_STYLE_ORDER do
+            local style = addon.HIGHLIGHT_STYLE_ORDER[index]
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = GetHighlightStyleText(style)
+            info.value = style
+            info.checked = addon.db.highlightStyle == style
+            info.func = function()
+                addon.Settings:SetHighlightStyle(style)
+            end
+            UIDropDownMenu_AddButton(info, level)
+        end
+    end)
+
+    local centerIconsCheck = Widgets:CreateCheckButton(
+        content,
+        "TopDpsOptionsCenterIcons",
+        6,
+        -314,
+        addon.L.SHOW_CENTER_ICONS
+    )
+    centerIconsCheck:SetScript("OnClick", function(self)
+        addon.Settings:SetCenterIconsEnabled(Widgets:GetCheckValue(self))
+    end)
+
+    local opacitySlider = CreateFrame("Slider", "TopDpsOptionsCenterOpacity", content, "OptionsSliderTemplate")
+    opacitySlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -382)
+    opacitySlider:SetWidth(300)
+    opacitySlider:SetMinMaxValues(0.2, 1)
+    opacitySlider:SetValueStep(0.05)
+
+    _G[opacitySlider:GetName() .. "Text"]:SetText(addon.L.CENTER_ICONS_OPACITY)
+    _G[opacitySlider:GetName() .. "Low"]:SetText(addon.L.CENTER_ICONS_LOW)
+    _G[opacitySlider:GetName() .. "High"]:SetText(addon.L.CENTER_ICONS_HIGH)
+
+    opacitySlider:SetScript("OnValueChanged", function(_, value)
+        local rounded = math.floor(value * 20 + 0.5) / 20
+        addon.Settings:SetCenterIconsOpacity(rounded)
+    end)
+
+    local sizeSlider = CreateFrame("Slider", "TopDpsOptionsCenterSize", content, "OptionsSliderTemplate")
+    sizeSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -456)
+    sizeSlider:SetWidth(300)
+    sizeSlider:SetMinMaxValues(addon.CENTER_ICON_SIZE_MIN, addon.CENTER_ICON_SIZE_MAX)
+    sizeSlider:SetValueStep(2)
+
+    _G[sizeSlider:GetName() .. "Text"]:SetText(addon.L.CENTER_ICONS_SIZE)
+    _G[sizeSlider:GetName() .. "Low"]:SetText(addon.L.CENTER_ICONS_SIZE_LOW)
+    _G[sizeSlider:GetName() .. "High"]:SetText(addon.L.CENTER_ICONS_SIZE_HIGH)
+
+    sizeSlider:SetScript("OnValueChanged", function(_, value)
+        addon.Settings:SetCenterIconsSize(math.floor(value / 2 + 0.5) * 2)
+    end)
+
+    Widgets:CreateSectionHeader(content, addon.L.ROTATION_SETTINGS, -548)
+
+    local activeSpecText = Widgets:CreateText(content, "GameFontNormal", 8, -580, Widgets.TEXT_WIDTH, "")
+    Widgets:CreateText(content, "GameFontNormal", 8, -614, Widgets.TEXT_WIDTH, addon.L.CONFIGURE_SPEC)
 
     local providerDropdown = CreateFrame(
         "Frame",
@@ -226,7 +321,7 @@ function RotationOptions:Create()
         content,
         "UIDropDownMenuTemplate"
     )
-    providerDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -138)
+    providerDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -630)
     UIDropDownMenu_SetWidth(providerDropdown, 270)
 
     UIDropDownMenu_Initialize(providerDropdown, function(_, level)
@@ -244,8 +339,6 @@ function RotationOptions:Create()
             UIDropDownMenu_AddButton(info, level)
         end
     end)
-
-    Widgets:CreateSectionHeader(content, addon.L.ROTATION_SETTINGS, -196)
 
     for providerIndex = 1, #providers do
         local provider = providers[providerIndex]
@@ -265,6 +358,11 @@ function RotationOptions:Create()
     self.providerViews = providerViews
     self.providerDropdown = providerDropdown
     self.activeSpecText = activeSpecText
+    self.cooldownLookaheadSlider = cooldownLookaheadSlider
+    self.highlightDropdown = highlightDropdown
+    self.centerIconsCheck = centerIconsCheck
+    self.opacitySlider = opacitySlider
+    self.sizeSlider = sizeSlider
 end
 
 function RotationOptions:GetSelectedProvider()
@@ -307,6 +405,26 @@ end
 function RotationOptions:Refresh()
     if not self.panel or not addon.db then
         return
+    end
+
+    self.cooldownLookaheadSlider:SetValue(addon.db.cooldownLookahead)
+    _G[self.cooldownLookaheadSlider:GetName() .. "Text"]:SetText(
+        FormatCooldownLookahead(addon.db.cooldownLookahead)
+    )
+
+    UIDropDownMenu_SetSelectedValue(self.highlightDropdown, addon.db.highlightStyle)
+    UIDropDownMenu_SetText(self.highlightDropdown, GetHighlightStyleText(addon.db.highlightStyle))
+
+    self.centerIconsCheck:SetChecked(addon.db.showCenterIcons and 1 or nil)
+    self.opacitySlider:SetValue(addon.db.centerIconsOpacity)
+    self.sizeSlider:SetValue(addon.db.centerIconsSize)
+
+    if addon.db.showCenterIcons then
+        self.opacitySlider:Enable()
+        self.sizeSlider:Enable()
+    else
+        self.opacitySlider:Disable()
+        self.sizeSlider:Disable()
     end
 
     local activeProvider = addon.SpecManager:GetActive()
