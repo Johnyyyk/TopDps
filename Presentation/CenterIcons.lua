@@ -85,7 +85,11 @@ end
 function CenterIcons:Show(entries)
     self.currentEntries = entries
 
-    if not entries or not entries[1] or not addon.db.enabled or not addon.db.showCenterIcons then
+    if not entries
+        or not entries[1]
+        or not addon.Settings:IsRotationEnabled()
+        or not addon.Settings:IsModeActive()
+        or not addon.db.showCenterIcons then
         self:Hide()
         return
     end
