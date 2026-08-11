@@ -58,6 +58,7 @@ Cooldowns\Paladin.lua
 Cooldowns\PaladinDefaults.lua
 
 UI\OptionsWidgets.lua
+UI\OptionsLayout.lua
 UI\MinimapButton.lua
 UI\GeneralOptions.lua
 UI\RotationOptions.lua
