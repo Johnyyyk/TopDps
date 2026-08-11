@@ -20,6 +20,23 @@ addon.HIGHLIGHT_STYLE_ORDER = {
     addon.HIGHLIGHT_CHEESE,
 }
 
+addon.PANEL_CATEGORY_BUFFS = "BUFFS"
+addon.PANEL_CATEGORY_PROCS = "PROCS"
+addon.PANEL_CATEGORY_ABILITIES = "ABILITIES"
+addon.PANEL_CATEGORY_COOLDOWNS = "COOLDOWNS"
+
+addon.PANEL_CATEGORY_ORDER = {
+    addon.PANEL_CATEGORY_BUFFS,
+    addon.PANEL_CATEGORY_PROCS,
+    addon.PANEL_CATEGORY_ABILITIES,
+    addon.PANEL_CATEGORY_COOLDOWNS,
+}
+
+addon.PANEL_BEHAVIOR_ALWAYS = "ALWAYS"
+addon.PANEL_BEHAVIOR_ACTIVE_ONLY = "ACTIVE_ONLY"
+addon.PANEL_BEHAVIOR_REQUIRED_BUFF = "REQUIRED_BUFF"
+addon.PANEL_BEHAVIOR_SELECTABLE_BUFF = "SELECTABLE_BUFF"
+
 addon.COOLDOWN_LOOKAHEAD_MIN = 0
 addon.COOLDOWN_LOOKAHEAD_MAX = 0.5
 addon.COOLDOWN_LOOKAHEAD_STEP = 0.05
@@ -30,6 +47,16 @@ addon.COOLDOWN_PANEL_ICON_SIZE_STEP = 2
 addon.COOLDOWN_PANEL_OPACITY_MIN = 0.3
 addon.COOLDOWN_PANEL_OPACITY_MAX = 1
 addon.COOLDOWN_PANEL_OPACITY_STEP = 0.05
+addon.COOLDOWN_PANEL_GROUP_SCALE_MIN = 0.6
+addon.COOLDOWN_PANEL_GROUP_SCALE_MAX = 1.5
+addon.COOLDOWN_PANEL_GROUP_SCALE_STEP = 0.05
+addon.COOLDOWN_PANEL_ICON_GAP_MIN = 0
+addon.COOLDOWN_PANEL_ICON_GAP_MAX = 12
+addon.COOLDOWN_PANEL_ICON_GAP_STEP = 1
+addon.COOLDOWN_PANEL_GROUP_GAP_MIN = 2
+addon.COOLDOWN_PANEL_GROUP_GAP_MAX = 28
+addon.COOLDOWN_PANEL_GROUP_GAP_STEP = 1
+addon.COOLDOWN_PANEL_WARNING_SCALE = 1.7
 
 addon.DEFAULTS = {
     enabled = true,
@@ -43,12 +70,21 @@ addon.DEFAULTS = {
     centerIconsSize = 58,
     showCooldownPanel = true,
     cooldownProcSoundsEnabled = true,
+    cooldownPanelShowTimers = true,
     cooldownPanelCombatOnly = true,
     cooldownPanelLocked = true,
     cooldownPanelX = 0,
     cooldownPanelY = -150,
     cooldownPanelIconSize = 44,
     cooldownPanelOpacity = 0.90,
+    cooldownPanelIconGap = 4,
+    cooldownPanelGroupGap = 12,
+    cooldownPanelGroupScale = {
+        [addon.PANEL_CATEGORY_BUFFS] = 0.70,
+        [addon.PANEL_CATEGORY_PROCS] = 1.10,
+        [addon.PANEL_CATEGORY_ABILITIES] = 1.00,
+        [addon.PANEL_CATEGORY_COOLDOWNS] = 0.90,
+    },
     cooldownElementEnabled = {},
     cooldownElementOrder = {},
     cooldownProcReadyAt = {},

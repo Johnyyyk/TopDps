@@ -10,9 +10,11 @@ Core\Namespace.lua
 Core\Constants.lua
 Core\Database.lua
 Localization.lua
+LocalizationPanel.lua
 Core\GameApi.lua
 Core\Logger.lua
 Core\Settings.lua
+Core\PanelSettings.lua
 
 Cooldowns\CooldownRegistry.lua
 Cooldowns\TrinketDatabase.lua

@@ -1,0 +1,30 @@
+local addon = TopDps
+local L = addon.L
+
+if GetLocale() == "ruRU" then
+    L.COOLDOWN_DESCRIPTION = "Компактная боевая панель: обязательные бафы, активные проки, защитные и вспомогательные способности, трини и дополнительные КД."
+    L.COOLDOWN_PANEL_SHOW_TIMERS = "Показывать таймеры"
+    L.COOLDOWN_PANEL_ICON_SIZE = "Базовый размер иконок: %d"
+    L.COOLDOWN_PANEL_ICON_GAP = "Расстояние между иконками: %d"
+    L.COOLDOWN_PANEL_GROUP_GAP = "Расстояние между группами: %d"
+    L.COOLDOWN_PANEL_GROUPS = "Группы панели"
+    L.COOLDOWN_PANEL_GROUP_SCALE = "Размер: %.0f%%"
+    L.PANEL_CATEGORY_BUFFS = "Собственные бафы"
+    L.PANEL_CATEGORY_PROCS = "Проки"
+    L.PANEL_CATEGORY_ABILITIES = "Защита и утилити"
+    L.PANEL_CATEGORY_COOLDOWNS = "Трини и дополнительные КД"
+    L.COOLDOWN_REQUIRED_BUFF_MISSING = "Обязательный баф отсутствует"
+else
+    L.COOLDOWN_DESCRIPTION = "A compact combat panel for required buffs, active procs, defensive and utility abilities, trinkets, and additional cooldowns."
+    L.COOLDOWN_PANEL_SHOW_TIMERS = "Show timers"
+    L.COOLDOWN_PANEL_ICON_SIZE = "Base icon size: %d"
+    L.COOLDOWN_PANEL_ICON_GAP = "Icon spacing: %d"
+    L.COOLDOWN_PANEL_GROUP_GAP = "Group spacing: %d"
+    L.COOLDOWN_PANEL_GROUPS = "Panel groups"
+    L.COOLDOWN_PANEL_GROUP_SCALE = "Size: %.0f%%"
+    L.PANEL_CATEGORY_BUFFS = "Own buffs"
+    L.PANEL_CATEGORY_PROCS = "Procs"
+    L.PANEL_CATEGORY_ABILITIES = "Defense and utility"
+    L.PANEL_CATEGORY_COOLDOWNS = "Trinkets and additional cooldowns"
+    L.COOLDOWN_REQUIRED_BUFF_MISSING = "Required buff is missing"
+end
