@@ -222,6 +222,7 @@ function RotationOptions:ApplyLayout()
         Layout:ApplyTextWidth(entry.frame, entry.parent, entry.x)
     end
 
+    Layout:ApplyCheckLabelWidth(self.characterEnabledCheck, self.content, Size.CONTENT_INSET)
     Layout:ApplySliderWidth(self.cooldownLookaheadSlider, self.content)
     Layout:ApplyDropdownWidth(self.highlightDropdown, self.content)
     Layout:ApplyCheckLabelWidth(self.centerIconsCheck, self.content, 6)
@@ -265,7 +266,19 @@ function RotationOptions:Create()
     )
 
     local generalHeaderY = Layout:TakeRow(cursor, Size.SECTION_ROW_HEIGHT, Size.ROW_GAP)
-    Layout:CreateSectionHeader(content, addon.L.GENERAL_SETTINGS, generalHeaderY)
+    Layout:CreateSectionHeader(content, addon.L.ROTATION_GENERAL_SETTINGS, generalHeaderY)
+
+    local enabledY = Layout:TakeRow(cursor, Size.CHECKBOX_ROW_HEIGHT, Size.ROW_GAP)
+    local characterEnabledCheck = Layout:CreateCheckButton(
+        content,
+        "TopDpsRotationCharacterEnabled",
+        Size.CONTENT_INSET,
+        enabledY,
+        addon.L.ROTATION_ENABLED
+    )
+    characterEnabledCheck:SetScript("OnClick", function(self)
+        addon.Settings:SetRotationEnabled(Widgets:GetCheckValue(self))
+    end)
 
     local cooldownRowTop = Layout:TakeRow(cursor, Size.SLIDER_ROW_HEIGHT, Size.SECTION_GAP)
     local cooldownLookaheadSlider = Layout:CreateSlider(
@@ -403,6 +416,7 @@ function RotationOptions:Create()
     self.providerViews = providerViews
     self.providerDropdown = providerDropdown
     self.activeSpecText = activeSpecText
+    self.characterEnabledCheck = characterEnabledCheck
     self.cooldownLookaheadSlider = cooldownLookaheadSlider
     self.highlightDropdown = highlightDropdown
     self.centerIconsCheck = centerIconsCheck
@@ -472,6 +486,8 @@ function RotationOptions:Refresh()
     end
 
     self:ApplyLayout()
+
+    self.characterEnabledCheck:SetChecked(addon.Settings:IsRotationEnabled() and 1 or nil)
 
     self.cooldownLookaheadSlider:SetValue(addon.db.cooldownLookahead)
     _G[self.cooldownLookaheadSlider:GetName() .. "Text"]:SetText(

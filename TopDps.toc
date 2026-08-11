@@ -5,18 +5,22 @@
 ## Author: Johnyyyk
 ## Version: 1.1.0
 ## SavedVariables: TopDpsDB, RpalTopDpsDB
+## SavedVariablesPerCharacter: TopDpsCharDB
 
 Core\Namespace.lua
 Core\Constants.lua
 Core\Database.lua
+Core\DatabaseSchema.lua
 Localization.lua
 LocalizationPanel.lua
 LocalizationPanelExtra.lua
+LocalizationFeatureSettings.lua
 Core\GameApi.lua
 Core\Logger.lua
 Core\Settings.lua
 Core\PanelSettings.lua
 Core\PanelSettingsRows.lua
+Core\FeatureSettings.lua
 
 Cooldowns\CooldownRegistry.lua
 Cooldowns\TrinketDatabase.lua
@@ -27,11 +31,14 @@ Engine\ReadinessService.lua
 Engine\CombatTracker.lua
 Engine\ContextBuilder.lua
 Engine\RotationEngine.lua
+Engine\RotationSettings.lua
 Engine\CooldownTracker.lua
 Engine\CooldownTrackerPresentation.lua
 Engine\CooldownTrackerEquipment.lua
+Engine\CooldownTrackerSettings.lua
 
 Specs\SpecProvider.lua
+Specs\SpecSettings.lua
 Specs\SpecRegistry.lua
 Specs\SpecManager.lua
 
@@ -60,6 +67,7 @@ Cooldowns\PaladinDefaults.lua
 UI\OptionsWidgets.lua
 UI\OptionsLayout.lua
 UI\MinimapButton.lua
+UI\MinimapControls.lua
 UI\GeneralOptions.lua
 UI\RotationOptions.lua
 UI\CooldownOptions.lua
