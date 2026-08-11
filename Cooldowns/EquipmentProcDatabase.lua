@@ -2,6 +2,7 @@ local addon = TopDps
 local EquipmentProcDatabase = addon:CreateModule("EquipmentProcDatabase")
 
 local ITEM_PROCS = {
+    -- Паладинские реликвии / манускрипты.
     [37574] = { procSpellIds = { 48835 }, durationFallback = 5 },
     [40706] = { procSpellIds = { 60819 }, durationFallback = 10 },
     [40707] = { procSpellIds = { 60794 }, durationFallback = 10 },
@@ -17,15 +18,39 @@ local ITEM_PROCS = {
 }
 
 local ENCHANT_PROCS = {
-    [2673] = { procSpellIds = { 28093 }, durationFallback = 15 },
-    [3225] = { procSpellIds = { 42976 }, durationFallback = 15 },
+    -- Старые оружейные чары, которые остаются применимыми в WotLK.
+    [1900] = { procSpellIds = { 20007 }, durationFallback = 15 }, -- Crusader
+    [2673] = { procSpellIds = { 28093 }, durationFallback = 15 }, -- Mongoose
+    [3225] = { procSpellIds = { 42976 }, durationFallback = 15 }, -- Executioner
+
+    -- Руны рыцаря смерти с отслеживаемым состоянием на персонаже.
+    [3368] = { procSpellIds = { 53365 }, durationFallback = 15 }, -- Fallen Crusader
+    [3369] = { procSpellIds = { 53386 }, durationFallback = 30, showStacks = true }, -- Cinderglacier
+
+    -- Инженерные активные улучшения экипировки. Их реальный КД читается с предмета.
+    [3599] = { inventoryCooldown = true }, -- Personal Electromagnetic Pulse Generator
+    [3601] = { inventoryCooldown = true }, -- Frag Belt
+    [3603] = { inventoryCooldown = true }, -- Hand-Mounted Pyro Rocket
+    [3604] = {
+        procSpellIds = { 54758 },
+        durationFallback = 12,
+        inventoryCooldown = true,
+    }, -- Hyperspeed Accelerators
+    [3605] = { inventoryCooldown = true }, -- Flexweave Underlay
+    [3606] = { inventoryCooldown = true }, -- Nitro Boosts
+    [3859] = { inventoryCooldown = true }, -- Springy Arachnoweave
+    [3878] = { inventoryCooldown = true }, -- Mind Amplification Dish
+
+    -- Портняжные чары плаща.
     [3722] = { procSpellIds = { 55637 }, durationFallback = 15, internalCooldown = 60 },
     [3728] = { triggerSpellIds = { 55767 }, internalCooldown = 45 },
     [3730] = { procSpellIds = { 55775 }, durationFallback = 15, internalCooldown = 55 },
-    [3789] = { procSpellIds = { 59620 }, durationFallback = 15 },
-    [3790] = { procSpellIds = { 59626 }, durationFallback = 10, internalCooldown = 35 },
-    [3869] = { procSpellIds = { 64440 }, durationFallback = 10, showStacks = true },
-    [3870] = { procSpellIds = { 64568 }, durationFallback = 20, showStacks = true },
+
+    -- Актуальные оружейные чары WotLK.
+    [3789] = { procSpellIds = { 59620 }, durationFallback = 15 }, -- Berserking
+    [3790] = { procSpellIds = { 59626 }, durationFallback = 10, internalCooldown = 35 }, -- Black Magic
+    [3869] = { procSpellIds = { 64440 }, durationFallback = 10, showStacks = true }, -- Blade Ward
+    [3870] = { procSpellIds = { 64568 }, durationFallback = 20, showStacks = true }, -- Blood Draining
 }
 
 local function CopyProcData(data)
