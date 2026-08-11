@@ -25,6 +25,7 @@ Engine\CombatTracker.lua
 Engine\ContextBuilder.lua
 Engine\RotationEngine.lua
 Engine\CooldownTracker.lua
+Engine\CooldownTrackerPresentation.lua
 
 Specs\SpecProvider.lua
 Specs\SpecRegistry.lua
@@ -49,6 +50,7 @@ Specs\Paladin\Retribution.lua
 # TopDps-Specs-End
 
 Cooldowns\Paladin.lua
+Cooldowns\PaladinDefaults.lua
 
 UI\OptionsWidgets.lua
 UI\MinimapButton.lua

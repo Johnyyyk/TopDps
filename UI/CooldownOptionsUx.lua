@@ -2,14 +2,24 @@ local addon = TopDps
 local CooldownOptions = addon.CooldownOptions
 local Widgets = addon.OptionsWidgets
 
-local SCROLL_HEIGHT = 2250
-local ELEMENTS_HEADER_Y = -1190
-local ELEMENTS_VIEW_Y = -1228
-local GROUPS_HEADER_Y = -870
-local GROUPS_START_Y = -904
+local SCROLL_HEIGHT = 2350
+local VISUAL_HEADER_Y = -658
+local SHOW_TIMERS_Y = -684
+local ICON_GAP_Y = -742
+local GROUP_GAP_Y = -806
+local BUFF_SIDE_LABEL_Y = -864
+local BUFF_SIDE_DROPDOWN_Y = -880
+local GROUPS_HEADER_Y = -946
+local GROUPS_START_Y = -980
+local ELEMENTS_HEADER_Y = -1248
+local ELEMENTS_VIEW_Y = -1286
 
 local function GetCategoryLabel(category)
     return addon.L["PANEL_CATEGORY_" .. tostring(category)] or tostring(category)
+end
+
+local function GetBuffSideLabel(side)
+    return addon.L["COOLDOWN_PANEL_BUFF_SIDE_" .. tostring(side)] or tostring(side)
 end
 
 local function CreateSlider(parent, name, x, y, width, minimum, maximum, step, lowText, highText)
@@ -69,24 +79,33 @@ function CooldownOptions:CreateUxControls()
     self.uxControlsCreated = true
     local content = self.content
 
-    Widgets:CreateSectionHeader(content, addon.L.VISUAL_SETTINGS, -658)
+    Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_PANEL_SPEC_VISUALS, VISUAL_HEADER_Y)
 
     local showTimersCheck = Widgets:CreateCheckButton(
         content,
         "TopDpsCooldownPanelShowTimers",
         6,
-        -684,
+        SHOW_TIMERS_Y,
         addon.L.COOLDOWN_PANEL_SHOW_TIMERS
     )
     showTimersCheck:SetScript("OnClick", function(self)
-        addon.Settings:SetCooldownPanelShowTimers(Widgets:GetCheckValue(self))
+        local profile = GetSelectedProfile()
+        if not profile then
+            return
+        end
+
+        addon.Settings:SetCooldownPanelShowTimers(
+            Widgets:GetCheckValue(self),
+            profile.classToken,
+            profile.talentTab
+        )
     end)
 
     local iconGapSlider = CreateSlider(
         content,
         "TopDpsCooldownPanelIconGap",
         20,
-        -742,
+        ICON_GAP_Y,
         300,
         addon.COOLDOWN_PANEL_ICON_GAP_MIN,
         addon.COOLDOWN_PANEL_ICON_GAP_MAX,
@@ -95,8 +114,17 @@ function CooldownOptions:CreateUxControls()
         tostring(addon.COOLDOWN_PANEL_ICON_GAP_MAX)
     )
     iconGapSlider:SetScript("OnValueChanged", function(self, value)
+        local profile = GetSelectedProfile()
+        if not profile then
+            return
+        end
+
         local rounded = math.floor(value + 0.5)
-        addon.Settings:SetCooldownPanelIconGap(rounded)
+        addon.Settings:SetCooldownPanelIconGap(
+            rounded,
+            profile.classToken,
+            profile.talentTab
+        )
         _G[self:GetName() .. "Text"]:SetText(string.format(addon.L.COOLDOWN_PANEL_ICON_GAP, rounded))
     end)
 
@@ -104,7 +132,7 @@ function CooldownOptions:CreateUxControls()
         content,
         "TopDpsCooldownPanelGroupGap",
         20,
-        -806,
+        GROUP_GAP_Y,
         300,
         addon.COOLDOWN_PANEL_GROUP_GAP_MIN,
         addon.COOLDOWN_PANEL_GROUP_GAP_MAX,
@@ -113,9 +141,63 @@ function CooldownOptions:CreateUxControls()
         tostring(addon.COOLDOWN_PANEL_GROUP_GAP_MAX)
     )
     groupGapSlider:SetScript("OnValueChanged", function(self, value)
+        local profile = GetSelectedProfile()
+        if not profile then
+            return
+        end
+
         local rounded = math.floor(value + 0.5)
-        addon.Settings:SetCooldownPanelGroupGap(rounded)
+        addon.Settings:SetCooldownPanelGroupGap(
+            rounded,
+            profile.classToken,
+            profile.talentTab
+        )
         _G[self:GetName() .. "Text"]:SetText(string.format(addon.L.COOLDOWN_PANEL_GROUP_GAP, rounded))
+    end)
+
+    Widgets:CreateText(
+        content,
+        "GameFontNormal",
+        8,
+        BUFF_SIDE_LABEL_Y,
+        Widgets.TEXT_WIDTH,
+        addon.L.COOLDOWN_PANEL_BUFF_SIDE
+    )
+
+    local buffSideDropdown = CreateFrame(
+        "Frame",
+        "TopDpsCooldownPanelBuffSideDropDown",
+        content,
+        "UIDropDownMenuTemplate"
+    )
+    buffSideDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, BUFF_SIDE_DROPDOWN_Y)
+    UIDropDownMenu_SetWidth(buffSideDropdown, 270)
+    UIDropDownMenu_Initialize(buffSideDropdown, function(_, level)
+        local profile = GetSelectedProfile()
+        if not profile then
+            return
+        end
+
+        local selectedSide = addon.Settings:GetCooldownPanelBuffSide(
+            profile.classToken,
+            profile.talentTab
+        )
+        local index
+        for index = 1, #addon.PANEL_BUFF_SIDE_ORDER do
+            local side = addon.PANEL_BUFF_SIDE_ORDER[index]
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = GetBuffSideLabel(side)
+            info.value = side
+            info.checked = selectedSide == side
+            info.func = function()
+                addon.Settings:SetCooldownPanelBuffSide(
+                    side,
+                    profile.classToken,
+                    profile.talentTab
+                )
+            end
+            UIDropDownMenu_AddButton(info, level)
+        end
     end)
 
     Widgets:CreateSectionHeader(content, addon.L.COOLDOWN_PANEL_GROUPS, GROUPS_HEADER_Y)
@@ -162,9 +244,19 @@ function CooldownOptions:CreateUxControls()
         )
         scaleSlider.category = category
         scaleSlider:SetScript("OnValueChanged", function(self, value)
+            local profile = GetSelectedProfile()
+            if not profile then
+                return
+            end
+
             local steps = math.floor(value / addon.COOLDOWN_PANEL_GROUP_SCALE_STEP + 0.5)
             local rounded = steps * addon.COOLDOWN_PANEL_GROUP_SCALE_STEP
-            addon.Settings:SetCooldownPanelCategoryScale(self.category, rounded)
+            addon.Settings:SetCooldownPanelCategoryScale(
+                self.category,
+                rounded,
+                profile.classToken,
+                profile.talentTab
+            )
             _G[self:GetName() .. "Text"]:SetText(string.format(
                 addon.L.COOLDOWN_PANEL_GROUP_SCALE,
                 rounded * 100
@@ -181,6 +273,7 @@ function CooldownOptions:CreateUxControls()
     self.showTimersCheck = showTimersCheck
     self.iconGapSlider = iconGapSlider
     self.groupGapSlider = groupGapSlider
+    self.buffSideDropdown = buffSideDropdown
     self.categoryControls = categoryControls
 end
 
@@ -194,19 +287,29 @@ function CooldownOptions:RefreshUxControls()
         return
     end
 
-    addon.Settings:EnsureCooldownPanelUxDefaults()
+    addon.Settings:EnsureCooldownPanelUxDefaults(profile.classToken, profile.talentTab)
 
-    self.showTimersCheck:SetChecked(addon.Settings:AreCooldownPanelTimersShown() and 1 or nil)
-    self.iconGapSlider:SetValue(addon.db.cooldownPanelIconGap)
-    self.groupGapSlider:SetValue(addon.db.cooldownPanelGroupGap)
+    local showTimers = addon.Settings:AreCooldownPanelTimersShown(
+        profile.classToken,
+        profile.talentTab
+    )
+    local iconGap = addon.Settings:GetCooldownPanelIconGap(profile.classToken, profile.talentTab)
+    local groupGap = addon.Settings:GetCooldownPanelGroupGap(profile.classToken, profile.talentTab)
+    local buffSide = addon.Settings:GetCooldownPanelBuffSide(profile.classToken, profile.talentTab)
+
+    self.showTimersCheck:SetChecked(showTimers and 1 or nil)
+    self.iconGapSlider:SetValue(iconGap)
+    self.groupGapSlider:SetValue(groupGap)
     _G[self.iconGapSlider:GetName() .. "Text"]:SetText(string.format(
         addon.L.COOLDOWN_PANEL_ICON_GAP,
-        addon.db.cooldownPanelIconGap
+        iconGap
     ))
     _G[self.groupGapSlider:GetName() .. "Text"]:SetText(string.format(
         addon.L.COOLDOWN_PANEL_GROUP_GAP,
-        addon.db.cooldownPanelGroupGap
+        groupGap
     ))
+    UIDropDownMenu_SetSelectedValue(self.buffSideDropdown, buffSide)
+    UIDropDownMenu_SetText(self.buffSideDropdown, GetBuffSideLabel(buffSide))
 
     local panelEnabled = addon.db.showCooldownPanel == true
     local index
@@ -217,7 +320,11 @@ function CooldownOptions:RefreshUxControls()
             profile.classToken,
             profile.talentTab
         )
-        local scale = addon.Settings:GetCooldownPanelCategoryScale(control.category)
+        local scale = addon.Settings:GetCooldownPanelCategoryScale(
+            control.category,
+            profile.classToken,
+            profile.talentTab
+        )
 
         control.check:SetChecked(enabled and 1 or nil)
         control.slider:SetValue(scale)
@@ -239,10 +346,12 @@ function CooldownOptions:RefreshUxControls()
         self.showTimersCheck:Enable()
         self.iconGapSlider:Enable()
         self.groupGapSlider:Enable()
+        UIDropDownMenu_EnableDropDown(self.buffSideDropdown)
     else
         self.showTimersCheck:Disable()
         self.iconGapSlider:Disable()
         self.groupGapSlider:Disable()
+        UIDropDownMenu_DisableDropDown(self.buffSideDropdown)
     end
 
     RefreshProcSoundControls(profile)

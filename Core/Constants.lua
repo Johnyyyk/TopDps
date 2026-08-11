@@ -32,6 +32,19 @@ addon.PANEL_CATEGORY_ORDER = {
     addon.PANEL_CATEGORY_COOLDOWNS,
 }
 
+addon.PANEL_MAIN_CATEGORY_ORDER = {
+    addon.PANEL_CATEGORY_PROCS,
+    addon.PANEL_CATEGORY_ABILITIES,
+    addon.PANEL_CATEGORY_COOLDOWNS,
+}
+
+addon.PANEL_BUFF_SIDE_LEFT = "LEFT"
+addon.PANEL_BUFF_SIDE_RIGHT = "RIGHT"
+addon.PANEL_BUFF_SIDE_ORDER = {
+    addon.PANEL_BUFF_SIDE_LEFT,
+    addon.PANEL_BUFF_SIDE_RIGHT,
+}
+
 addon.PANEL_BEHAVIOR_ALWAYS = "ALWAYS"
 addon.PANEL_BEHAVIOR_ACTIVE_ONLY = "ACTIVE_ONLY"
 addon.PANEL_BEHAVIOR_REQUIRED_BUFF = "REQUIRED_BUFF"
@@ -77,13 +90,19 @@ addon.DEFAULTS = {
     cooldownPanelY = -150,
     cooldownPanelIconSize = 44,
     cooldownPanelOpacity = 0.90,
-    cooldownPanelIconGap = 4,
+    cooldownPanelIconGap = 3,
     cooldownPanelGroupGap = 12,
+    cooldownPanelBuffSide = addon.PANEL_BUFF_SIDE_LEFT,
+    cooldownPanelGroupOrder = {
+        addon.PANEL_CATEGORY_PROCS,
+        addon.PANEL_CATEGORY_ABILITIES,
+        addon.PANEL_CATEGORY_COOLDOWNS,
+    },
     cooldownPanelGroupScale = {
-        [addon.PANEL_CATEGORY_BUFFS] = 0.70,
-        [addon.PANEL_CATEGORY_PROCS] = 1.10,
-        [addon.PANEL_CATEGORY_ABILITIES] = 1.00,
-        [addon.PANEL_CATEGORY_COOLDOWNS] = 0.90,
+        [addon.PANEL_CATEGORY_BUFFS] = 1.00,
+        [addon.PANEL_CATEGORY_PROCS] = 1.20,
+        [addon.PANEL_CATEGORY_ABILITIES] = 0.80,
+        [addon.PANEL_CATEGORY_COOLDOWNS] = 1.10,
     },
     cooldownElementEnabled = {},
     cooldownElementOrder = {},
