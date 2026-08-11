@@ -65,12 +65,56 @@ local function ConfigureSlider(slider, minimum, maximum, step, lowText, highText
     _G[slider:GetName() .. "High"]:SetText(highText)
 end
 
+local function CreateBuffSideDropdown(content, cursor)
+    local rowTop = Layout:TakeRow(cursor, Size.DROPDOWN_ROW_HEIGHT, Size.ROW_GAP)
+    local label, dropdown = Layout:CreateDropdownField(
+        content,
+        "TopDpsCooldownPanelBuffSideDropDown",
+        rowTop,
+        addon.L.COOLDOWN_PANEL_BUFF_SIDE
+    )
+
+    UIDropDownMenu_Initialize(dropdown, function(_, level)
+        local profile = GetSelectedProfile()
+        if not profile then
+            return
+        end
+
+        local selectedSide = addon.Settings:GetCooldownPanelBuffSide(
+            profile.classToken,
+            profile.talentTab
+        )
+        local index
+        for index = 1, #addon.PANEL_BUFF_SIDE_ORDER do
+            local side = addon.PANEL_BUFF_SIDE_ORDER[index]
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = GetBuffSideLabel(side)
+            info.value = side
+            info.checked = selectedSide == side
+            info.func = function()
+                addon.Settings:SetCooldownPanelBuffSide(
+                    side,
+                    profile.classToken,
+                    profile.talentTab
+                )
+            end
+            UIDropDownMenu_AddButton(info, level)
+        end
+    end)
+
+    return label, dropdown
+end
+
 function CooldownOptions:CreateUxControls(content, cursor)
     if self.uxControlsCreated then
         return
     end
 
     self.uxControlsCreated = true
+
+    if self.resetSpecButton then
+        Layout:ApplyButtonTextWidth(self.resetSpecButton, content)
+    end
 
     local visualHeaderY = Layout:TakeRow(cursor, Size.SECTION_ROW_HEIGHT, Size.ROW_GAP)
     Layout:CreateSectionHeader(content, addon.L.COOLDOWN_PANEL_SPEC_VISUALS, visualHeaderY)
@@ -139,7 +183,7 @@ function CooldownOptions:CreateUxControls(content, cursor)
     end)
     self:RegisterLayoutControl("slider", iconGapSlider, content)
 
-    local groupGapRowTop = Layout:TakeRow(cursor, Size.SLIDER_ROW_HEIGHT, Size.ROW_GAP)
+    local groupGapRowTop = Layout:TakeRow(cursor, Size.SLIDER_ROW_HEIGHT, Size.SECTION_GAP)
     local groupGapSlider = Layout:CreateSlider(
         content,
         "TopDpsCooldownPanelGroupGap",
@@ -176,53 +220,11 @@ function CooldownOptions:CreateUxControls(content, cursor)
     end)
     self:RegisterLayoutControl("slider", groupGapSlider, content)
 
-    local buffSideRowTop = Layout:TakeRow(cursor, Size.DROPDOWN_ROW_HEIGHT, Size.SECTION_GAP)
-    local buffSideLabel, buffSideDropdown = Layout:CreateDropdownField(
-        content,
-        "TopDpsCooldownPanelBuffSideDropDown",
-        buffSideRowTop,
-        addon.L.COOLDOWN_PANEL_BUFF_SIDE
-    )
-    self:RegisterLayoutControl(
-        "dropdown",
-        buffSideDropdown,
-        content,
-        nil,
-        buffSideLabel
-    )
-
-    UIDropDownMenu_Initialize(buffSideDropdown, function(_, level)
-        local profile = GetSelectedProfile()
-        if not profile then
-            return
-        end
-
-        local selectedSide = addon.Settings:GetCooldownPanelBuffSide(
-            profile.classToken,
-            profile.talentTab
-        )
-        local index
-        for index = 1, #addon.PANEL_BUFF_SIDE_ORDER do
-            local side = addon.PANEL_BUFF_SIDE_ORDER[index]
-            local info = UIDropDownMenu_CreateInfo()
-            info.text = GetBuffSideLabel(side)
-            info.value = side
-            info.checked = selectedSide == side
-            info.func = function()
-                addon.Settings:SetCooldownPanelBuffSide(
-                    side,
-                    profile.classToken,
-                    profile.talentTab
-                )
-            end
-            UIDropDownMenu_AddButton(info, level)
-        end
-    end)
-
     local groupsHeaderY = Layout:TakeRow(cursor, Size.SECTION_ROW_HEIGHT, Size.ROW_GAP)
     Layout:CreateSectionHeader(content, addon.L.COOLDOWN_PANEL_GROUPS, groupsHeaderY)
 
     local categoryControls = {}
+    local buffSideDropdown
     local index
     for index = 1, #addon.PANEL_CATEGORY_ORDER do
         local category = addon.PANEL_CATEGORY_ORDER[index]
@@ -250,6 +252,18 @@ function CooldownOptions:CreateUxControls(content, cursor)
             )
         end)
         self:RegisterLayoutControl("checkbox", check, content, Size.CONTENT_INSET)
+
+        if category == addon.PANEL_CATEGORY_BUFFS then
+            local buffSideLabel
+            buffSideLabel, buffSideDropdown = CreateBuffSideDropdown(content, cursor)
+            self:RegisterLayoutControl(
+                "dropdown",
+                buffSideDropdown,
+                content,
+                nil,
+                buffSideLabel
+            )
+        end
 
         local scaleRowTop = Layout:TakeRow(cursor, Size.SLIDER_ROW_HEIGHT, Size.ROW_GAP)
         local scaleSlider = Layout:CreateSlider(
