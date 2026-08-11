@@ -24,13 +24,10 @@ Layout.Size = {
     CHECKBOX_LABEL_GAP = 0,
     CHECKBOX_ROW_HEIGHT = 30,
 
-    SLIDER_LEFT_INSET = 20,
-    SLIDER_RIGHT_INSET = 20,
+    CONTROL_HORIZONTAL_INSET = 20,
     SLIDER_BAR_TOP_OFFSET = 16,
     SLIDER_ROW_HEIGHT = 46,
 
-    DROPDOWN_LEFT_OFFSET = -8,
-    DROPDOWN_RIGHT_INSET = 0,
     DROPDOWN_LABEL_TO_FRAME = 16,
     DROPDOWN_VISIBLE_CHROME_WIDTH = 50,
     DROPDOWN_ROW_HEIGHT = 48,
@@ -154,7 +151,8 @@ function Layout:ApplySliderWidth(slider, parent)
         return
     end
 
-    slider:SetWidth(math.max(1, width - self.Size.SLIDER_LEFT_INSET - self.Size.SLIDER_RIGHT_INSET))
+    local horizontalInset = self.Size.CONTROL_HORIZONTAL_INSET
+    slider:SetWidth(math.max(1, width - horizontalInset * 2))
 end
 
 function Layout:CreateSlider(parent, name, rowTop)
@@ -163,7 +161,7 @@ function Layout:CreateSlider(parent, name, rowTop)
         "TOPLEFT",
         parent,
         "TOPLEFT",
-        self.Size.SLIDER_LEFT_INSET,
+        self.Size.CONTROL_HORIZONTAL_INSET,
         rowTop - self.Size.SLIDER_BAR_TOP_OFFSET
     )
     self:ApplySliderWidth(slider, parent)
@@ -177,9 +175,8 @@ function Layout:ApplyDropdownWidth(dropdown, parent)
         return
     end
 
-    local visibleWidth = parentWidth
-        - self.Size.DROPDOWN_RIGHT_INSET
-        - self.Size.DROPDOWN_LEFT_OFFSET
+    local horizontalInset = self.Size.CONTROL_HORIZONTAL_INSET
+    local visibleWidth = parentWidth - horizontalInset * 2
     local menuWidth = visibleWidth - self.Size.DROPDOWN_VISIBLE_CHROME_WIDTH
     UIDropDownMenu_SetWidth(dropdown, math.max(1, menuWidth))
 end
@@ -190,7 +187,7 @@ function Layout:CreateDropdown(parent, name, rowTop)
         "TOPLEFT",
         parent,
         "TOPLEFT",
-        self.Size.DROPDOWN_LEFT_OFFSET,
+        self.Size.CONTROL_HORIZONTAL_INSET,
         rowTop - self.Size.DROPDOWN_LABEL_TO_FRAME
     )
     self:ApplyDropdownWidth(dropdown, parent)
