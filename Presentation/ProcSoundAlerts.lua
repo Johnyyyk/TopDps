@@ -28,8 +28,11 @@ function ProcSoundAlerts:Update(entries, states)
             local state = states[index]
             local isActive = state and state.state == "ACTIVE" or false
             local previous = self.activeStates[entry.settingId]
+            local category = addon.CooldownRegistry:GetPanelPresentation(entry)
+            local categoryEnabled = addon.Settings:IsCooldownPanelCategoryEnabled(category)
 
             if soundsEnabled
+                and categoryEnabled
                 and previous ~= nil
                 and previous == false
                 and isActive
