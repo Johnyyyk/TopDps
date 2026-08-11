@@ -8,7 +8,9 @@ end
 
 function GeneralOptions:Create()
     local panel = Widgets:CreatePanel("TopDpsOptionsPanel", addon.NAME)
-    local _, content = Widgets:CreateScrollArea(panel, "TopDpsOptionsScrollFrame", 360)
+    local content = CreateFrame("Frame", nil, panel)
+    content:SetPoint("TOPLEFT", panel, "TOPLEFT", 8, -8)
+    content:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -8, 8)
 
     local title = Widgets:CreateText(
         content,
@@ -59,8 +61,6 @@ function GeneralOptions:Create()
             UIDropDownMenu_AddButton(info, level)
         end
     end)
-
-    Widgets:CreateText(content, "GameFontHighlightSmall", 8, -286, Widgets.TEXT_WIDTH, addon.L.OPTIONS_HINT)
 
     panel:SetScript("OnShow", function()
         addon.OptionsController:Refresh()
