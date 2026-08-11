@@ -345,7 +345,7 @@ function RotationOptions:Create()
         maximumSettingsHeight = math.max(maximumSettingsHeight, viewHeight)
     end
 
-    content:SetHeight(PROVIDER_VIEW_TOP + maximumSettingsHeight + 12)
+    content:SetHeight(math.max(Widgets.PANEL_HEIGHT, PROVIDER_VIEW_TOP + maximumSettingsHeight + 12))
 
     panel:SetScript("OnShow", function()
         self:Refresh()
