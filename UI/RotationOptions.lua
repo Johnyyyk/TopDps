@@ -3,6 +3,10 @@ local RotationOptions = addon:CreateModule("RotationOptions")
 local Widgets = addon.OptionsWidgets
 
 local PROVIDER_VIEW_TOP = 618
+local CONTENT_INSET = 8
+local SLIDER_LEFT_INSET = 20
+local SLIDER_RIGHT_INSET = 12
+local DROPDOWN_CHROME_WIDTH = 32
 
 local function MakeFrameToken(value)
     return string.gsub(tostring(value or ""), "[^%w]", "")
@@ -14,6 +18,55 @@ end
 
 local function FormatCooldownLookahead(value)
     return string.format(addon.L.COOLDOWN_LOOKAHEAD_FORMAT, value)
+end
+
+local function CreateText(parent, fontObject, x, y, text)
+    local label = parent:CreateFontString(nil, "ARTWORK", fontObject)
+    label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+    label:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -CONTENT_INSET, y)
+    label:SetJustifyH("LEFT")
+    label:SetJustifyV("TOP")
+    label:SetText(text)
+
+    return label
+end
+
+local function CreateSectionHeader(parent, text, y)
+    local label = parent:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    label:SetPoint("TOPLEFT", parent, "TOPLEFT", CONTENT_INSET, y)
+    label:SetText(text)
+
+    local line = parent:CreateTexture(nil, "ARTWORK")
+    line:SetTexture(1, 1, 1, 0.18)
+    line:SetPoint("LEFT", label, "RIGHT", 10, 0)
+    line:SetPoint("RIGHT", parent, "RIGHT", -CONTENT_INSET, 0)
+    line:SetHeight(1)
+
+    return label
+end
+
+local function CreateCheckButton(parent, name, x, y, text)
+    local check = Widgets:CreateCheckButton(parent, name, x, y, text)
+    check.label:ClearAllPoints()
+    check.label:SetPoint("TOPLEFT", check, "TOPRIGHT", 4, -4)
+    check.label:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -CONTENT_INSET, y - 4)
+
+    return check
+end
+
+local function AnchorSlider(slider, parent, y)
+    slider:ClearAllPoints()
+    slider:SetPoint("TOPLEFT", parent, "TOPLEFT", SLIDER_LEFT_INSET, y)
+    slider:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -SLIDER_RIGHT_INSET, y)
+end
+
+local function ApplyDropdownWidth(dropdown, parent)
+    local width = parent:GetWidth()
+    if not width or width <= DROPDOWN_CHROME_WIDTH then
+        return
+    end
+
+    UIDropDownMenu_SetWidth(dropdown, width - DROPDOWN_CHROME_WIDTH)
 end
 
 local function GetSettingLabel(provider, definition)
@@ -79,7 +132,7 @@ function RotationOptions:CreateCheckbox(view, provider, definition, index, y)
         .. MakeFrameToken(provider.id)
         .. MakeFrameToken(definition.key)
         .. tostring(index)
-    local check = Widgets:CreateCheckButton(view, name, 6, y, GetSettingLabel(provider, definition))
+    local check = CreateCheckButton(view, name, 6, y, GetSettingLabel(provider, definition))
 
     check:SetScript("OnClick", function(self)
         provider:SetSetting(definition.key, Widgets:GetCheckValue(self))
@@ -98,8 +151,7 @@ function RotationOptions:CreateSlider(view, provider, definition, index, y)
         .. MakeFrameToken(definition.key)
         .. tostring(index)
     local slider = CreateFrame("Slider", name, view, "OptionsSliderTemplate")
-    slider:SetPoint("TOPLEFT", view, "TOPLEFT", 20, y)
-    slider:SetWidth(300)
+    AnchorSlider(slider, view, y)
     slider:SetMinMaxValues(definition.min, definition.max)
     slider:SetValueStep(definition.step or 1)
 
@@ -122,7 +174,7 @@ function RotationOptions:CreateSlider(view, provider, definition, index, y)
 end
 
 function RotationOptions:CreateDropdown(view, provider, definition, index, y)
-    Widgets:CreateText(view, "GameFontNormal", 8, y, Widgets.TEXT_WIDTH, GetSettingLabel(provider, definition))
+    CreateText(view, "GameFontNormal", CONTENT_INSET, y, GetSettingLabel(provider, definition))
 
     local name = "TopDpsRotation"
         .. MakeFrameToken(provider.id)
@@ -130,7 +182,6 @@ function RotationOptions:CreateDropdown(view, provider, definition, index, y)
         .. tostring(index)
     local dropdown = CreateFrame("Frame", name, view, "UIDropDownMenuTemplate")
     dropdown:SetPoint("TOPLEFT", view, "TOPLEFT", -8, y - 16)
-    UIDropDownMenu_SetWidth(dropdown, 270)
 
     UIDropDownMenu_Initialize(dropdown, function(_, level)
         local valueIndex
@@ -151,13 +202,14 @@ function RotationOptions:CreateDropdown(view, provider, definition, index, y)
         type = "dropdown",
         definition = definition,
         frame = dropdown,
+        layoutParent = view,
     }, y - 70
 end
 
 function RotationOptions:CreateProviderView(content, provider)
     local view = CreateFrame("Frame", nil, content)
     view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -PROVIDER_VIEW_TOP)
-    view:SetWidth(Widgets.SCROLL_CONTENT_WIDTH)
+    view:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -PROVIDER_VIEW_TOP)
 
     local controls = {}
     local definitions = provider:GetSettingsDefinition()
@@ -167,7 +219,7 @@ function RotationOptions:CreateProviderView(content, provider)
     for index = 1, #definitions do
         local definition = definitions[index]
         if definition.type == "header" then
-            Widgets:CreateSectionHeader(view, GetSettingLabel(provider, definition), y)
+            CreateSectionHeader(view, GetSettingLabel(provider, definition), y)
             y = y - 34
         elseif definition.type == "checkbox" then
             local control
@@ -197,30 +249,20 @@ function RotationOptions:Create()
     local panel = Widgets:CreatePanel("TopDpsRotationOptionsPanel", addon.L.ROTATION_PAGE, addon.NAME)
     local providers = addon.SpecRegistry:GetAll()
     local providerViews = {}
-    local _, content = Widgets:CreateScrollArea(
+    local scrollFrame, content = Widgets:CreateScrollArea(
         panel,
         "TopDpsRotationOptionsScrollFrame",
         PROVIDER_VIEW_TOP + 320
     )
 
-    Widgets:CreateText(
-        content,
-        "GameFontNormalLarge",
-        8,
-        -8,
-        Widgets.TEXT_WIDTH,
-        addon.NAME .. " - " .. addon.L.ROTATION_PAGE
-    )
-    Widgets:CreateText(
-        content,
-        "GameFontHighlightSmall",
-        8,
-        -40,
-        Widgets.TEXT_WIDTH,
-        addon.L.ROTATION_DESCRIPTION
-    )
+    content:ClearAllPoints()
+    content:SetPoint("TOPLEFT", scrollFrame, "TOPLEFT", 0, 0)
+    content:SetPoint("TOPRIGHT", scrollFrame, "TOPRIGHT", 0, 0)
 
-    Widgets:CreateSectionHeader(content, addon.L.GENERAL_SETTINGS, -92)
+    CreateText(content, "GameFontNormalLarge", CONTENT_INSET, -8, addon.NAME .. " - " .. addon.L.ROTATION_PAGE)
+    CreateText(content, "GameFontHighlightSmall", CONTENT_INSET, -40, addon.L.ROTATION_DESCRIPTION)
+
+    CreateSectionHeader(content, addon.L.GENERAL_SETTINGS, -92)
 
     local cooldownLookaheadSlider = CreateFrame(
         "Slider",
@@ -228,8 +270,7 @@ function RotationOptions:Create()
         content,
         "OptionsSliderTemplate"
     )
-    cooldownLookaheadSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -126)
-    cooldownLookaheadSlider:SetWidth(300)
+    AnchorSlider(cooldownLookaheadSlider, content, -126)
     cooldownLookaheadSlider:SetMinMaxValues(addon.COOLDOWN_LOOKAHEAD_MIN, addon.COOLDOWN_LOOKAHEAD_MAX)
     cooldownLookaheadSlider:SetValueStep(addon.COOLDOWN_LOOKAHEAD_STEP)
 
@@ -243,12 +284,11 @@ function RotationOptions:Create()
         _G[self:GetName() .. "Text"]:SetText(FormatCooldownLookahead(rounded))
     end)
 
-    Widgets:CreateSectionHeader(content, addon.L.VISUAL_SETTINGS, -184)
-    Widgets:CreateText(content, "GameFontNormal", 8, -212, Widgets.TEXT_WIDTH, addon.L.HIGHLIGHT_STYLE)
+    CreateSectionHeader(content, addon.L.VISUAL_SETTINGS, -184)
+    CreateText(content, "GameFontNormal", CONTENT_INSET, -212, addon.L.HIGHLIGHT_STYLE)
 
     local highlightDropdown = CreateFrame("Frame", "TopDpsOptionsHighlightDropDown", content, "UIDropDownMenuTemplate")
     highlightDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -228)
-    UIDropDownMenu_SetWidth(highlightDropdown, 270)
 
     UIDropDownMenu_Initialize(highlightDropdown, function(_, level)
         local index
@@ -265,7 +305,7 @@ function RotationOptions:Create()
         end
     end)
 
-    local centerIconsCheck = Widgets:CreateCheckButton(
+    local centerIconsCheck = CreateCheckButton(
         content,
         "TopDpsOptionsCenterIcons",
         6,
@@ -277,8 +317,7 @@ function RotationOptions:Create()
     end)
 
     local opacitySlider = CreateFrame("Slider", "TopDpsOptionsCenterOpacity", content, "OptionsSliderTemplate")
-    opacitySlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -340)
-    opacitySlider:SetWidth(300)
+    AnchorSlider(opacitySlider, content, -340)
     opacitySlider:SetMinMaxValues(0.2, 1)
     opacitySlider:SetValueStep(0.05)
 
@@ -292,8 +331,7 @@ function RotationOptions:Create()
     end)
 
     local sizeSlider = CreateFrame("Slider", "TopDpsOptionsCenterSize", content, "OptionsSliderTemplate")
-    sizeSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -398)
-    sizeSlider:SetWidth(300)
+    AnchorSlider(sizeSlider, content, -398)
     sizeSlider:SetMinMaxValues(addon.CENTER_ICON_SIZE_MIN, addon.CENTER_ICON_SIZE_MAX)
     sizeSlider:SetValueStep(2)
 
@@ -305,10 +343,10 @@ function RotationOptions:Create()
         addon.Settings:SetCenterIconsSize(math.floor(value / 2 + 0.5) * 2)
     end)
 
-    Widgets:CreateSectionHeader(content, addon.L.ROTATION_SETTINGS, -466)
+    CreateSectionHeader(content, addon.L.ROTATION_SETTINGS, -466)
 
-    local activeSpecText = Widgets:CreateText(content, "GameFontNormal", 8, -498, Widgets.TEXT_WIDTH, "")
-    Widgets:CreateText(content, "GameFontNormal", 8, -532, Widgets.TEXT_WIDTH, addon.L.CONFIGURE_SPEC)
+    local activeSpecText = CreateText(content, "GameFontNormal", CONTENT_INSET, -498, "")
+    CreateText(content, "GameFontNormal", CONTENT_INSET, -532, addon.L.CONFIGURE_SPEC)
 
     local providerDropdown = CreateFrame(
         "Frame",
@@ -317,7 +355,6 @@ function RotationOptions:Create()
         "UIDropDownMenuTemplate"
     )
     providerDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -548)
-    UIDropDownMenu_SetWidth(providerDropdown, 270)
 
     UIDropDownMenu_Initialize(providerDropdown, function(_, level)
         local index
@@ -345,7 +382,7 @@ function RotationOptions:Create()
         maximumSettingsHeight = math.max(maximumSettingsHeight, viewHeight)
     end
 
-    content:SetHeight(math.max(Widgets.PANEL_HEIGHT, PROVIDER_VIEW_TOP + maximumSettingsHeight + 12))
+    content:SetHeight(math.max(scrollFrame:GetHeight(), PROVIDER_VIEW_TOP + maximumSettingsHeight + 12))
 
     panel:SetScript("OnShow", function()
         self:Refresh()
@@ -354,6 +391,8 @@ function RotationOptions:Create()
     InterfaceOptions_AddCategory(panel)
 
     self.panel = panel
+    self.scrollFrame = scrollFrame
+    self.content = content
     self.providers = providers
     self.providerViews = providerViews
     self.providerDropdown = providerDropdown
@@ -397,6 +436,7 @@ function RotationOptions:RefreshControl(provider, control)
         control.frame:SetValue(value)
         _G[control.frame:GetName() .. "Text"]:SetText(FormatSliderText(provider, definition, value))
     elseif control.type == "dropdown" then
+        ApplyDropdownWidth(control.frame, control.layoutParent)
         UIDropDownMenu_SetSelectedValue(control.frame, value)
         UIDropDownMenu_SetText(control.frame, GetDropdownValueText(definition, value))
     end
@@ -406,6 +446,9 @@ function RotationOptions:Refresh()
     if not self.panel or not addon.db then
         return
     end
+
+    ApplyDropdownWidth(self.highlightDropdown, self.content)
+    ApplyDropdownWidth(self.providerDropdown, self.content)
 
     self.cooldownLookaheadSlider:SetValue(addon.db.cooldownLookahead)
     _G[self.cooldownLookaheadSlider:GetName() .. "Text"]:SetText(
