@@ -2,6 +2,8 @@ local addon = TopDps
 local RotationOptions = addon:CreateModule("RotationOptions")
 local Widgets = addon.OptionsWidgets
 
+local PROVIDER_VIEW_TOP = 618
+
 local function MakeFrameToken(value)
     return string.gsub(tostring(value or ""), "[^%w]", "")
 end
@@ -116,7 +118,7 @@ function RotationOptions:CreateSlider(view, provider, definition, index, y)
         type = "slider",
         definition = definition,
         frame = slider,
-    }, y - 76
+    }, y - 60
 end
 
 function RotationOptions:CreateDropdown(view, provider, definition, index, y)
@@ -154,7 +156,7 @@ end
 
 function RotationOptions:CreateProviderView(content, provider)
     local view = CreateFrame("Frame", nil, content)
-    view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -704)
+    view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -PROVIDER_VIEW_TOP)
     view:SetWidth(Widgets.SCROLL_CONTENT_WIDTH)
 
     local controls = {}
@@ -182,30 +184,23 @@ function RotationOptions:CreateProviderView(content, provider)
         end
     end
 
-    view:SetHeight(math.max(1, -y + 20))
+    local viewHeight = math.max(1, -y + 20)
+    view:SetHeight(viewHeight)
 
     return {
         frame = view,
         controls = controls,
-    }, -y
+    }, viewHeight
 end
 
 function RotationOptions:Create()
     local panel = Widgets:CreatePanel("TopDpsRotationOptionsPanel", addon.L.ROTATION_PAGE, addon.NAME)
     local providers = addon.SpecRegistry:GetAll()
-    local maximumSettingsHeight = 320
     local providerViews = {}
-
-    local providerIndex
-    for providerIndex = 1, #providers do
-        local definitions = providers[providerIndex]:GetSettingsDefinition()
-        maximumSettingsHeight = math.max(maximumSettingsHeight, #definitions * 76)
-    end
-
     local _, content = Widgets:CreateScrollArea(
         panel,
         "TopDpsRotationOptionsScrollFrame",
-        760 + maximumSettingsHeight
+        PROVIDER_VIEW_TOP + 320
     )
 
     Widgets:CreateText(
@@ -233,7 +228,7 @@ function RotationOptions:Create()
         content,
         "OptionsSliderTemplate"
     )
-    cooldownLookaheadSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -132)
+    cooldownLookaheadSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -126)
     cooldownLookaheadSlider:SetWidth(300)
     cooldownLookaheadSlider:SetMinMaxValues(addon.COOLDOWN_LOOKAHEAD_MIN, addon.COOLDOWN_LOOKAHEAD_MAX)
     cooldownLookaheadSlider:SetValueStep(addon.COOLDOWN_LOOKAHEAD_STEP)
@@ -248,11 +243,11 @@ function RotationOptions:Create()
         _G[self:GetName() .. "Text"]:SetText(FormatCooldownLookahead(rounded))
     end)
 
-    Widgets:CreateSectionHeader(content, addon.L.VISUAL_SETTINGS, -210)
-    Widgets:CreateText(content, "GameFontNormal", 8, -238, Widgets.TEXT_WIDTH, addon.L.HIGHLIGHT_STYLE)
+    Widgets:CreateSectionHeader(content, addon.L.VISUAL_SETTINGS, -184)
+    Widgets:CreateText(content, "GameFontNormal", 8, -212, Widgets.TEXT_WIDTH, addon.L.HIGHLIGHT_STYLE)
 
     local highlightDropdown = CreateFrame("Frame", "TopDpsOptionsHighlightDropDown", content, "UIDropDownMenuTemplate")
-    highlightDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -254)
+    highlightDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -228)
     UIDropDownMenu_SetWidth(highlightDropdown, 270)
 
     UIDropDownMenu_Initialize(highlightDropdown, function(_, level)
@@ -274,7 +269,7 @@ function RotationOptions:Create()
         content,
         "TopDpsOptionsCenterIcons",
         6,
-        -314,
+        -286,
         addon.L.SHOW_CENTER_ICONS
     )
     centerIconsCheck:SetScript("OnClick", function(self)
@@ -282,7 +277,7 @@ function RotationOptions:Create()
     end)
 
     local opacitySlider = CreateFrame("Slider", "TopDpsOptionsCenterOpacity", content, "OptionsSliderTemplate")
-    opacitySlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -382)
+    opacitySlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -340)
     opacitySlider:SetWidth(300)
     opacitySlider:SetMinMaxValues(0.2, 1)
     opacitySlider:SetValueStep(0.05)
@@ -297,7 +292,7 @@ function RotationOptions:Create()
     end)
 
     local sizeSlider = CreateFrame("Slider", "TopDpsOptionsCenterSize", content, "OptionsSliderTemplate")
-    sizeSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -456)
+    sizeSlider:SetPoint("TOPLEFT", content, "TOPLEFT", 20, -398)
     sizeSlider:SetWidth(300)
     sizeSlider:SetMinMaxValues(addon.CENTER_ICON_SIZE_MIN, addon.CENTER_ICON_SIZE_MAX)
     sizeSlider:SetValueStep(2)
@@ -310,10 +305,10 @@ function RotationOptions:Create()
         addon.Settings:SetCenterIconsSize(math.floor(value / 2 + 0.5) * 2)
     end)
 
-    Widgets:CreateSectionHeader(content, addon.L.ROTATION_SETTINGS, -548)
+    Widgets:CreateSectionHeader(content, addon.L.ROTATION_SETTINGS, -466)
 
-    local activeSpecText = Widgets:CreateText(content, "GameFontNormal", 8, -580, Widgets.TEXT_WIDTH, "")
-    Widgets:CreateText(content, "GameFontNormal", 8, -614, Widgets.TEXT_WIDTH, addon.L.CONFIGURE_SPEC)
+    local activeSpecText = Widgets:CreateText(content, "GameFontNormal", 8, -498, Widgets.TEXT_WIDTH, "")
+    Widgets:CreateText(content, "GameFontNormal", 8, -532, Widgets.TEXT_WIDTH, addon.L.CONFIGURE_SPEC)
 
     local providerDropdown = CreateFrame(
         "Frame",
@@ -321,7 +316,7 @@ function RotationOptions:Create()
         content,
         "UIDropDownMenuTemplate"
     )
-    providerDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -630)
+    providerDropdown:SetPoint("TOPLEFT", content, "TOPLEFT", -8, -548)
     UIDropDownMenu_SetWidth(providerDropdown, 270)
 
     UIDropDownMenu_Initialize(providerDropdown, function(_, level)
@@ -340,12 +335,17 @@ function RotationOptions:Create()
         end
     end)
 
+    local maximumSettingsHeight = 1
+    local providerIndex
     for providerIndex = 1, #providers do
         local provider = providers[providerIndex]
-        local view = self:CreateProviderView(content, provider)
+        local view, viewHeight = self:CreateProviderView(content, provider)
         view.frame:Hide()
         providerViews[provider.id] = view
+        maximumSettingsHeight = math.max(maximumSettingsHeight, viewHeight)
     end
+
+    content:SetHeight(PROVIDER_VIEW_TOP + maximumSettingsHeight + 12)
 
     panel:SetScript("OnShow", function()
         self:Refresh()
