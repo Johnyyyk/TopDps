@@ -46,7 +46,7 @@ local function RefreshProcSoundControls(profile)
                 profile.talentTab
             )
 
-            if addon.db.showCooldownPanel
+            if addon.Settings:IsPanelEnabled()
                 and elementEnabled
                 and procsEnabled
                 and masterSoundEnabled then
@@ -378,7 +378,7 @@ function CooldownOptions:RefreshUxControls()
     UIDropDownMenu_SetSelectedValue(self.buffSideDropdown, buffSide)
     UIDropDownMenu_SetText(self.buffSideDropdown, GetBuffSideLabel(buffSide))
 
-    local panelEnabled = addon.db.showCooldownPanel == true
+    local panelEnabled = addon.Settings:IsPanelEnabled()
     local index
     for index = 1, #(self.categoryControls or {}) do
         local control = self.categoryControls[index]

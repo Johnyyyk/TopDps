@@ -61,7 +61,7 @@ function DebugOptions:Create()
         addon.L.DEBUG_CHAT_RECOMMENDATIONS
     )
     chatCheck:SetScript("OnClick", function(self)
-        addon.db.debugChatRecommendations = Widgets:GetCheckValue(self)
+        addon.db.debug.chatRecommendations = Widgets:GetCheckValue(self)
         addon.RecommendationPresenter:ResetChatSignature()
     end)
 
@@ -75,7 +75,7 @@ function DebugOptions:Create()
     )
     loggingCheck:SetScript("OnClick", function(self)
         local enabled = Widgets:GetCheckValue(self)
-        addon.db.debugLogging = enabled
+        addon.db.debug.logging = enabled
         addon.Logger:Add("INFO", enabled and addon.L.DEBUG_LOG_ENABLED or addon.L.DEBUG_LOG_DISABLED, true)
 
         if enabled then
@@ -197,8 +197,8 @@ function DebugOptions:Refresh()
     end
 
     self:ApplyLayout()
-    self.chatCheck:SetChecked(addon.db.debugChatRecommendations and 1 or nil)
-    self.loggingCheck:SetChecked(addon.db.debugLogging and 1 or nil)
+    self.chatCheck:SetChecked(addon.db.debug.chatRecommendations and 1 or nil)
+    self.loggingCheck:SetChecked(addon.db.debug.logging and 1 or nil)
 end
 
 function DebugOptions:RefreshLog(force)

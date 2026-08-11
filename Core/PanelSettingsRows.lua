@@ -101,23 +101,3 @@ function Settings:SetCooldownPanelIconsPerRow(category, value, classToken, talen
         addon.CooldownPanel:ApplyLayout(addon.CooldownPanel.states)
     end
 end
-
-local originalResetCooldownPanelSpecSettings = Settings.ResetCooldownPanelSpecSettings
-function Settings:ResetCooldownPanelSpecSettings(classToken, talentTab)
-    classToken, talentTab = self:ResolveCooldownPanelSpec(classToken, talentTab)
-    originalResetCooldownPanelSpecSettings(self, classToken, talentTab)
-
-    local specSettings = self:GetCooldownPanelSpecSettings(classToken, talentTab)
-    if specSettings then
-        specSettings.iconsPerRow = nil
-    end
-
-    if self:IsCurrentCooldownPanelSpec(classToken, talentTab) and addon.CooldownPanel then
-        addon.CooldownPanel:InvalidateLayout()
-        addon.CooldownPanel:ApplyLayout(addon.CooldownPanel.states)
-    end
-
-    if addon.OptionsController then
-        addon.OptionsController:Refresh()
-    end
-end

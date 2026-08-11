@@ -62,38 +62,6 @@ local EQUIPMENT_SOURCES = {
     },
 }
 
-local function GetGroupOrder(group)
-    return addon.COOLDOWN_GROUP_ORDER[group] or 100
-end
-
-local function SortEntries(entries, classToken, talentTab)
-    table.sort(entries, function(left, right)
-        local leftGroup = GetGroupOrder(left.group)
-        local rightGroup = GetGroupOrder(right.group)
-        if leftGroup ~= rightGroup then
-            return leftGroup < rightGroup
-        end
-
-        local leftOrder = addon.Settings:GetCooldownElementOrder(
-            left.settingId,
-            left.order,
-            classToken,
-            talentTab
-        )
-        local rightOrder = addon.Settings:GetCooldownElementOrder(
-            right.settingId,
-            right.order,
-            classToken,
-            talentTab
-        )
-        if leftOrder ~= rightOrder then
-            return leftOrder < rightOrder
-        end
-
-        return tostring(left.settingId) < tostring(right.settingId)
-    end)
-end
-
 local function GetSourceName(source)
     return addon.L[source.labelKey] or source.settingId
 end
@@ -184,9 +152,8 @@ function CooldownTracker:CreateConfigurableEquipmentProcEntry(source)
     }
 end
 
-local originalCreateClassEntries = CooldownTracker.CreateClassEntries
-function CooldownTracker:CreateClassEntries()
-    local entries = originalCreateClassEntries(self)
+function CooldownTracker:CreateEquipmentProcEntries()
+    local entries = {}
     local index
 
     for index = 1, #EQUIPMENT_SOURCES do
@@ -199,16 +166,14 @@ function CooldownTracker:CreateClassEntries()
     return entries
 end
 
-local originalGetConfigurableEntriesForProfile = CooldownTracker.GetConfigurableEntriesForProfile
-function CooldownTracker:GetConfigurableEntriesForProfile(classToken, talentTab)
-    local entries = originalGetConfigurableEntriesForProfile(self, classToken, talentTab)
+function CooldownTracker:CreateConfigurableEquipmentProcEntries()
+    local entries = {}
     local index
 
     for index = 1, #EQUIPMENT_SOURCES do
         entries[#entries + 1] = self:CreateConfigurableEquipmentProcEntry(EQUIPMENT_SOURCES[index])
     end
 
-    SortEntries(entries, classToken, talentTab)
     return entries
 end
 
@@ -223,15 +188,15 @@ function CooldownTracker:RememberEquipmentProcCooldown(entry, aura)
     local duration = aura.duration or procData.durationFallback or 0
     local elapsed = math.max(0, duration - remaining)
     local readyAt = nowEpoch - elapsed + procData.internalCooldown
-    local current = addon.db.cooldownProcReadyAt[entry.procKey]
+    local current = addon.db.panel.procReadyAt[entry.procKey]
 
     if not current or current <= nowEpoch then
-        addon.db.cooldownProcReadyAt[entry.procKey] = readyAt
+        addon.db.panel.procReadyAt[entry.procKey] = readyAt
     end
 end
 
 function CooldownTracker:GetRememberedEquipmentProcState(entry)
-    local readyAt = addon.db.cooldownProcReadyAt[entry.procKey]
+    local readyAt = addon.db.panel.procReadyAt[entry.procKey]
     if not readyAt then
         return nil
     end
@@ -239,7 +204,7 @@ function CooldownTracker:GetRememberedEquipmentProcState(entry)
     local nowEpoch = time()
     local remaining = readyAt - nowEpoch
     if remaining <= 0 then
-        addon.db.cooldownProcReadyAt[entry.procKey] = nil
+        addon.db.panel.procReadyAt[entry.procKey] = nil
         return nil
     end
 
@@ -312,7 +277,7 @@ function CooldownTracker:HandleEquipmentProcCombatLog(...)
                 if triggerSpellIds[triggerIndex] == spellId then
                     local internalCooldown = tonumber(procData.internalCooldown) or 0
                     if internalCooldown > 0 then
-                        addon.db.cooldownProcReadyAt[entry.procKey] = time() + internalCooldown
+                        addon.db.panel.procReadyAt[entry.procKey] = time() + internalCooldown
                     end
                     break
                 end
@@ -326,46 +291,3 @@ equipmentEventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 equipmentEventFrame:SetScript("OnEvent", function(_, _, ...)
     CooldownTracker:HandleEquipmentProcCombatLog(...)
 end)
-
-function CooldownTracker:Update()
-    if not addon.CooldownPanel or not addon.db then
-        return
-    end
-
-    local previewUnlocked = self:IsPanelAllowedOutsideCombat()
-    if not addon.db.showCooldownPanel or (not addon.Settings:IsModeActive() and not previewUnlocked) then
-        addon.CooldownPanel:Hide()
-        return
-    end
-
-    if addon.Settings:IsCooldownPanelCombatOnly() and not UnitAffectingCombat("player") and not previewUnlocked then
-        addon.CooldownPanel:Hide()
-        return
-    end
-
-    if #self.entries == 0 then
-        addon.CooldownPanel:Hide()
-        return
-    end
-
-    self:ScanPlayerAuras()
-
-    local states = {}
-    local index
-    for index = 1, #self.entries do
-        local entry = self.entries[index]
-        if entry.type == "spell" then
-            states[index] = self:GetSpellState(entry)
-        elseif entry.type == "aura" then
-            states[index] = self:GetAuraState(entry)
-        elseif entry.type == "counter" then
-            states[index] = self:GetCounterState(entry)
-        elseif entry.type == "trinket" then
-            states[index] = self:GetTrinketState(entry)
-        elseif entry.type == "equipmentProc" then
-            states[index] = self:GetEquipmentProcState(entry)
-        end
-    end
-
-    addon.CooldownPanel:Update(states)
-end

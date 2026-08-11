@@ -18,7 +18,7 @@ function RecommendationPresenter:Set(provider, category, entries)
     self.lastSignature = signature
     addon.Logger:Info("Recommendation: %s", tostring(recommendationName))
 
-    if recommendationName and addon.db.debugChatRecommendations and DEFAULT_CHAT_FRAME then
+    if recommendationName and addon.db.debug.chatRecommendations and DEFAULT_CHAT_FRAME then
         DEFAULT_CHAT_FRAME:AddMessage(
             string.format("|cffffd200%s:|r %s", addon.NAME, string.format(addon.L.NEXT_CAST, recommendationName))
         )

@@ -317,7 +317,7 @@ function RotationOptions:Create()
             local info = UIDropDownMenu_CreateInfo()
             info.text = GetHighlightStyleText(style)
             info.value = style
-            info.checked = addon.db.highlightStyle == style
+            info.checked = addon.db.rotation.highlightStyle == style
             info.func = function()
                 addon.Settings:SetHighlightStyle(style)
             end
@@ -489,19 +489,19 @@ function RotationOptions:Refresh()
 
     self.characterEnabledCheck:SetChecked(addon.Settings:IsRotationEnabled() and 1 or nil)
 
-    self.cooldownLookaheadSlider:SetValue(addon.db.cooldownLookahead)
+    self.cooldownLookaheadSlider:SetValue(addon.db.rotation.cooldownLookahead)
     _G[self.cooldownLookaheadSlider:GetName() .. "Text"]:SetText(
-        FormatCooldownLookahead(addon.db.cooldownLookahead)
+        FormatCooldownLookahead(addon.db.rotation.cooldownLookahead)
     )
 
-    UIDropDownMenu_SetSelectedValue(self.highlightDropdown, addon.db.highlightStyle)
-    UIDropDownMenu_SetText(self.highlightDropdown, GetHighlightStyleText(addon.db.highlightStyle))
+    UIDropDownMenu_SetSelectedValue(self.highlightDropdown, addon.db.rotation.highlightStyle)
+    UIDropDownMenu_SetText(self.highlightDropdown, GetHighlightStyleText(addon.db.rotation.highlightStyle))
 
-    self.centerIconsCheck:SetChecked(addon.db.showCenterIcons and 1 or nil)
-    self.opacitySlider:SetValue(addon.db.centerIconsOpacity)
-    self.sizeSlider:SetValue(addon.db.centerIconsSize)
+    self.centerIconsCheck:SetChecked(addon.db.rotation.centerIcons.enabled and 1 or nil)
+    self.opacitySlider:SetValue(addon.db.rotation.centerIcons.opacity)
+    self.sizeSlider:SetValue(addon.db.rotation.centerIcons.size)
 
-    if addon.db.showCenterIcons then
+    if addon.db.rotation.centerIcons.enabled then
         self.opacitySlider:Enable()
         self.sizeSlider:Enable()
     else

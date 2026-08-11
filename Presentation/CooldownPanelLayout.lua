@@ -2,6 +2,10 @@ local addon = TopDps
 local CooldownPanel = addon.CooldownPanel
 
 function CooldownPanel:IsEntryVisible(entry, state, previewUnlocked)
+    if not state then
+        return false
+    end
+
     local category, behavior = self:GetPresentation(entry)
     if not addon.Settings:IsCooldownPanelCategoryEnabled(category) then
         return false
@@ -46,7 +50,7 @@ end
 
 function CooldownPanel:GetIconSize(entry, visualGroup)
     local category = self:GetPresentation(entry)
-    local baseSize = addon.db.cooldownPanelIconSize or addon.DEFAULTS.cooldownPanelIconSize
+    local baseSize = addon.db.panel.iconSize or addon.DEFAULTS.cooldownPanelIconSize
     local scale = addon.Settings:GetCooldownPanelCategoryScale(category)
 
     if visualGroup == self.WARNING_GROUP then
@@ -67,6 +71,12 @@ local function CreateBuckets(panel)
 end
 
 function CooldownPanel:BuildBlock(items, visualGroup, iconGap)
+    local category = visualGroup
+    if visualGroup == self.WARNING_GROUP then
+        category = addon.PANEL_CATEGORY_BUFFS
+    end
+
+    local maximumIcons = addon.Settings:GetCooldownPanelIconsPerRow(category)
     local block = {
         visualGroup = visualGroup,
         rows = {},
@@ -83,7 +93,7 @@ function CooldownPanel:BuildBlock(items, visualGroup, iconGap)
         }
         local count = 0
 
-        while itemIndex <= #items and count < self.MAX_ICONS_PER_ROW do
+        while itemIndex <= #items and count < maximumIcons do
             local item = items[itemIndex]
             row.items[#row.items + 1] = item
             if count > 0 then
@@ -109,7 +119,7 @@ end
 
 function CooldownPanel:BuildLayoutSections(states)
     local buckets = CreateBuckets(self)
-    local previewUnlocked = addon.db.cooldownPanelLocked == false
+    local previewUnlocked = addon.db.panel.locked == false
     local iconGap = addon.Settings:GetCooldownPanelIconGap()
     local groupGap = addon.Settings:GetCooldownPanelGroupGap()
     local buffSide = addon.Settings:GetCooldownPanelBuffSide()
@@ -264,7 +274,7 @@ function CooldownPanel:ApplyLayout(states)
         contentHeight = contentHeight + section.gapBefore + section.height
     end
 
-    local baseSize = addon.db.cooldownPanelIconSize or addon.DEFAULTS.cooldownPanelIconSize
+    local baseSize = addon.db.panel.iconSize or addon.DEFAULTS.cooldownPanelIconSize
     local width = math.max(baseSize + self.PADDING * 2, maximumWidth + self.PADDING * 2)
     local height = math.max(baseSize + self.PADDING * 2, contentHeight + self.PADDING * 2)
 
@@ -315,15 +325,15 @@ function CooldownPanel:ApplyLayout(states)
 
     self.frame:SetWidth(width)
     self.frame:SetHeight(height)
-    self.frame:SetAlpha(addon.db.cooldownPanelOpacity or addon.DEFAULTS.cooldownPanelOpacity)
+    self.frame:SetAlpha(addon.db.panel.opacity or addon.DEFAULTS.cooldownPanelOpacity)
 
     self.frame:ClearAllPoints()
     self.frame:SetPoint(
         "CENTER",
         UIParent,
         "CENTER",
-        addon.db.cooldownPanelX or addon.DEFAULTS.cooldownPanelX,
-        addon.db.cooldownPanelY or addon.DEFAULTS.cooldownPanelY
+        addon.db.panel.position.x or addon.DEFAULTS.cooldownPanelX,
+        addon.db.panel.position.y or addon.DEFAULTS.cooldownPanelY
     )
 
     return visibleCount

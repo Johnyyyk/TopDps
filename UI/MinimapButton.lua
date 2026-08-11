@@ -33,12 +33,16 @@ local function GetModeText(mode)
     return addon.L["MODE_" .. mode] or mode
 end
 
+local function GetStateText(enabled)
+    return enabled and addon.L.STATE_ENABLED or addon.L.STATE_DISABLED
+end
+
 function MinimapButton:UpdatePosition()
     if not self.button or not addon.db then
         return
     end
 
-    local angle = tonumber(addon.db.minimapAngle) or addon.DEFAULTS.minimapAngle
+    local angle = tonumber(addon.db.minimap.angle) or addon.DEFAULTS.minimapAngle
     local radians = math.rad(angle)
     local x = math.cos(radians) * addon.MINIMAP_BUTTON_RADIUS
     local y = math.sin(radians) * addon.MINIMAP_BUTTON_RADIUS
@@ -65,7 +69,7 @@ function MinimapButton:UpdateAngleFromCursor()
         angle = angle + 360
     end
 
-    addon.db.minimapAngle = angle
+    addon.db.minimap.angle = angle
     self:UpdatePosition()
 end
 
@@ -81,11 +85,23 @@ function MinimapButton:ShowMenu(anchor)
             notCheckable = true,
         },
         {
-            text = addon.L.ENABLED,
-            checked = addon.db.enabled,
+            text = addon.L.ROTATION_PAGE,
+            checked = addon.Settings:IsRotationEnabled(),
             func = function()
-                addon.Settings:SetEnabled(not addon.db.enabled)
+                addon.Settings:SetRotationEnabled(not addon.Settings:IsRotationEnabled())
             end,
+        },
+        {
+            text = addon.L.COOLDOWN_PAGE,
+            checked = addon.Settings:IsPanelEnabled(),
+            func = function()
+                addon.Settings:SetCooldownPanelEnabled(not addon.Settings:IsPanelEnabled())
+            end,
+        },
+        {
+            text = addon.L.MODE,
+            isTitle = true,
+            notCheckable = true,
         },
     }
 
@@ -140,7 +156,7 @@ function MinimapButton:Initialize()
     button:SetScript("OnDragStop", function(self)
         self:SetScript("OnUpdate", nil)
         MinimapButton.ignoreClickUntil = GetTime() + 0.25
-        addon.Logger:Info("Minimap angle changed: %.1f", tonumber(addon.db.minimapAngle) or 0)
+        addon.Logger:Info("Minimap angle changed: %.1f", tonumber(addon.db.minimap.angle) or 0)
     end)
 
     button:SetScript("OnClick", function(self, mouseButton)
@@ -159,7 +175,13 @@ function MinimapButton:Initialize()
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
         GameTooltip:AddLine(addon.NAME, 1, 0.82, 0)
         GameTooltip:AddLine(
-            string.format(addon.L.ADDON_STATE, addon.db.enabled and addon.L.STATE_ENABLED or addon.L.STATE_DISABLED),
+            string.format("%s: %s", addon.L.ROTATION_PAGE, GetStateText(addon.Settings:IsRotationEnabled())),
+            1,
+            1,
+            1
+        )
+        GameTooltip:AddLine(
+            string.format("%s: %s", addon.L.COOLDOWN_PAGE, GetStateText(addon.Settings:IsPanelEnabled())),
             1,
             1,
             1
@@ -187,15 +209,11 @@ function MinimapButton:Refresh()
         return
     end
 
-    if addon.db.showMinimap then
+    if addon.db.minimap.show then
         self.button:Show()
     else
         self.button:Hide()
     end
 
-    if addon.db.enabled then
-        self.icon:SetVertexColor(1, 1, 1)
-    else
-        self.icon:SetVertexColor(0.45, 0.45, 0.45)
-    end
+    self.icon:SetVertexColor(1, 1, 1)
 end

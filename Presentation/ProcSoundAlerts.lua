@@ -48,21 +48,3 @@ function ProcSoundAlerts:Update(entries, states)
         pcall(PlaySoundFile, PROC_SOUND_PATH)
     end
 end
-
-local originalSetEntries = addon.CooldownPanel.SetEntries
-function addon.CooldownPanel:SetEntries(entries)
-    ProcSoundAlerts:Reset()
-    return originalSetEntries(self, entries)
-end
-
-local originalUpdate = addon.CooldownPanel.Update
-function addon.CooldownPanel:Update(states)
-    ProcSoundAlerts:Update(self.entries, states)
-    return originalUpdate(self, states)
-end
-
-local originalHide = addon.CooldownPanel.Hide
-function addon.CooldownPanel:Hide()
-    ProcSoundAlerts:Reset()
-    return originalHide(self)
-end

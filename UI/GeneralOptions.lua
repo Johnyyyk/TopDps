@@ -56,7 +56,7 @@ function GeneralOptions:Create()
         addon.L.SHOW_MINIMAP
     )
     showMinimap:SetScript("OnClick", function(self)
-        addon.db.showMinimap = Widgets:GetCheckValue(self)
+        addon.db.minimap.show = Widgets:GetCheckValue(self)
         addon.MinimapButton:Refresh()
     end)
 
@@ -113,7 +113,7 @@ function GeneralOptions:Refresh()
 
     self:ApplyLayout()
 
-    self.showMinimapCheck:SetChecked(addon.db.showMinimap and 1 or nil)
+    self.showMinimapCheck:SetChecked(addon.db.minimap.show and 1 or nil)
 
     UIDropDownMenu_SetSelectedValue(self.modeDropdown, addon.db.mode)
     UIDropDownMenu_SetText(self.modeDropdown, GetModeText(addon.db.mode))

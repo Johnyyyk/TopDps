@@ -13,7 +13,7 @@ local function IsValueInList(value, list)
 end
 
 function Settings:IsModeActive()
-    if not addon.db or not addon.db.enabled then
+    if not addon.db then
         return false
     end
 
@@ -40,6 +40,58 @@ function Settings:IsModeActive()
     end
 
     return false
+end
+
+function Settings:IsRotationEnabled()
+    return addon.charDb and addon.charDb.rotationEnabled == true
+end
+
+function Settings:SetRotationEnabled(enabled)
+    if not addon.charDb then
+        return
+    end
+
+    addon.charDb.rotationEnabled = enabled and true or false
+
+    if not addon.charDb.rotationEnabled and addon.RecommendationPresenter then
+        addon.RecommendationPresenter:Clear()
+    end
+
+    if addon.OptionsController then
+        addon.OptionsController:Refresh()
+    end
+
+    if addon.MinimapButton then
+        addon.MinimapButton:Refresh()
+    end
+
+    addon.Logger:Info("Rotation enabled for character: %s", tostring(addon.charDb.rotationEnabled))
+end
+
+function Settings:IsPanelEnabled()
+    return addon.charDb and addon.charDb.panelEnabled == true
+end
+
+function Settings:SetCooldownPanelEnabled(enabled)
+    if not addon.charDb then
+        return
+    end
+
+    addon.charDb.panelEnabled = enabled and true or false
+
+    if not addon.charDb.panelEnabled and addon.CooldownPanel then
+        addon.CooldownPanel:Hide()
+    end
+
+    if addon.OptionsController then
+        addon.OptionsController:Refresh()
+    end
+
+    if addon.MinimapButton then
+        addon.MinimapButton:Refresh()
+    end
+
+    addon.Logger:Info("Panel enabled for character: %s", tostring(addon.charDb.panelEnabled))
 end
 
 function Settings:GetSpecSettings(provider)
@@ -101,19 +153,6 @@ function Settings:SetSpecSetting(provider, key, value)
     )
 end
 
-function Settings:IsSpecEnabled(provider)
-    if not provider then
-        return false
-    end
-
-    local enabled = self:GetSpecSetting(provider, "enabled")
-    if enabled == nil then
-        return true
-    end
-
-    return enabled == true
-end
-
 function Settings:ResolveCooldownPanelSpec(classToken, talentTab)
     if not classToken then
         classToken = addon.SpecManager and addon.SpecManager.classToken or nil
@@ -152,15 +191,15 @@ function Settings:IsCurrentCooldownPanelSpec(classToken, talentTab)
 end
 
 function Settings:AreCooldownProcSoundsEnabled()
-    if not addon.db then
+    if not addon.db or not addon.db.panel then
         return addon.DEFAULTS.cooldownProcSoundsEnabled
     end
 
-    return addon.db.cooldownProcSoundsEnabled ~= false
+    return addon.db.panel.procSoundsEnabled ~= false
 end
 
 function Settings:SetCooldownProcSoundsEnabled(enabled)
-    addon.db.cooldownProcSoundsEnabled = enabled and true or false
+    addon.db.panel.procSoundsEnabled = enabled and true or false
 
     if addon.OptionsController then
         addon.OptionsController:Refresh()
@@ -210,30 +249,6 @@ function Settings:SetCooldownProcSoundEnabled(settingId, enabled, classToken, ta
     end
 end
 
-function Settings:SetEnabled(enabled)
-    addon.db.enabled = enabled and true or false
-
-    if not addon.db.enabled then
-        if addon.RecommendationPresenter then
-            addon.RecommendationPresenter:Clear()
-        end
-
-        if addon.CooldownPanel then
-            addon.CooldownPanel:Hide()
-        end
-    end
-
-    if addon.OptionsController then
-        addon.OptionsController:Refresh()
-    end
-
-    if addon.MinimapButton then
-        addon.MinimapButton:Refresh()
-    end
-
-    addon.Logger:Info("Addon enabled: %s", tostring(addon.db.enabled))
-end
-
 function Settings:SetMode(mode, silent)
     if not IsValueInList(mode, addon.MODE_ORDER) then
         return
@@ -268,7 +283,7 @@ function Settings:SetHighlightStyle(style)
         return
     end
 
-    if addon.db.highlightStyle == style then
+    if addon.db.rotation.highlightStyle == style then
         return
     end
 
@@ -276,7 +291,7 @@ function Settings:SetHighlightStyle(style)
         addon.HighlightManager:StopAll()
     end
 
-    addon.db.highlightStyle = style
+    addon.db.rotation.highlightStyle = style
 
     if addon.RecommendationPresenter then
         addon.RecommendationPresenter:RefreshHighlights()
@@ -292,11 +307,11 @@ end
 function Settings:SetCooldownLookahead(seconds)
     seconds = tonumber(seconds) or addon.DEFAULTS.cooldownLookahead
     seconds = math.max(addon.COOLDOWN_LOOKAHEAD_MIN, math.min(addon.COOLDOWN_LOOKAHEAD_MAX, seconds))
-    addon.db.cooldownLookahead = seconds
+    addon.db.rotation.cooldownLookahead = seconds
 end
 
 function Settings:SetCenterIconsEnabled(enabled)
-    addon.db.showCenterIcons = enabled and true or false
+    addon.db.rotation.centerIcons.enabled = enabled and true or false
 
     if addon.CenterIcons then
         addon.CenterIcons:Refresh()
@@ -310,7 +325,7 @@ end
 function Settings:SetCenterIconsOpacity(opacity)
     opacity = tonumber(opacity) or addon.DEFAULTS.centerIconsOpacity
     opacity = math.max(0.2, math.min(1, opacity))
-    addon.db.centerIconsOpacity = opacity
+    addon.db.rotation.centerIcons.opacity = opacity
 
     if addon.CenterIcons then
         addon.CenterIcons:SetOpacity(opacity)
@@ -321,22 +336,10 @@ function Settings:SetCenterIconsSize(size)
     size = tonumber(size) or addon.DEFAULTS.centerIconsSize
     size = math.floor(size + 0.5)
     size = math.max(addon.CENTER_ICON_SIZE_MIN, math.min(addon.CENTER_ICON_SIZE_MAX, size))
-    addon.db.centerIconsSize = size
+    addon.db.rotation.centerIcons.size = size
 
     if addon.CenterIcons then
         addon.CenterIcons:ApplyLayout()
-    end
-end
-
-function Settings:SetCooldownPanelEnabled(enabled)
-    addon.db.showCooldownPanel = enabled and true or false
-
-    if not addon.db.showCooldownPanel and addon.CooldownPanel then
-        addon.CooldownPanel:Hide()
-    end
-
-    if addon.OptionsController then
-        addon.OptionsController:Refresh()
     end
 end
 
@@ -373,6 +376,18 @@ function Settings:ResetCooldownPanelSpecSettings(classToken, talentTab)
     specSettings.elementEnabled = {}
     specSettings.elementOrder = {}
     specSettings.procSoundEnabled = {}
+    specSettings.groupEnabled = {}
+    specSettings.showTimers = nil
+    specSettings.iconGap = nil
+    specSettings.groupGap = nil
+    specSettings.groupScale = nil
+    specSettings.buffSide = nil
+    specSettings.groupOrder = nil
+    specSettings.iconsPerRow = nil
+
+    if self.EnsureCooldownPanelUxDefaults then
+        self:EnsureCooldownPanelUxDefaults(classToken, talentTab)
+    end
 
     if addon.ProcSoundAlerts then
         addon.ProcSoundAlerts:Reset()
@@ -380,13 +395,21 @@ function Settings:ResetCooldownPanelSpecSettings(classToken, talentTab)
 
     if self:IsCurrentCooldownPanelSpec(classToken, talentTab) and addon.CooldownTracker then
         addon.CooldownTracker:RefreshConfiguration()
+        if addon.CooldownPanel then
+            addon.CooldownPanel:InvalidateLayout()
+            addon.CooldownPanel:RefreshVisuals()
+        end
     elseif addon.CooldownOptions then
         addon.CooldownOptions:Refresh()
+    end
+
+    if addon.OptionsController then
+        addon.OptionsController:Refresh()
     end
 end
 
 function Settings:SetCooldownPanelLocked(locked)
-    addon.db.cooldownPanelLocked = locked and true or false
+    addon.db.panel.locked = locked and true or false
 
     if addon.CooldownPanel then
         addon.CooldownPanel:ApplyLockState()
@@ -398,8 +421,8 @@ function Settings:SetCooldownPanelLocked(locked)
 end
 
 function Settings:SetCooldownPanelPosition(x, y)
-    addon.db.cooldownPanelX = tonumber(x) or addon.DEFAULTS.cooldownPanelX
-    addon.db.cooldownPanelY = tonumber(y) or addon.DEFAULTS.cooldownPanelY
+    addon.db.panel.position.x = tonumber(x) or addon.DEFAULTS.cooldownPanelX
+    addon.db.panel.position.y = tonumber(y) or addon.DEFAULTS.cooldownPanelY
 
     if addon.CooldownPanel then
         addon.CooldownPanel:ApplyLayout()
@@ -413,7 +436,7 @@ function Settings:SetCooldownPanelIconSize(size)
         addon.COOLDOWN_PANEL_ICON_SIZE_MIN,
         math.min(addon.COOLDOWN_PANEL_ICON_SIZE_MAX, size)
     )
-    addon.db.cooldownPanelIconSize = size
+    addon.db.panel.iconSize = size
 
     if addon.CooldownPanel then
         addon.CooldownPanel:ApplyLayout()
@@ -426,7 +449,7 @@ function Settings:SetCooldownPanelOpacity(opacity)
         addon.COOLDOWN_PANEL_OPACITY_MIN,
         math.min(addon.COOLDOWN_PANEL_OPACITY_MAX, opacity)
     )
-    addon.db.cooldownPanelOpacity = opacity
+    addon.db.panel.opacity = opacity
 
     if addon.CooldownPanel then
         addon.CooldownPanel:ApplyLayout()
@@ -434,17 +457,34 @@ function Settings:SetCooldownPanelOpacity(opacity)
 end
 
 function Settings:IsCooldownElementEnabled(settingId, defaultEnabled, classToken, talentTab)
+    classToken, talentTab = self:ResolveCooldownPanelSpec(classToken, talentTab)
     local specSettings = self:GetCooldownPanelSpecSettings(classToken, talentTab)
-    if not specSettings or type(specSettings.elementEnabled) ~= "table" then
-        return defaultEnabled ~= false
+    if specSettings and type(specSettings.elementEnabled) == "table" then
+        local value = specSettings.elementEnabled[settingId]
+        if value ~= nil then
+            return value == true
+        end
     end
 
-    local value = specSettings.elementEnabled[settingId]
-    if value == nil then
-        return defaultEnabled ~= false
+    local profile = addon.CooldownRegistry and addon.CooldownRegistry:GetProfile(classToken, talentTab) or nil
+    local defaults = profile and profile.defaultElementEnabled or nil
+    local definition = addon.CooldownRegistry
+        and addon.CooldownRegistry.entriesBySettingId
+        and addon.CooldownRegistry.entriesBySettingId[settingId]
+        or nil
+    local entryId = definition and definition.id or nil
+
+    if defaults and entryId then
+        if defaults[entryId] ~= nil then
+            return defaults[entryId] == true
+        end
+
+        if defaults.__allowlist == true then
+            return false
+        end
     end
 
-    return value == true
+    return defaultEnabled ~= false
 end
 
 function Settings:SetCooldownElementEnabled(settingId, enabled, classToken, talentTab)

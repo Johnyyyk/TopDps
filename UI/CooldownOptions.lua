@@ -576,7 +576,8 @@ function CooldownOptions:Refresh()
         addon.CooldownRegistry:GetProfileDisplayName(profile)
     )
 
-    self.enabledCheck:SetChecked(addon.db.showCooldownPanel and 1 or nil)
+    local panelEnabled = addon.Settings:IsPanelEnabled()
+    self.enabledCheck:SetChecked(panelEnabled and 1 or nil)
     self.procSoundsEnabledCheck:SetChecked(
         addon.Settings:AreCooldownProcSoundsEnabled() and 1 or nil
     )
@@ -586,16 +587,16 @@ function CooldownOptions:Refresh()
             profile.talentTab
         ) and 1 or nil
     )
-    self.lockedCheck:SetChecked(addon.db.cooldownPanelLocked and 1 or nil)
+    self.lockedCheck:SetChecked(addon.db.panel.locked and 1 or nil)
 
-    SetSliderValue(self.sizeSlider, addon.db.cooldownPanelIconSize)
-    SetSliderValue(self.opacitySlider, addon.db.cooldownPanelOpacity)
+    SetSliderValue(self.sizeSlider, addon.db.panel.iconSize)
+    SetSliderValue(self.opacitySlider, addon.db.panel.opacity)
 
     _G[self.sizeSlider:GetName() .. "Text"]:SetText(
-        string.format(addon.L.COOLDOWN_PANEL_ICON_SIZE, addon.db.cooldownPanelIconSize)
+        string.format(addon.L.COOLDOWN_PANEL_ICON_SIZE, addon.db.panel.iconSize)
     )
     _G[self.opacitySlider:GetName() .. "Text"]:SetText(
-        string.format(addon.L.COOLDOWN_PANEL_OPACITY, addon.db.cooldownPanelOpacity * 100)
+        string.format(addon.L.COOLDOWN_PANEL_OPACITY, addon.db.panel.opacity * 100)
     )
 
     self:EnsureElementsView(profile)
@@ -632,7 +633,7 @@ function CooldownOptions:Refresh()
         self:RefreshUxControls()
     end
 
-    if addon.db.showCooldownPanel then
+    if panelEnabled then
         self.procSoundsEnabledCheck:Enable()
         self.combatOnlyCheck:Enable()
         self.lockedCheck:Enable()

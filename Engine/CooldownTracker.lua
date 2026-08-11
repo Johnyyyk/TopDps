@@ -327,6 +327,13 @@ function CooldownTracker:CreateClassEntries()
         end
     end
 
+    if self.CreateEquipmentProcEntries then
+        local equipmentEntries = self:CreateEquipmentProcEntries()
+        for index = 1, #equipmentEntries do
+            result[#result + 1] = equipmentEntries[index]
+        end
+    end
+
     return result
 end
 
@@ -387,6 +394,13 @@ function CooldownTracker:GetConfigurableEntriesForProfile(classToken, talentTab)
 
     for index = 1, #TRINKET_SLOTS do
         table.insert(entries, self:CreateConfigurableTrinketEntry(TRINKET_SLOTS[index], index * 10))
+    end
+
+    if self.CreateConfigurableEquipmentProcEntries then
+        local equipmentEntries = self:CreateConfigurableEquipmentProcEntries()
+        for index = 1, #equipmentEntries do
+            entries[#entries + 1] = equipmentEntries[index]
+        end
     end
 
     SortEntries(entries, classToken, talentTab)
@@ -723,15 +737,15 @@ function CooldownTracker:RememberProcCooldown(entry, aura)
     local duration = aura.duration or procData.durationFallback or 0
     local elapsed = math.max(0, duration - remaining)
     local readyAt = nowEpoch - elapsed + procData.internalCooldown
-    local current = addon.db.cooldownProcReadyAt[entry.itemId]
+    local current = addon.db.panel.procReadyAt[entry.itemId]
 
     if not current or current <= nowEpoch then
-        addon.db.cooldownProcReadyAt[entry.itemId] = readyAt
+        addon.db.panel.procReadyAt[entry.itemId] = readyAt
     end
 end
 
 function CooldownTracker:GetRememberedProcState(entry)
-    local readyAt = addon.db.cooldownProcReadyAt[entry.itemId]
+    local readyAt = addon.db.panel.procReadyAt[entry.itemId]
     if not readyAt then
         return nil
     end
@@ -739,7 +753,7 @@ function CooldownTracker:GetRememberedProcState(entry)
     local nowEpoch = time()
     local remaining = readyAt - nowEpoch
     if remaining <= 0 then
-        addon.db.cooldownProcReadyAt[entry.itemId] = nil
+        addon.db.panel.procReadyAt[entry.itemId] = nil
         return nil
     end
 
@@ -761,7 +775,9 @@ function CooldownTracker:GetTrinketState(entry)
         local aura = self:FindActiveAura(procData.procSpellIds)
         if aura then
             self:RememberProcCooldown(entry, aura)
-            return self:GetActiveState(aura, procData.durationFallback, true, true)
+            local state = self:GetActiveState(aura, procData.durationFallback, true, true)
+            state.icon = entry.icon
+            return state
         end
     end
 
@@ -789,7 +805,7 @@ function CooldownTracker:GetTrinketState(entry)
 end
 
 function CooldownTracker:IsPanelAllowedOutsideCombat()
-    return addon.db.enabled and addon.db.cooldownPanelLocked == false
+    return addon.db and addon.db.panel and addon.db.panel.locked == false
 end
 
 function CooldownTracker:Update()
@@ -797,12 +813,17 @@ function CooldownTracker:Update()
         return
     end
 
-    local previewUnlocked = self:IsPanelAllowedOutsideCombat()
-    if not addon.db.showCooldownPanel or (not addon.Settings:IsModeActive() and not previewUnlocked) then
+    if not addon.Settings:IsPanelEnabled() then
         addon.CooldownPanel:Hide()
         return
     end
 
+    if not addon.Settings:IsModeActive() then
+        addon.CooldownPanel:Hide()
+        return
+    end
+
+    local previewUnlocked = self:IsPanelAllowedOutsideCombat()
     if addon.Settings:IsCooldownPanelCombatOnly() and not UnitAffectingCombat("player") and not previewUnlocked then
         addon.CooldownPanel:Hide()
         return
@@ -827,6 +848,8 @@ function CooldownTracker:Update()
             states[index] = self:GetCounterState(entry)
         elseif entry.type == "trinket" then
             states[index] = self:GetTrinketState(entry)
+        elseif entry.type == "equipmentProc" and self.GetEquipmentProcState then
+            states[index] = self:GetEquipmentProcState(entry)
         end
     end
 
