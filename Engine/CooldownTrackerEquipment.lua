@@ -1,7 +1,16 @@
 local addon = TopDps
 local CooldownTracker = addon.CooldownTracker
 
+local GCD_THRESHOLD = 2
+
 local EQUIPMENT_SOURCES = {
+    {
+        settingId = "EQUIPMENT_HEAD_ENCHANT",
+        slot = 1,
+        sourceType = "enchant",
+        order = 5,
+        labelKey = "COOLDOWN_EQUIPMENT_HEAD_ENCHANT",
+    },
     {
         settingId = "EQUIPMENT_CLOAK_ENCHANT",
         slot = 15,
@@ -10,24 +19,45 @@ local EQUIPMENT_SOURCES = {
         labelKey = "COOLDOWN_EQUIPMENT_CLOAK_ENCHANT",
     },
     {
+        settingId = "EQUIPMENT_HANDS_ENCHANT",
+        slot = 10,
+        sourceType = "enchant",
+        order = 20,
+        labelKey = "COOLDOWN_EQUIPMENT_HANDS_ENCHANT",
+    },
+    {
+        settingId = "EQUIPMENT_WAIST_ENCHANT",
+        slot = 6,
+        sourceType = "enchant",
+        order = 30,
+        labelKey = "COOLDOWN_EQUIPMENT_WAIST_ENCHANT",
+    },
+    {
+        settingId = "EQUIPMENT_FEET_ENCHANT",
+        slot = 8,
+        sourceType = "enchant",
+        order = 40,
+        labelKey = "COOLDOWN_EQUIPMENT_FEET_ENCHANT",
+    },
+    {
         settingId = "EQUIPMENT_MAINHAND_ENCHANT",
         slot = 16,
         sourceType = "enchant",
-        order = 20,
+        order = 50,
         labelKey = "COOLDOWN_EQUIPMENT_MAINHAND_ENCHANT",
     },
     {
         settingId = "EQUIPMENT_OFFHAND_ENCHANT",
         slot = 17,
         sourceType = "enchant",
-        order = 30,
+        order = 60,
         labelKey = "COOLDOWN_EQUIPMENT_OFFHAND_ENCHANT",
     },
     {
         settingId = "EQUIPMENT_RELIC",
         slot = 18,
         sourceType = "item",
-        order = 40,
+        order = 70,
         labelKey = "COOLDOWN_EQUIPMENT_RELIC",
     },
 }
@@ -78,6 +108,28 @@ local function GetItemData(slot)
     itemTexture = itemTexture or GetInventoryItemTexture("player", slot)
 
     return itemId, itemName, itemTexture
+end
+
+local function GetInventoryCooldownState(entry)
+    if not entry.procData or entry.procData.inventoryCooldown ~= true or not GetInventoryItemCooldown then
+        return nil
+    end
+
+    local start, duration = GetInventoryItemCooldown("player", entry.slot)
+    start = tonumber(start) or 0
+    duration = tonumber(duration) or 0
+
+    if duration <= GCD_THRESHOLD or start + duration <= GetTime() then
+        return nil
+    end
+
+    return {
+        state = "COOLDOWN",
+        start = start,
+        duration = duration,
+        remaining = math.max(0, start + duration - GetTime()),
+        cooldownId = "EQUIPMENT_USE:" .. tostring(entry.procKey) .. ":" .. tostring(start),
+    }
 end
 
 function CooldownTracker:CreateEquipmentProcEntry(source)
@@ -216,6 +268,11 @@ function CooldownTracker:GetEquipmentProcState(entry)
         )
         state.icon = entry.icon
         return state
+    end
+
+    local inventoryCooldown = GetInventoryCooldownState(entry)
+    if inventoryCooldown then
+        return inventoryCooldown
     end
 
     local remembered = self:GetRememberedEquipmentProcState(entry)
