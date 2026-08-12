@@ -63,6 +63,59 @@ jobs:
           cd build
           zip -r "TopDps-$VERSION.zip" TopDps
 
+      - name: Проверить архив аддона
+        if: steps.release.outputs.exists != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          ARCHIVE="build/TopDps-$VERSION.zip"
+          unzip -t "$ARCHIVE"
+
+          python3 - "$ARCHIVE" <<'PY'
+          import sys
+          import zipfile
+          from pathlib import PurePosixPath
+
+          archive_path = sys.argv[1]
+          forbidden_roots = {".git", ".github", "docs", "tools", "build"}
+          forbidden_files = {"README.md", "CONTRIBUTING.md"}
+
+          with zipfile.ZipFile(archive_path) as archive:
+              names = set(archive.namelist())
+
+              if "TopDps/TopDps.toc" not in names:
+                  raise SystemExit("В архиве отсутствует TopDps/TopDps.toc")
+
+              for name in names:
+                  if not name.startswith("TopDps/"):
+                      raise SystemExit("Файл вне корня TopDps/: " + name)
+
+                  relative = name[len("TopDps/"):]
+                  if not relative or name.endswith("/"):
+                      continue
+
+                  parts = PurePosixPath(relative).parts
+                  if parts[0] in forbidden_roots or relative in forbidden_files:
+                      raise SystemExit("В релизный архив попал служебный файл: " + name)
+
+              toc = archive.read("TopDps/TopDps.toc").decode("utf-8")
+              missing = []
+              for raw_line in toc.splitlines():
+                  line = raw_line.strip()
+                  if not line or line.startswith("#"):
+                      continue
+
+                  expected = "TopDps/" + line.replace("\\", "/")
+                  if expected not in names:
+                      missing.append(expected)
+
+              if missing:
+                  raise SystemExit("В архиве отсутствуют файлы из TOC: " + ", ".join(missing))
+
+          print("Архив релиза проверен")
+          PY
+
       - name: Подготовить описание релиза
         if: steps.release.outputs.exists != 'true'
         env:
@@ -105,6 +158,20 @@ jobs:
           - Можно полностью отключить ротацию конкретной специализации или отдельные категории способностей.
           - Настройки специализаций вынесены в отдельное хранилище с автоматической миграцией существующих настроек.
           - Архитектура настроек подготовлена для подключения новых классов и специализаций без изменений общего Core/UI.
+          EOF
+          elif [ "$VERSION" = "2.0.0" ]; then
+            cat > release-notes.md <<'EOF'
+          TopDps 2.0.0 разделяет ротацию и боевую панель на независимые функции и завершает крупный рефактор архитектуры настроек.
+
+          - Добавлена отдельная боевая панель для обязательных бафов, проков, защиты/утилити, тринь и дополнительных кулдаунов.
+          - Для проков добавлены таймеры и звуковые уведомления с общим и индивидуальными переключателями.
+          - Ротация и панель теперь независимо включаются для каждого персонажа и используют общий режим работы аддона.
+          - Настройки ротации и панели разделены по отдельным страницам и областям SavedVariables.
+          - Добавлена настройка cooldown lookahead до 0.5 секунды для ранней подсветки следующей способности.
+          - Исправлена обработка equipment proc и логика показа разблокированной панели при выключенном режиме.
+          - Удалены compatibility proxy, миграции старой БД и цепочки override/monkey-patch, из-за которых поведение зависело от порядка файлов в TOC.
+          - Добавлена CI-защита от возврата legacy flat-ключей и удалённой архитектуры настроек.
+          - SavedVariables версий 1.x не мигрируются: после обновления настройки необходимо проверить заново.
           EOF
           else
             printf 'Изменения версии v%s.\n' "$VERSION" > release-notes.md
