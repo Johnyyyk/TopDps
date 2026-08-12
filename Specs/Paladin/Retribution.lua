@@ -187,10 +187,6 @@ local PRIORITY = {
     },
 }
 
-function Retribution:OnSpellCatalogBuilt()
-    self.artOfWarAuraName = GetSpellInfo(SPELL_IDS.artOfWarAura)
-end
-
 function Retribution:OnEquipmentChanged()
     local t9Count = 0
     local t10Count = 0
@@ -265,20 +261,14 @@ function Retribution:GetReadyEntries(readiness, entries, category, context)
 end
 
 function Retribution:HasArtOfWarAura()
-    local index
-    for index = 1, 40 do
-        local name, _, _, _, _, _, _, _, _, _, spellId = UnitBuff("player", index)
-        if not name then
-            break
-        end
+    local aura = addon.AuraService:FindAura(
+        "player",
+        { SPELL_IDS.artOfWarAura },
+        "HELPFUL",
+        false
+    )
 
-        if spellId == SPELL_IDS.artOfWarAura
-            or (self.artOfWarAuraName and name == self.artOfWarAuraName) then
-            return true
-        end
-    end
-
-    return false
+    return aura ~= nil
 end
 
 function Retribution:IsTargetInMelee(context)
