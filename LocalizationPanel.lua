@@ -18,6 +18,7 @@ if GetLocale() == "ruRU" then
     L.PANEL_CATEGORY_ABILITIES = "Защита и утилити"
     L.PANEL_CATEGORY_COOLDOWNS = "Трини и дополнительные КД"
     L.COOLDOWN_REQUIRED_BUFF_MISSING = "Обязательный баф отсутствует"
+    L.COOLDOWN_REQUIRED_STATE_MISSING = "Требуемое состояние не выполнено"
 else
     L.COOLDOWN_DESCRIPTION = "A compact combat panel for required buffs, active procs, defensive and utility abilities, trinkets, and additional cooldowns."
     L.COOLDOWN_PANEL_SPEC_VISUALS = "Selected specialization display"
@@ -35,4 +36,5 @@ else
     L.PANEL_CATEGORY_ABILITIES = "Defense and utility"
     L.PANEL_CATEGORY_COOLDOWNS = "Trinkets and additional cooldowns"
     L.COOLDOWN_REQUIRED_BUFF_MISSING = "Required buff is missing"
+    L.COOLDOWN_REQUIRED_STATE_MISSING = "Required state is not satisfied"
 end

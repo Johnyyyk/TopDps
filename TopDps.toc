@@ -24,6 +24,7 @@ Cooldowns\CooldownRegistry.lua
 Cooldowns\TrinketDatabase.lua
 Cooldowns\EquipmentProcDatabase.lua
 
+Engine\AuraService.lua
 Engine\ActionBarService.lua
 Engine\ReadinessService.lua
 Engine\CombatTracker.lua
