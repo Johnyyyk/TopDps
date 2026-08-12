@@ -3,22 +3,34 @@
 ## Notes: Расширяемый помощник приоритетов для WoW 3.3.5a
 ## Notes-ruRU: Расширяемый помощник приоритетов для WoW 3.3.5a
 ## Author: Johnyyyk
-## Version: 1.1.0
-## SavedVariables: TopDpsDB, RpalTopDpsDB
+## Version: 2.0.0
+## SavedVariables: TopDpsDB
+## SavedVariablesPerCharacter: TopDpsCharDB
 
 Core\Namespace.lua
 Core\Constants.lua
 Core\Database.lua
 Localization.lua
+LocalizationPanel.lua
+LocalizationPanelExtra.lua
+LocalizationFeatureSettings.lua
 Core\GameApi.lua
 Core\Logger.lua
 Core\Settings.lua
+Core\PanelSettings.lua
+Core\PanelSettingsRows.lua
+
+Cooldowns\CooldownRegistry.lua
+Cooldowns\TrinketDatabase.lua
+Cooldowns\EquipmentProcDatabase.lua
 
 Engine\ActionBarService.lua
 Engine\ReadinessService.lua
 Engine\CombatTracker.lua
 Engine\ContextBuilder.lua
 Engine\RotationEngine.lua
+Engine\CooldownTracker.lua
+Engine\CooldownTrackerEquipment.lua
 
 Specs\SpecProvider.lua
 Specs\SpecRegistry.lua
@@ -32,16 +44,27 @@ Presentation\BlizzardHighlight.lua
 Presentation\HighlightManager.lua
 Presentation\CenterIcons.lua
 Presentation\RecommendationPresenter.lua
+Presentation\CooldownPanel.lua
+Presentation\CooldownPanelLayout.lua
+Presentation\CooldownPanelState.lua
+Presentation\ProcSoundAlerts.lua
 
 # TopDps-Specs-Start
 Specs\Paladin\Common.lua
 Specs\Paladin\Retribution.lua
 # TopDps-Specs-End
 
+Cooldowns\Paladin.lua
+Cooldowns\PaladinDefaults.lua
+
 UI\OptionsWidgets.lua
+UI\OptionsLayout.lua
 UI\MinimapButton.lua
 UI\GeneralOptions.lua
 UI\RotationOptions.lua
+UI\CooldownOptions.lua
+UI\CooldownOptionsUx.lua
+UI\CooldownOptionsExtraUx.lua
 UI\DebugOptions.lua
 UI\OptionsController.lua
 

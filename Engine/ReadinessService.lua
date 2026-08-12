@@ -48,7 +48,10 @@ function ReadinessService:IsActionCooldownReady(action)
         return false
     end
 
-    local lookahead = addon.db and addon.db.cooldownLookahead or addon.DEFAULTS.cooldownLookahead
+    local lookahead = addon.db
+        and addon.db.rotation
+        and addon.db.rotation.cooldownLookahead
+        or addon.DEFAULTS.cooldownLookahead
     if remaining <= lookahead then
         return true
     end

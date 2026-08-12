@@ -12,7 +12,7 @@ function HighlightManager:GetRenderer(style)
 end
 
 function HighlightManager:Start(button)
-    local style = addon.db.highlightStyle
+    local style = addon.db.rotation.highlightStyle
     if self.active[button] == style then
         return
     end
@@ -50,7 +50,9 @@ function HighlightManager:SetEntries(entries)
     local desired = {}
     local index
 
-    if entries and addon.db and addon.db.enabled then
+    if entries
+        and addon.Settings:IsRotationEnabled()
+        and addon.Settings:IsModeActive() then
         for index = 1, #entries do
             desired[entries[index].button] = true
         end

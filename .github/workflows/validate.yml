@@ -20,6 +20,9 @@ jobs:
       - name: Проверить версии проекта
         run: python3 tools/check_version.py
 
+      - name: Проверить архитектуру настроек
+        run: python3 tools/check_settings_architecture.py
+
       - name: Установить Lua 5.1
         run: sudo apt-get update && sudo apt-get install -y lua5.1
 

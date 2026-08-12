@@ -19,12 +19,6 @@ function SpecProvider:BuildSettingsCatalog()
     self.categorySettingKeys = {}
     self.effectiveSettings = {
         {
-            type = "checkbox",
-            key = "enabled",
-            labelKey = "ROTATION_ENABLED",
-            default = true,
-        },
-        {
             type = "header",
             labelKey = "ROTATION_ABILITIES",
         },

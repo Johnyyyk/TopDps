@@ -28,20 +28,20 @@ function Logger:Add(level, formatText, force, ...)
         return
     end
 
-    if not force and not addon.db.debugLogging then
+    if not force and not addon.db.debug.logging then
         return
     end
 
-    if type(addon.db.debugLog) ~= "table" then
-        addon.db.debugLog = {}
+    if type(addon.db.debug.log) ~= "table" then
+        addon.db.debug.log = {}
     end
 
     local message = FormatMessage(formatText, ...)
     local line = string.format("%s [%s] %s", GetTimestamp(), tostring(level), message)
-    table.insert(addon.db.debugLog, line)
+    table.insert(addon.db.debug.log, line)
 
-    while #addon.db.debugLog > addon.DEBUG_LOG_LIMIT do
-        table.remove(addon.db.debugLog, 1)
+    while #addon.db.debug.log > addon.DEBUG_LOG_LIMIT do
+        table.remove(addon.db.debug.log, 1)
     end
 
     self.dirty = true
@@ -91,11 +91,11 @@ function Logger:SafeCall(context, func, ...)
 end
 
 function Logger:GetText()
-    if not addon.db or type(addon.db.debugLog) ~= "table" then
+    if not addon.db or type(addon.db.debug.log) ~= "table" then
         return ""
     end
 
-    return table.concat(addon.db.debugLog, "\n")
+    return table.concat(addon.db.debug.log, "\n")
 end
 
 function Logger:Clear()
@@ -103,7 +103,7 @@ function Logger:Clear()
         return
     end
 
-    addon.db.debugLog = {}
+    addon.db.debug.log = {}
     self.dirty = true
     self:Add("INFO", addon.L.DEBUG_LOG_CLEARED, true)
 
@@ -122,7 +122,7 @@ function Logger:SetRotationState(state)
 end
 
 function Logger:WriteDiagnosticSnapshot()
-    if not addon.db or not addon.db.debugLogging then
+    if not addon.db or not addon.db.debug.logging then
         return
     end
 
@@ -132,15 +132,16 @@ function Logger:WriteDiagnosticSnapshot()
     local buttonCount = addon.ActionBarService and #addon.ActionBarService.buttons or 0
 
     self:Info(
-        "Snapshot: version=%s, locale=%s, class=%s, level=%s, enabled=%s, mode=%s, glow=%s, center=%s, provider=%s, buttons=%s",
+        "Snapshot: version=%s, locale=%s, class=%s, level=%s, rotation=%s, panel=%s, mode=%s, glow=%s, center=%s, provider=%s, buttons=%s",
         addon.VERSION,
         tostring(GetLocale()),
         tostring(class),
         tostring(UnitLevel("player")),
-        tostring(addon.db.enabled),
+        tostring(addon.Settings:IsRotationEnabled()),
+        tostring(addon.Settings:IsPanelEnabled()),
         tostring(addon.db.mode),
-        tostring(addon.db.highlightStyle),
-        tostring(addon.db.showCenterIcons),
+        tostring(addon.db.rotation.highlightStyle),
+        tostring(addon.db.rotation.centerIcons.enabled),
         tostring(providerId),
         tostring(buttonCount)
     )
