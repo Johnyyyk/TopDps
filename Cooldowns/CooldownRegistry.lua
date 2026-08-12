@@ -30,6 +30,7 @@ local SUPPORTED_TYPES = {
     spell = true,
     aura = true,
     counter = true,
+    state = true,
 }
 
 local SUPPORTED_PANEL_CATEGORIES = {
@@ -44,6 +45,7 @@ local SUPPORTED_PANEL_BEHAVIORS = {
     [addon.PANEL_BEHAVIOR_ACTIVE_ONLY] = true,
     [addon.PANEL_BEHAVIOR_REQUIRED_BUFF] = true,
     [addon.PANEL_BEHAVIOR_SELECTABLE_BUFF] = true,
+    [addon.PANEL_BEHAVIOR_REQUIRED_STATE] = true,
 }
 
 local DEFAULT_PRESENTATION_BY_GROUP = {
@@ -107,12 +109,33 @@ local function ValidateCounterEntry(entry)
     end
 end
 
+local function ValidateStateEntry(entry)
+    if type(entry.getState) ~= "function" then
+        error("TopDps: state panel entry requires getState")
+    end
+end
+
 local function ResolveDefaultPresentation(group)
     return DEFAULT_PRESENTATION_BY_GROUP[group]
         or {
             category = addon.PANEL_CATEGORY_ABILITIES,
             behavior = addon.PANEL_BEHAVIOR_ALWAYS,
         }
+end
+
+local function ResolveEntryDefaults(entry)
+    if entry.type == "state" then
+        entry.group = entry.group or addon.COOLDOWN_GROUP_STATES
+        entry.panelCategory = entry.panelCategory or addon.PANEL_CATEGORY_BUFFS
+        entry.panelBehavior = entry.panelBehavior or addon.PANEL_BEHAVIOR_REQUIRED_STATE
+        return
+    end
+
+    entry.group = entry.group or addon.COOLDOWN_GROUP_UTILITY
+
+    local defaultPresentation = ResolveDefaultPresentation(entry.group)
+    entry.panelCategory = entry.panelCategory or defaultPresentation.category
+    entry.panelBehavior = entry.panelBehavior or defaultPresentation.behavior
 end
 
 local function ValidateEntry(definition, entry)
@@ -134,18 +157,17 @@ local function ValidateEntry(definition, entry)
         ValidateAuraEntry(entry)
     elseif entry.type == "counter" then
         ValidateCounterEntry(entry)
+    elseif entry.type == "state" then
+        ValidateStateEntry(entry)
     end
 
     entry.classToken = definition.classToken
     entry.talentTab = definition.talentTab
-    entry.group = entry.group or addon.COOLDOWN_GROUP_UTILITY
     entry.order = tonumber(entry.order) or 100
     entry.defaultEnabled = entry.defaultEnabled ~= false
     entry.settingId = definition.classToken .. ":" .. (definition.talentTab or "ALL") .. ":" .. entry.id
 
-    local defaultPresentation = ResolveDefaultPresentation(entry.group)
-    entry.panelCategory = entry.panelCategory or defaultPresentation.category
-    entry.panelBehavior = entry.panelBehavior or defaultPresentation.behavior
+    ResolveEntryDefaults(entry)
 
     if not SUPPORTED_PANEL_CATEGORIES[entry.panelCategory] then
         error("TopDps: unsupported panel category: " .. tostring(entry.panelCategory))
