@@ -402,12 +402,12 @@ function Retribution:IsCategoryAllowed(category, context)
             return false
         end
 
-        if context.enemyCount < 2 then
-            local inInstance, instanceType = IsInInstance()
-            local isPvEInstance = inInstance and (instanceType == "party" or instanceType == "raid")
-            if not isPvEInstance or not self:IsLongLivedTarget(context.enemyCount) then
-                return false
-            end
+        if context.playerLevel >= 80 then
+            return true
+        end
+
+        if context.enemyCount < 2 and not self:IsLongLivedTarget(context.enemyCount) then
+            return false
         end
 
         return true
