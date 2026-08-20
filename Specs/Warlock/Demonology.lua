@@ -32,6 +32,13 @@ local Demonology = addon.SpecProvider:Create({
         },
         immolate = {
             spellIds = { Warlock.SPELL_IDS.immolate },
+            refresh = {
+                auraSpellIds = { Warlock.SPELL_IDS.immolate },
+                unit = "target",
+                filter = "HARMFUL",
+                ownOnly = true,
+                lead = addon.REFRESH_LEAD_CAST_TIME,
+            },
         },
         shadowBolt = {
             spellIds = { Warlock.SPELL_IDS.shadowBolt },
@@ -105,10 +112,6 @@ function Demonology:IsCategoryAllowed(category)
 
     if category == "corruption" then
         return not Warlock:HasOwnTargetAura({ Warlock.SPELL_IDS.corruption })
-    end
-
-    if category == "immolate" then
-        return not Warlock:HasOwnTargetAura({ Warlock.SPELL_IDS.immolate })
     end
 
     local moltenCore = Warlock:HasPlayerAura({ Warlock.SPELL_IDS.moltenCoreProc })

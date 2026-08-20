@@ -28,6 +28,13 @@ local Destruction = addon.SpecProvider:Create({
         },
         immolate = {
             spellIds = { Warlock.SPELL_IDS.immolate },
+            refresh = {
+                auraSpellIds = { Warlock.SPELL_IDS.immolate },
+                unit = "target",
+                filter = "HARMFUL",
+                ownOnly = true,
+                lead = addon.REFRESH_LEAD_CAST_TIME,
+            },
         },
         conflagrate = {
             spellIds = { Warlock.SPELL_IDS.conflagrate },
@@ -66,10 +73,6 @@ function Destruction:IsCategoryAllowed(category)
     local commonAllowed = Warlock:GetCommonCategoryAllowed(self, category)
     if commonAllowed ~= nil then
         return commonAllowed
-    end
-
-    if category == "immolate" then
-        return not Warlock:HasOwnTargetAura({ Warlock.SPELL_IDS.immolate })
     end
 
     if category == "conflagrate" then
