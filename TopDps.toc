@@ -57,6 +57,8 @@ Presentation\ProcSoundAlerts.lua
 Specs\Paladin\Common.lua
 Specs\Paladin\Retribution.lua
 Specs\Warlock\Common.lua
+Specs\Warlock\Demonology.lua
+Specs\Warlock\Destruction.lua
 # TopDps-Specs-End
 
 Cooldowns\Paladin.lua
