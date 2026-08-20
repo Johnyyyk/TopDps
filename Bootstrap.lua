@@ -72,6 +72,14 @@ function Bootstrap:RetrySpecializationDetection()
     self:HandleSpecializationChanged(reason, true)
 end
 
+function Bootstrap:UpdateCooldownPanel()
+    if addon.ProcSoundAlerts then
+        addon.ProcSoundAlerts:UpdateWhilePanelHidden()
+    end
+
+    addon.CooldownTracker:Update()
+end
+
 function Bootstrap:Initialize()
     if self.initialized then
         return
@@ -230,10 +238,10 @@ eventFrame:SetScript("OnUpdate", function(_, elapsed)
             addon.RotationEngine:UpdateRecommendation()
         end)
         addon.Logger:SafeCall("UpdateCooldownPanel", function()
-            addon.CooldownTracker:Update()
+            Bootstrap:UpdateCooldownPanel()
         end)
     else
         addon.RotationEngine:UpdateRecommendation()
-        addon.CooldownTracker:Update()
+        Bootstrap:UpdateCooldownPanel()
     end
 end)
