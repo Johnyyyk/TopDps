@@ -1,6 +1,14 @@
 local addon = TopDps
 local Warlock = addon.Warlock
 
+local SHADOW_WARD_SPELL_IDS = { 6229, 11739, 11740, 28610, 47890, 47891 }
+local DEATH_COIL_SPELL_IDS = { 6789, 17925, 17926, 27223, 47859, 47860 }
+local SOULSHATTER_SPELL_IDS = { 29858 }
+local DEMONIC_CIRCLE_TELEPORT_SPELL_IDS = { 48020 }
+local HOWL_OF_TERROR_SPELL_IDS = { 5484, 17928 }
+local INFERNO_SPELL_IDS = { 1122 }
+local SHADOWFURY_SPELL_IDS = { 30283, 30413, 30414, 47846, 47847 }
+
 addon.CooldownRegistry:RegisterProfile({
     classToken = Warlock.CLASS_TOKEN,
     talentTab = Warlock.TALENT_TABS.DEMONOLOGY,
@@ -43,6 +51,48 @@ local function RegisterCommonEntries(talentTab)
                 panelCategory = addon.PANEL_CATEGORY_BUFFS,
                 panelBehavior = addon.PANEL_BEHAVIOR_REQUIRED_BUFF,
                 order = 20,
+            },
+            {
+                id = "inferno",
+                type = "spell",
+                spellIds = INFERNO_SPELL_IDS,
+                group = addon.COOLDOWN_GROUP_OFFENSIVE,
+                order = 90,
+            },
+            {
+                id = "shadowWard",
+                type = "spell",
+                spellIds = SHADOW_WARD_SPELL_IDS,
+                group = addon.COOLDOWN_GROUP_DEFENSIVE,
+                order = 10,
+            },
+            {
+                id = "deathCoil",
+                type = "spell",
+                spellIds = DEATH_COIL_SPELL_IDS,
+                group = addon.COOLDOWN_GROUP_DEFENSIVE,
+                order = 20,
+            },
+            {
+                id = "soulshatter",
+                type = "spell",
+                spellIds = SOULSHATTER_SPELL_IDS,
+                group = addon.COOLDOWN_GROUP_UTILITY,
+                order = 10,
+            },
+            {
+                id = "demonicCircleTeleport",
+                type = "spell",
+                spellIds = DEMONIC_CIRCLE_TELEPORT_SPELL_IDS,
+                group = addon.COOLDOWN_GROUP_UTILITY,
+                order = 20,
+            },
+            {
+                id = "howlOfTerror",
+                type = "spell",
+                spellIds = HOWL_OF_TERROR_SPELL_IDS,
+                group = addon.COOLDOWN_GROUP_UTILITY,
+                order = 30,
             },
         },
     })
@@ -174,6 +224,13 @@ addon.CooldownRegistry:Register({
                 )
             end,
             order = 40,
+        },
+        {
+            id = "shadowfury",
+            type = "spell",
+            spellIds = SHADOWFURY_SPELL_IDS,
+            group = addon.COOLDOWN_GROUP_UTILITY,
+            order = 100,
         },
         {
             id = "backdraft",
