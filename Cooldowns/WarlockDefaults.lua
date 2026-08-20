@@ -30,10 +30,11 @@ SetProfileDefaults(Warlock.TALENT_TABS.DEMONOLOGY, {
     "weaponStone",
     "soulLink",
     "metamorphosis",
-    "demonicEmpowerment",
+    "shadowWard",
+    "soulshatter",
+    "demonicCircleTeleport",
     "moltenCore",
     "decimation",
-    "demonicPact",
 })
 
 SetProfileDefaults(Warlock.TALENT_TABS.DESTRUCTION, {
@@ -41,7 +42,9 @@ SetProfileDefaults(Warlock.TALENT_TABS.DESTRUCTION, {
     "glyphLifeTap",
     "correctPet",
     "weaponStone",
+    "shadowWard",
+    "soulshatter",
+    "demonicCircleTeleport",
     "backdraft",
     "empoweredImp",
-    "pyroclasm",
 })
