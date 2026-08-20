@@ -3,9 +3,35 @@ local SpecProvider = addon:CreateModule("SpecProvider")
 
 SpecProvider.__index = SpecProvider
 
+local function ValidateRefreshDefinition(category, refresh)
+    if refresh == nil then
+        return
+    end
+
+    if type(refresh) ~= "table" then
+        error("TopDps: rotation refresh for " .. tostring(category) .. " must be a table")
+    end
+
+    if type(refresh.auraSpellIds) ~= "table" or #refresh.auraSpellIds == 0 then
+        error("TopDps: rotation refresh for " .. tostring(category) .. " requires auraSpellIds")
+    end
+
+    if refresh.lead ~= nil and refresh.lead ~= addon.REFRESH_LEAD_CAST_TIME then
+        local lead = tonumber(refresh.lead)
+        if not lead or lead < 0 then
+            error("TopDps: rotation refresh lead for " .. tostring(category) .. " must be non-negative")
+        end
+    end
+end
+
 function SpecProvider:Create(definition)
     if type(definition) ~= "table" then
         error("TopDps: specialization provider definition must be a table")
+    end
+
+    local category, ability
+    for category, ability in pairs(definition.abilities or {}) do
+        ValidateRefreshDefinition(category, ability and ability.refresh or nil)
     end
 
     local provider = setmetatable(definition, { __index = self })

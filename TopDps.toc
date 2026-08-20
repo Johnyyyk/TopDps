@@ -26,6 +26,7 @@ Cooldowns\EquipmentProcDatabase.lua
 
 Engine\AuraService.lua
 Engine\EquipmentService.lua
+Engine\RefreshService.lua
 Engine\ActionBarService.lua
 Engine\ReadinessService.lua
 Engine\CombatTracker.lua
