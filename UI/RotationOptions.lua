@@ -16,6 +16,23 @@ local function FormatCooldownLookahead(value)
     return string.format(addon.L.COOLDOWN_LOOKAHEAD_FORMAT, value)
 end
 
+local function GetCooldownLookaheadTickCount()
+    local range = addon.COOLDOWN_LOOKAHEAD_MAX - addon.COOLDOWN_LOOKAHEAD_MIN
+    return math.floor(range / addon.COOLDOWN_LOOKAHEAD_STEP + 0.5)
+end
+
+local function CooldownLookaheadToTick(value)
+    value = tonumber(value) or addon.COOLDOWN_LOOKAHEAD_MIN
+    local offset = value - addon.COOLDOWN_LOOKAHEAD_MIN
+    return math.floor(offset / addon.COOLDOWN_LOOKAHEAD_STEP + 0.5)
+end
+
+local function CooldownLookaheadFromTick(tick)
+    tick = math.floor((tonumber(tick) or 0) + 0.5)
+    local value = addon.COOLDOWN_LOOKAHEAD_MIN + tick * addon.COOLDOWN_LOOKAHEAD_STEP
+    return math.max(addon.COOLDOWN_LOOKAHEAD_MIN, math.min(addon.COOLDOWN_LOOKAHEAD_MAX, value))
+end
+
 local function GetSettingLabel(provider, definition)
     if definition.labelKey and addon.L[definition.labelKey] then
         return addon.L[definition.labelKey]
@@ -286,17 +303,16 @@ function RotationOptions:Create()
         "TopDpsOptionsCooldownLookahead",
         cooldownRowTop
     )
-    cooldownLookaheadSlider:SetMinMaxValues(addon.COOLDOWN_LOOKAHEAD_MIN, addon.COOLDOWN_LOOKAHEAD_MAX)
-    cooldownLookaheadSlider:SetValueStep(addon.COOLDOWN_LOOKAHEAD_STEP)
+    cooldownLookaheadSlider:SetMinMaxValues(0, GetCooldownLookaheadTickCount())
+    cooldownLookaheadSlider:SetValueStep(1)
 
     _G[cooldownLookaheadSlider:GetName() .. "Low"]:SetText(addon.L.COOLDOWN_LOOKAHEAD_LOW)
     _G[cooldownLookaheadSlider:GetName() .. "High"]:SetText(addon.L.COOLDOWN_LOOKAHEAD_HIGH)
 
-    cooldownLookaheadSlider:SetScript("OnValueChanged", function(self, value)
-        local steps = math.floor(value / addon.COOLDOWN_LOOKAHEAD_STEP + 0.5)
-        local rounded = steps * addon.COOLDOWN_LOOKAHEAD_STEP
-        addon.Settings:SetCooldownLookahead(rounded)
-        _G[self:GetName() .. "Text"]:SetText(FormatCooldownLookahead(rounded))
+    cooldownLookaheadSlider:SetScript("OnValueChanged", function(self, tick)
+        local value = CooldownLookaheadFromTick(tick)
+        addon.Settings:SetCooldownLookahead(value)
+        _G[self:GetName() .. "Text"]:SetText(FormatCooldownLookahead(value))
     end)
 
     local visualHeaderY = Layout:TakeRow(cursor, Size.SECTION_ROW_HEIGHT, Size.ROW_GAP)
@@ -489,7 +505,9 @@ function RotationOptions:Refresh()
 
     self.characterEnabledCheck:SetChecked(addon.Settings:IsRotationEnabled() and 1 or nil)
 
-    self.cooldownLookaheadSlider:SetValue(addon.db.rotation.cooldownLookahead)
+    self.cooldownLookaheadSlider:SetValue(
+        CooldownLookaheadToTick(addon.db.rotation.cooldownLookahead)
+    )
     _G[self.cooldownLookaheadSlider:GetName() .. "Text"]:SetText(
         FormatCooldownLookahead(addon.db.rotation.cooldownLookahead)
     )

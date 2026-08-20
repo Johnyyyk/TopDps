@@ -30,7 +30,7 @@ if locale == "ruRU" then
     L.COOLDOWN_LOOKAHEAD = "Опережение подсветки по откату"
     L.COOLDOWN_LOOKAHEAD_FORMAT = "Опережение подсветки по откату: %.2f с"
     L.COOLDOWN_LOOKAHEAD_LOW = "0 с"
-    L.COOLDOWN_LOOKAHEAD_HIGH = "0.5 с"
+    L.COOLDOWN_LOOKAHEAD_HIGH = "0.75 с"
 
     L.HIGHLIGHT_STYLE = "Обводка следующей способности"
     L.HIGHLIGHT_BLIZZARD = "Стандартная Blizzard"
@@ -130,7 +130,7 @@ else
     L.COOLDOWN_LOOKAHEAD = "Cooldown highlight lookahead"
     L.COOLDOWN_LOOKAHEAD_FORMAT = "Cooldown highlight lookahead: %.2f s"
     L.COOLDOWN_LOOKAHEAD_LOW = "0 s"
-    L.COOLDOWN_LOOKAHEAD_HIGH = "0.5 s"
+    L.COOLDOWN_LOOKAHEAD_HIGH = "0.75 s"
 
     L.HIGHLIGHT_STYLE = "Next ability border"
     L.HIGHLIGHT_BLIZZARD = "Default Blizzard"
