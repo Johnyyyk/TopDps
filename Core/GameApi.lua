@@ -149,6 +149,68 @@ function GameApi:GetSpellCastTime(spell)
     return math.max(0, (tonumber(castTime) or 0) / 1000)
 end
 
+local function MatchesGlyphSpell(spellIds, ...)
+    local valueCount = select("#", ...)
+    local valueIndex
+    local spellIndex
+
+    for valueIndex = 1, valueCount do
+        local value = tonumber((select(valueIndex, ...)))
+        if value then
+            for spellIndex = 1, #spellIds do
+                if value == spellIds[spellIndex] then
+                    return true
+                end
+            end
+        end
+    end
+
+    return false
+end
+
+local function ReadGlyphSocket(slot, talentGroup)
+    if talentGroup then
+        local ok, first, second, third, fourth, fifth = pcall(GetGlyphSocketInfo, slot, talentGroup)
+        if ok then
+            return true, first, second, third, fourth, fifth
+        end
+    end
+
+    local ok, first, second, third, fourth, fifth = pcall(GetGlyphSocketInfo, slot)
+    if ok then
+        return true, first, second, third, fourth, fifth
+    end
+
+    return false
+end
+
+function GameApi:HasGlyphSpell(spellIds)
+    if not GetGlyphSocketInfo or type(spellIds) ~= "table" or #spellIds == 0 then
+        return false
+    end
+
+    local socketCount = 6
+    if GetNumGlyphSockets then
+        local ok, count = pcall(GetNumGlyphSockets)
+        if ok and type(count) == "number" and count > 0 then
+            socketCount = count
+        end
+    elseif NUM_GLYPH_SLOTS and NUM_GLYPH_SLOTS > 0 then
+        socketCount = NUM_GLYPH_SLOTS
+    end
+
+    local talentGroup = self:GetActiveTalentGroup()
+    local slot
+    for slot = 1, socketCount do
+        local ok, first, second, third, fourth, fifth = ReadGlyphSocket(slot, talentGroup)
+        if ok and MatchesGlyphSpell(spellIds, first, second, third, fourth, fifth) then
+            return true
+        end
+    end
+
+    return false
+end
+
 function GameApi:GetActionSpellData(action)
     -- На 3.3.5 четвёртое значение GetActionInfo содержит global spell ID.
     -- Второе значение на части клиентов является индексом spellbook.

@@ -14,6 +14,7 @@ Localization.lua
 LocalizationPanel.lua
 LocalizationPanelExtra.lua
 LocalizationFeatureSettings.lua
+LocalizationWarlock.lua
 Core\GameApi.lua
 Core\Logger.lua
 Core\Settings.lua
@@ -55,10 +56,15 @@ Presentation\ProcSoundAlerts.lua
 # TopDps-Specs-Start
 Specs\Paladin\Common.lua
 Specs\Paladin\Retribution.lua
+Specs\Warlock\Common.lua
+Specs\Warlock\Demonology.lua
+Specs\Warlock\Destruction.lua
 # TopDps-Specs-End
 
 Cooldowns\Paladin.lua
 Cooldowns\PaladinDefaults.lua
+Cooldowns\Warlock.lua
+Cooldowns\WarlockDefaults.lua
 
 UI\OptionsWidgets.lua
 UI\OptionsLayout.lua

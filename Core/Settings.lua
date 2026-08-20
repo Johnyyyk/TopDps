@@ -211,6 +211,14 @@ function Settings:IsCooldownProcSoundEnabled(settingId, defaultEnabled, classTok
         return false
     end
 
+    local definition = addon.CooldownRegistry
+        and addon.CooldownRegistry.entriesBySettingId
+        and addon.CooldownRegistry.entriesBySettingId[settingId]
+        or nil
+    if definition and definition.defaultProcSoundEnabled ~= nil then
+        defaultEnabled = definition.defaultProcSoundEnabled == true
+    end
+
     local specSettings = self:GetCooldownPanelSpecSettings(classToken, talentTab)
     if not specSettings then
         return defaultEnabled ~= false

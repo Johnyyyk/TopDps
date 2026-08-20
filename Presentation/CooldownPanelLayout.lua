@@ -11,6 +11,10 @@ function CooldownPanel:IsEntryVisible(entry, state, previewUnlocked)
         return false
     end
 
+    if addon.CooldownRegistry and not addon.CooldownRegistry:IsEntryApplicable(entry) then
+        return false
+    end
+
     local category, behavior = self:GetPresentation(entry)
     if not addon.Settings:IsCooldownPanelCategoryEnabled(category) then
         return false
