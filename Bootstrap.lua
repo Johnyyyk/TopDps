@@ -115,6 +115,10 @@ function Bootstrap:HandleEvent(event, ...)
     end
 
     if event == "PLAYER_EQUIPMENT_CHANGED" then
+        if addon.EquipmentService then
+            addon.EquipmentService:ScheduleTemporaryEnchantRefresh()
+        end
+
         addon.SpecManager:RefreshEquipment()
         addon.CooldownTracker:RefreshConfiguration()
 
@@ -125,6 +129,11 @@ function Bootstrap:HandleEvent(event, ...)
             tostring(provider and provider.id or "none"),
             providerState and ("; " .. tostring(providerState)) or ""
         )
+    elseif event == "UNIT_INVENTORY_CHANGED" then
+        local unit = ...
+        if addon.EquipmentService then
+            addon.EquipmentService:HandleUnitInventoryChanged(unit)
+        end
     elseif event == "PLAYER_REGEN_ENABLED" then
         addon.CombatTracker:Clear()
         addon.RecommendationPresenter:Clear()
@@ -175,6 +184,7 @@ local EVENTS = {
     "UPDATE_SHAPESHIFT_FORM",
     "UNIT_AURA",
     "UNIT_FLAGS",
+    "UNIT_INVENTORY_CHANGED",
     "PARTY_MEMBERS_CHANGED",
     "RAID_ROSTER_UPDATE",
     "PLAYER_REGEN_ENABLED",
