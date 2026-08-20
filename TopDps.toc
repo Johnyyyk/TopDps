@@ -63,6 +63,8 @@ Specs\Warlock\Destruction.lua
 
 Cooldowns\Paladin.lua
 Cooldowns\PaladinDefaults.lua
+Cooldowns\Warlock.lua
+Cooldowns\WarlockDefaults.lua
 
 UI\OptionsWidgets.lua
 UI\OptionsLayout.lua

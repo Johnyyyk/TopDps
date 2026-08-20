@@ -25,22 +25,29 @@ function ProcSoundAlerts:Update(entries, states)
     for index = 1, #entries do
         local entry = entries[index]
         if IsProcEntry(entry) then
-            local state = states[index]
-            local isActive = state and state.state == "ACTIVE" or false
-            local previous = self.activeStates[entry.settingId]
-            local category = addon.CooldownRegistry:GetPanelPresentation(entry)
-            local categoryEnabled = addon.Settings:IsCooldownPanelCategoryEnabled(category)
+            local applicable = not addon.CooldownRegistry
+                or addon.CooldownRegistry:IsEntryApplicable(entry)
 
-            if soundsEnabled
-                and categoryEnabled
-                and previous ~= nil
-                and previous == false
-                and isActive
-                and addon.Settings:IsCooldownProcSoundEnabled(entry.settingId, true) then
-                shouldPlay = true
+            if not applicable then
+                self.activeStates[entry.settingId] = nil
+            else
+                local state = states[index]
+                local isActive = state and state.state == "ACTIVE" or false
+                local previous = self.activeStates[entry.settingId]
+                local category = addon.CooldownRegistry:GetPanelPresentation(entry)
+                local categoryEnabled = addon.Settings:IsCooldownPanelCategoryEnabled(category)
+
+                if soundsEnabled
+                    and categoryEnabled
+                    and previous ~= nil
+                    and previous == false
+                    and isActive
+                    and addon.Settings:IsCooldownProcSoundEnabled(entry.settingId, true) then
+                    shouldPlay = true
+                end
+
+                self.activeStates[entry.settingId] = isActive
             end
-
-            self.activeStates[entry.settingId] = isActive
         end
     end
 
