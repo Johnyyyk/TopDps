@@ -191,8 +191,6 @@ end
 function EquipmentService:ScheduleTemporaryEnchantRefresh()
     local refreshAt = GetTime() + REFRESH_DELAY_SECONDS
 
-    self.tooltipCache[MAIN_HAND_SLOT] = nil
-    self.tooltipCache[OFF_HAND_SLOT] = nil
     self.refreshStates[MAIN_HAND_SLOT] = {
         refreshAt = refreshAt,
         attemptsRemaining = REFRESH_ATTEMPTS,
