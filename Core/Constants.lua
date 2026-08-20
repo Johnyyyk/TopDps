@@ -51,8 +51,10 @@ addon.PANEL_BEHAVIOR_REQUIRED_BUFF = "REQUIRED_BUFF"
 addon.PANEL_BEHAVIOR_SELECTABLE_BUFF = "SELECTABLE_BUFF"
 addon.PANEL_BEHAVIOR_REQUIRED_STATE = "REQUIRED_STATE"
 
+addon.REFRESH_LEAD_CAST_TIME = "CAST_TIME"
+
 addon.COOLDOWN_LOOKAHEAD_MIN = 0
-addon.COOLDOWN_LOOKAHEAD_MAX = 0.5
+addon.COOLDOWN_LOOKAHEAD_MAX = 0.75
 addon.COOLDOWN_LOOKAHEAD_STEP = 0.05
 
 addon.COOLDOWN_PANEL_ICON_SIZE_MIN = 28
@@ -77,7 +79,7 @@ addon.DEFAULTS = {
     minimapAngle = 135,
     mode = addon.MODE_EVERYWHERE,
     highlightStyle = addon.HIGHLIGHT_BLIZZARD,
-    cooldownLookahead = 0.15,
+    cooldownLookahead = 0.5,
     showCenterIcons = false,
     centerIconsOpacity = 0.85,
     centerIconsSize = 58,

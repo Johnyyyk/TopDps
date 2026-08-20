@@ -64,6 +64,7 @@ function RotationEngine:UpdateRecommendation()
 
         if entries
             and provider:IsCategoryEnabled(category)
+            and addon.RefreshService:IsCategoryRefreshDue(provider, category, context)
             and provider:IsCategoryAllowed(category, context) then
             local readyEntries = addon.ReadinessService:GetReadyEntries(entries, category, provider, context)
             if #readyEntries > 0 then

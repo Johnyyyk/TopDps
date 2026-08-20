@@ -136,6 +136,19 @@ function GameApi:GetTalentRankByName(tabIndex, talentName)
     return 0
 end
 
+function GameApi:GetSpellCastTime(spell)
+    if not GetSpellInfo or not spell then
+        return 0
+    end
+
+    local ok, _, _, _, _, _, _, castTime = pcall(GetSpellInfo, spell)
+    if not ok then
+        return 0
+    end
+
+    return math.max(0, (tonumber(castTime) or 0) / 1000)
+end
+
 function GameApi:GetActionSpellData(action)
     -- На 3.3.5 четвёртое значение GetActionInfo содержит global spell ID.
     -- Второе значение на части клиентов является индексом spellbook.
