@@ -30,6 +30,7 @@ SetProfileDefaults(Warlock.TALENT_TABS.DEMONOLOGY, {
     "weaponStone",
     "soulLink",
     "metamorphosis",
+    "demonicEmpowerment",
     "shadowWard",
     "soulshatter",
     "demonicCircleTeleport",

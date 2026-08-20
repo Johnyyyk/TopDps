@@ -189,6 +189,7 @@ addon.CooldownRegistry:Register({
             displaySpellId = Warlock.SPELL_IDS.demonicPactProc,
             requiredTalentSpellIds = { Warlock.SPELL_IDS.demonicPactTalent },
             requiredTalentTab = Warlock.TALENT_TABS.DEMONOLOGY,
+            defaultProcSoundEnabled = false,
             group = addon.COOLDOWN_GROUP_PROCS,
             order = 30,
         },
