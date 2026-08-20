@@ -197,13 +197,20 @@ function Warlock:HasSpellCritDebuff()
     return wintersChill ~= nil and (tonumber(wintersChill.stacks) or 0) >= 5
 end
 
-function Warlock:GetDesiredCurseSpellId(provider)
-    local mode = provider:GetSetting("curseMode")
-
-    if mode == self.CURSE_MODE_NONE then
-        return nil
+function Warlock:IsBossLikeTarget()
+    if not UnitExists("target") then
+        return false
     end
 
+    local classification = UnitClassification and UnitClassification("target") or nil
+    if classification == "worldboss" then
+        return true
+    end
+
+    return UnitLevel("target") == -1
+end
+
+function Warlock:GetManualCurseSpellId(mode)
     if mode == self.CURSE_MODE_ELEMENTS then
         return self.SPELL_IDS.curseElements
     end
@@ -216,24 +223,62 @@ function Warlock:GetDesiredCurseSpellId(provider)
         return self.SPELL_IDS.curseAgony
     end
 
+    return nil
+end
+
+function Warlock:GetAcceptableCurseSpellIds(provider)
+    local mode = provider:GetSetting("curseMode")
+    if mode == self.CURSE_MODE_NONE then
+        return {}
+    end
+
+    if mode ~= self.CURSE_MODE_AUTO then
+        local spellId = self:GetManualCurseSpellId(mode)
+        return spellId and { spellId } or {}
+    end
+
     if self:HasExternalMagicVulnerability() then
+        return {
+            self.SPELL_IDS.curseDoom,
+            self.SPELL_IDS.curseAgony,
+        }
+    end
+
+    return { self.SPELL_IDS.curseElements }
+end
+
+function Warlock:GetPreferredCurseSpellId(provider)
+    local mode = provider:GetSetting("curseMode")
+    if mode == self.CURSE_MODE_NONE then
+        return nil
+    end
+
+    if mode ~= self.CURSE_MODE_AUTO then
+        return self:GetManualCurseSpellId(mode)
+    end
+
+    if not self:HasExternalMagicVulnerability() then
+        return self.SPELL_IDS.curseElements
+    end
+
+    if self:IsBossLikeTarget() then
         return self.SPELL_IDS.curseDoom
     end
 
-    return self.SPELL_IDS.curseElements
+    return self.SPELL_IDS.curseAgony
 end
 
-function Warlock:IsDesiredCurseMissing(provider)
-    local spellId = self:GetDesiredCurseSpellId(provider)
-    if not spellId then
-        return false
+function Warlock:IsCurseRequirementSatisfied(provider)
+    local acceptableSpellIds = self:GetAcceptableCurseSpellIds(provider)
+    if #acceptableSpellIds == 0 then
+        return true
     end
 
-    return not self:HasOwnTargetAura({ spellId })
+    return self:HasOwnTargetAura(acceptableSpellIds)
 end
 
 function Warlock:GetCurseReadyEntries(provider, readiness, entries, category, context)
-    local spellId = self:GetDesiredCurseSpellId(provider)
+    local spellId = self:GetPreferredCurseSpellId(provider)
     if not spellId then
         return {}
     end
@@ -280,7 +325,7 @@ function Warlock:GetCommonCategoryAllowed(provider, category)
     end
 
     if category == "curse" then
-        return self:IsDesiredCurseMissing(provider)
+        return not self:IsCurseRequirementSatisfied(provider)
     end
 
     return nil
