@@ -69,18 +69,32 @@ function GroupService:GetUnitsMissingAura(spellIds, filter, ownOnly)
     return result
 end
 
+function GroupService:IsActiveHealthUnit(unit)
+    local snapshot = addon.UnitStateService:GetUnitSnapshot(unit)
+    return snapshot.exists
+        and snapshot.connected
+        and not snapshot.dead
+        and snapshot.health.maximum > 0,
+        snapshot
+end
+
 function GroupService:CountHealthAtOrBelow(fraction)
     local units = self:GetUnits()
     local count = 0
+    local eligibleCount = 0
     local index
 
     for index = 1, #units do
-        if addon.UnitStateService:IsHealthAtOrBelow(units[index], fraction) then
-            count = count + 1
+        local eligible, snapshot = self:IsActiveHealthUnit(units[index])
+        if eligible then
+            eligibleCount = eligibleCount + 1
+            if snapshot.health.fraction <= fraction then
+                count = count + 1
+            end
         end
     end
 
-    return count, #units
+    return count, eligibleCount
 end
 
 function GroupService:FindLowestHealthUnit()
@@ -91,10 +105,10 @@ function GroupService:FindLowestHealthUnit()
 
     for index = 1, #units do
         local unit = units[index]
-        local health = addon.UnitStateService:GetHealthState(unit)
-        if health.maximum > 0 and (not lowestHealth or health.fraction < lowestHealth.fraction) then
+        local eligible, snapshot = self:IsActiveHealthUnit(unit)
+        if eligible and (not lowestHealth or snapshot.health.fraction < lowestHealth.fraction) then
             lowestUnit = unit
-            lowestHealth = health
+            lowestHealth = snapshot.health
         end
     end
 
