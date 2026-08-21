@@ -282,10 +282,6 @@ function CooldownPanel:Show()
 end
 
 function CooldownPanel:Hide()
-    if addon.ProcSoundAlerts then
-        addon.ProcSoundAlerts:Reset()
-    end
-
     if self.frame and self.frame:IsShown() then
         self.frame:Hide()
     end
