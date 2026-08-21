@@ -1,6 +1,18 @@
 local addon = TopDps
 local UnitStateService = addon:CreateModule("UnitStateService")
 
+local function IsApiTrue(value)
+    return value == true or value == 1
+end
+
+local function HasUnit(unit)
+    if not unit or not UnitExists then
+        return false
+    end
+
+    return IsApiTrue(UnitExists(unit))
+end
+
 local function ClampFraction(value)
     if value < 0 then
         return 0
@@ -32,7 +44,7 @@ local function BuildValueState(current, maximum)
 end
 
 function UnitStateService:GetHealthState(unit)
-    if not unit or not UnitExists(unit) then
+    if not HasUnit(unit) then
         return BuildValueState(0, 0)
     end
 
@@ -40,7 +52,7 @@ function UnitStateService:GetHealthState(unit)
 end
 
 function UnitStateService:GetPowerType(unit)
-    if not unit or not UnitExists(unit) or not UnitPowerType then
+    if not HasUnit(unit) or not UnitPowerType then
         return nil, nil
     end
 
@@ -49,7 +61,7 @@ function UnitStateService:GetPowerType(unit)
 end
 
 function UnitStateService:GetPowerState(unit)
-    if not unit or not UnitExists(unit) then
+    if not HasUnit(unit) then
         local state = BuildValueState(0, 0)
         state.type = nil
         state.token = nil
@@ -61,8 +73,13 @@ function UnitStateService:GetPowerState(unit)
     local maximum
 
     if UnitPower and UnitPowerMax then
-        current = UnitPower(unit, powerType)
-        maximum = UnitPowerMax(unit, powerType)
+        if powerType ~= nil then
+            current = UnitPower(unit, powerType)
+            maximum = UnitPowerMax(unit, powerType)
+        else
+            current = UnitPower(unit)
+            maximum = UnitPowerMax(unit)
+        end
     elseif UnitMana and UnitManaMax then
         current = UnitMana(unit)
         maximum = UnitManaMax(unit)
@@ -94,7 +111,7 @@ function UnitStateService:GetComboPoints(sourceUnit, targetUnit)
 end
 
 function UnitStateService:IsBossLike(unit)
-    if not unit or not UnitExists(unit) then
+    if not HasUnit(unit) then
         return false
     end
 
@@ -106,7 +123,7 @@ function UnitStateService:IsBossLike(unit)
 end
 
 function UnitStateService:GetUnitSnapshot(unit)
-    local exists = unit and UnitExists(unit) == 1 or false
+    local exists = HasUnit(unit)
     local health = self:GetHealthState(unit)
     local power = self:GetPowerState(unit)
 
@@ -119,8 +136,8 @@ function UnitStateService:GetUnitSnapshot(unit)
         creatureType = exists and UnitCreatureType(unit) or nil,
         health = health,
         power = power,
-        dead = exists and UnitIsDead(unit) == 1 or false,
-        attackable = exists and UnitCanAttack("player", unit) == 1 or false,
+        dead = exists and IsApiTrue(UnitIsDead(unit)) or false,
+        attackable = exists and IsApiTrue(UnitCanAttack("player", unit)) or false,
         bossLike = exists and self:IsBossLike(unit) or false,
     }
 end
