@@ -54,7 +54,11 @@ function RefreshService:IsCategoryRefreshDue(provider, category, context)
     end
 
     local lead = self:GetLeadSeconds(definition, category, context)
-    if definition.isRefreshDue then
+    if definition.isRefreshDue ~= nil then
+        if type(definition.isRefreshDue) ~= "function" then
+            error("TopDps: rotation refresh isRefreshDue for " .. tostring(category) .. " must be a function")
+        end
+
         local decision = definition.isRefreshDue(context, aura, remaining, lead)
         if decision ~= nil then
             return decision == true
