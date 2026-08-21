@@ -19,6 +19,10 @@ local bitBand = bit and bit.band or nil
 
 CombatTracker.enemyActivity = CombatTracker.enemyActivity or {}
 
+local function IsApiTrue(value)
+    return value == true or value == 1
+end
+
 local function HasMineAffiliation(flags)
     if not bitBand or not COMBATLOG_OBJECT_AFFILIATION_MINE or not flags then
         return false
@@ -65,6 +69,9 @@ end
 function CombatTracker:GetActiveEnemyCount()
     local now = GetTime()
     local targetGuid = UnitGUID("target")
+    local targetAttackable = targetGuid
+        and UnitCanAttack
+        and IsApiTrue(UnitCanAttack("player", "target"))
     local count = 0
     local guid
     local timestamp
@@ -77,7 +84,7 @@ function CombatTracker:GetActiveEnemyCount()
         end
     end
 
-    if targetGuid and not self.enemyActivity[targetGuid] then
+    if targetAttackable and not self.enemyActivity[targetGuid] then
         count = count + 1
     end
 
