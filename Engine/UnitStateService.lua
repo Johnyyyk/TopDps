@@ -126,10 +126,15 @@ function UnitStateService:GetUnitSnapshot(unit)
     local exists = HasUnit(unit)
     local health = self:GetHealthState(unit)
     local power = self:GetPowerState(unit)
+    local connected = exists
+    if exists and UnitIsConnected then
+        connected = IsApiTrue(UnitIsConnected(unit))
+    end
 
     return {
         unit = unit,
         exists = exists,
+        connected = connected,
         guid = exists and UnitGUID(unit) or nil,
         level = exists and UnitLevel(unit) or nil,
         classification = exists and UnitClassification(unit) or nil,
