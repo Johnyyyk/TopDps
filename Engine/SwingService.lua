@@ -9,6 +9,11 @@ local SWING_EVENTS = {
     SWING_MISSED = true,
 }
 
+local SWING_RESET_EVENTS = {
+    SPELL_DAMAGE = true,
+    SPELL_MISSED = true,
+}
+
 local function IsApiTrue(value)
     return value == true or value == 1
 end
@@ -111,6 +116,17 @@ function SwingService:ResolveOffHand(explicitOffHand)
     return offNext < mainNext
 end
 
+function SwingService:GetAbilitySwingReset(spellId, spellName)
+    local provider = addon.SpecManager and addon.SpecManager:GetActive() or nil
+    if not provider then
+        return nil
+    end
+
+    local category = provider:GetSpellCategory(spellId, spellName)
+    local ability = category and provider.abilities and provider.abilities[category] or nil
+    return ability and ability.swingReset or nil
+end
+
 function SwingService:RecordSwing(isOffHand)
     local now = GetTime()
     local mainHandSpeed, offHandSpeed = self:GetAttackSpeeds()
@@ -122,14 +138,35 @@ function SwingService:RecordSwing(isOffHand)
     hand.nextSwingAt = speed > 0 and now + speed or nil
 end
 
+function SwingService:RecordAbilitySwingReset(spellId, spellName)
+    local reset = self:GetAbilitySwingReset(spellId, spellName)
+    if reset == "MAIN_HAND" then
+        self:RecordSwing(false)
+    elseif reset == "OFF_HAND" then
+        self:RecordSwing(true)
+    elseif reset == "BOTH" then
+        self:RecordSwing(false)
+        self:RecordSwing(true)
+    end
+end
+
 function SwingService:RecordCombatEvent(...)
     local _, eventType, sourceGuid = ...
-    if not SWING_EVENTS[eventType] or sourceGuid ~= UnitGUID("player") then
+    if sourceGuid ~= UnitGUID("player") then
         return
     end
 
-    local explicitOffHand = GetExplicitOffHandFlag(eventType, ...)
-    self:RecordSwing(self:ResolveOffHand(explicitOffHand))
+    if SWING_EVENTS[eventType] then
+        local explicitOffHand = GetExplicitOffHandFlag(eventType, ...)
+        self:RecordSwing(self:ResolveOffHand(explicitOffHand))
+        return
+    end
+
+    if SWING_RESET_EVENTS[eventType] then
+        local spellId = tonumber((select(9, ...)))
+        local spellName = select(10, ...)
+        self:RecordAbilitySwingReset(spellId, spellName)
+    end
 end
 
 function SwingService:HandleAttackSpeedChanged(unit)
