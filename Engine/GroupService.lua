@@ -1,6 +1,19 @@
 local addon = TopDps
 local GroupService = addon:CreateModule("GroupService")
 
+local function ClampFraction(value)
+    value = tonumber(value) or 0
+    if value < 0 then
+        return 0
+    end
+
+    if value > 1 then
+        return 1
+    end
+
+    return value
+end
+
 function GroupService:GetUnits()
     local units = {}
     local raidCount = GetNumRaidMembers and GetNumRaidMembers() or 0
@@ -79,6 +92,7 @@ function GroupService:IsActiveHealthUnit(unit)
 end
 
 function GroupService:CountHealthAtOrBelow(fraction)
+    local threshold = ClampFraction(fraction)
     local units = self:GetUnits()
     local count = 0
     local eligibleCount = 0
@@ -88,7 +102,7 @@ function GroupService:CountHealthAtOrBelow(fraction)
         local eligible, snapshot = self:IsActiveHealthUnit(units[index])
         if eligible then
             eligibleCount = eligibleCount + 1
-            if snapshot.health.fraction <= fraction then
+            if snapshot.health.fraction <= threshold then
                 count = count + 1
             end
         end
