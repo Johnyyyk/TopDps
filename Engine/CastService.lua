@@ -44,8 +44,17 @@ local function BuildCastState(unit, isChannel, values)
         icon = values[4]
         startTimeMs = values[5]
         endTimeMs = values[6]
-        castId = values[8]
-        notInterruptible = values[9]
+
+        if isChannel then
+            -- WotLK 3.3.5a: name, rank, displayName, icon,
+            -- startTime, endTime, isTradeSkill, notInterruptible.
+            notInterruptible = values[8]
+        else
+            -- WotLK 3.3.5a: name, rank, displayName, icon,
+            -- startTime, endTime, isTradeSkill, castId, notInterruptible.
+            castId = values[8]
+            notInterruptible = values[9]
+        end
     elseif isChannel then
         icon = values[3]
         startTimeMs = values[4]
