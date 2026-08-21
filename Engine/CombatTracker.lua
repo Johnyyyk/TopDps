@@ -15,21 +15,45 @@ local DAMAGE_EVENTS = {
 }
 
 local ENEMY_ACTIVITY_TIMEOUT = 6
+local bitBand = bit and bit.band or nil
 
 CombatTracker.enemyActivity = CombatTracker.enemyActivity or {}
 
+local function HasMineAffiliation(flags)
+    if not bitBand or not COMBATLOG_OBJECT_AFFILIATION_MINE or not flags then
+        return false
+    end
+
+    return bitBand(flags, COMBATLOG_OBJECT_AFFILIATION_MINE) ~= 0
+end
+
+local function IsOwnedUnit(guid, flags, playerGuid, petGuid)
+    if not guid then
+        return false
+    end
+
+    if guid == playerGuid or (petGuid and guid == petGuid) then
+        return true
+    end
+
+    return HasMineAffiliation(flags)
+end
+
 function CombatTracker:RecordCombatEvent(...)
-    local _, eventType, sourceGuid, _, _, destinationGuid = ...
+    local _, eventType, sourceGuid, _, sourceFlags, destinationGuid, _, destinationFlags = ...
     if not DAMAGE_EVENTS[eventType] then
         return
     end
 
     local playerGuid = UnitGUID("player")
+    local petGuid = UnitGUID("pet")
+    local sourceOwned = IsOwnedUnit(sourceGuid, sourceFlags, playerGuid, petGuid)
+    local destinationOwned = IsOwnedUnit(destinationGuid, destinationFlags, playerGuid, petGuid)
     local now = GetTime()
 
-    if sourceGuid == playerGuid and destinationGuid and destinationGuid ~= playerGuid then
+    if sourceOwned and destinationGuid and not destinationOwned then
         self.enemyActivity[destinationGuid] = now
-    elseif destinationGuid == playerGuid and sourceGuid and sourceGuid ~= playerGuid then
+    elseif destinationOwned and sourceGuid and not sourceOwned then
         self.enemyActivity[sourceGuid] = now
     end
 end
