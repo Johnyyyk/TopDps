@@ -86,7 +86,8 @@ function GroupService:IsActiveHealthUnit(unit)
     local snapshot = addon.UnitStateService:GetUnitSnapshot(unit)
     return snapshot.exists
         and snapshot.connected
-        and not snapshot.dead
+        and not snapshot.deadOrGhost
+        and snapshot.assistable
         and snapshot.health.maximum > 0,
         snapshot
 end
