@@ -9,12 +9,31 @@ local SWING_EVENTS = {
     SWING_MISSED = true,
 }
 
-local function FindLastBoolean(...)
-    local index
-    for index = select("#", ...), 1, -1 do
-        local value = select(index, ...)
+local function IsApiTrue(value)
+    return value == true or value == 1
+end
+
+local function GetOffHandFlag(eventType, ...)
+    local argumentCount = select("#", ...)
+
+    if eventType == "SWING_DAMAGE" then
+        if argumentCount < 18 then
+            return false
+        end
+
+        return IsApiTrue(select(18, ...))
+    end
+
+    if eventType == "SWING_MISSED" then
+        local value = select(10, ...)
         if type(value) == "boolean" then
             return value
+        end
+
+        -- На ядрах, где после isOffHand передаётся amountMissed,
+        -- наличие третьего swing-аргумента позволяет безопасно принять 0/1.
+        if argumentCount >= 11 then
+            return IsApiTrue(value)
         end
     end
 
@@ -61,7 +80,7 @@ function SwingService:RecordCombatEvent(...)
         return
     end
 
-    self:RecordSwing(FindLastBoolean(...))
+    self:RecordSwing(GetOffHandFlag(eventType, ...))
 end
 
 function SwingService:HandleAttackSpeedChanged(unit)
@@ -93,7 +112,7 @@ function SwingService:IsActionQueued(action)
     end
 
     local ok, current = pcall(IsCurrentAction, action)
-    return ok and (current == true or current == 1)
+    return ok and IsApiTrue(current)
 end
 
 function SwingService:GetState()
