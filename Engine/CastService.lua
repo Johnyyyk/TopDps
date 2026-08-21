@@ -127,6 +127,44 @@ function CastService:GetUnitCastState(unit)
     }
 end
 
+function CastService:GetChannelTickState(state, tickCount)
+    local count = math.floor(tonumber(tickCount) or 0)
+    if not state or not state.active or not state.isChannel or count <= 0 then
+        return nil
+    end
+
+    local duration = math.max(0, tonumber(state.duration) or 0)
+    if duration <= 0 then
+        return nil
+    end
+
+    local tickDuration = duration / count
+    local now = GetTime()
+    local elapsed = math.max(0, math.min(duration, now - (tonumber(state.startTime) or now)))
+    local completedTicks = math.floor(elapsed / tickDuration)
+    if completedTicks > count then
+        completedTicks = count
+    end
+
+    local nextTickIndex
+    local nextTickAt
+    local nextTickRemaining = 0
+    if completedTicks < count then
+        nextTickIndex = completedTicks + 1
+        nextTickAt = state.startTime + nextTickIndex * tickDuration
+        nextTickRemaining = math.max(0, nextTickAt - now)
+    end
+
+    return {
+        tickCount = count,
+        tickDuration = tickDuration,
+        completedTicks = completedTicks,
+        nextTickIndex = nextTickIndex,
+        nextTickAt = nextTickAt,
+        nextTickRemaining = nextTickRemaining,
+    }
+end
+
 function CastService:GetPlayerCastState()
     return self:GetUnitCastState("player")
 end
