@@ -8,6 +8,10 @@ local function GetGroupLabel(group)
     return addon.L["COOLDOWN_GROUP_" .. tostring(group)] or tostring(group)
 end
 
+local function GetVisibilityLabel(mode)
+    return addon.L["COOLDOWN_PANEL_VISIBILITY_" .. tostring(mode)] or tostring(mode)
+end
+
 local function BuildEntriesSignature(profile, entries)
     local parts = { profile and profile.key or "none" }
     local index
@@ -28,6 +32,11 @@ local function SetSliderValue(slider, value)
     slider.suppressChange = true
     slider:SetValue(value)
     slider.suppressChange = false
+end
+
+local function SetVisibilityDropdownValue(dropdown, mode)
+    UIDropDownMenu_SetSelectedValue(dropdown, mode)
+    UIDropDownMenu_SetText(dropdown, GetVisibilityLabel(mode))
 end
 
 function CooldownOptions:RegisterLayoutControl(controlType, frame, parent, x, label)
@@ -265,6 +274,40 @@ function CooldownOptions:GetSelectedProfile()
     return firstProfile
 end
 
+function CooldownOptions:InitializeVisibilityDropdown(dropdown, context)
+    UIDropDownMenu_Initialize(dropdown, function(_, level)
+        local profile = self:GetSelectedProfile()
+        if not profile then
+            return
+        end
+
+        local currentMode = addon.Settings:GetCooldownPanelVisibilityMode(
+            context,
+            profile.classToken,
+            profile.talentTab
+        )
+        local index
+
+        for index = 1, #addon.PANEL_VISIBILITY_ORDER do
+            local mode = addon.PANEL_VISIBILITY_ORDER[index]
+            local selectedMode = mode
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = GetVisibilityLabel(mode)
+            info.value = mode
+            info.checked = currentMode == mode
+            info.func = function()
+                addon.Settings:SetCooldownPanelVisibilityMode(
+                    context,
+                    selectedMode,
+                    profile.classToken,
+                    profile.talentTab
+                )
+            end
+            UIDropDownMenu_AddButton(info, level)
+        end
+    end)
+end
+
 function CooldownOptions:Create()
     local panel = Widgets:CreatePanel("TopDpsCooldownOptionsPanel", addon.L.COOLDOWN_PAGE, addon.NAME)
     local profiles = addon.CooldownRegistry:GetProfiles()
@@ -474,27 +517,46 @@ function CooldownOptions:Create()
         addon.Settings:ResetCooldownPanelSpecSettings(profile.classToken, profile.talentTab)
     end)
 
-    local combatOnlyY = Layout:TakeRow(cursor, Size.CHECKBOX_ROW_HEIGHT, Size.SECTION_GAP)
-    local combatOnlyCheck = Layout:CreateCheckButton(
-        content,
-        "TopDpsCooldownPanelCombatOnly",
-        Size.CONTENT_INSET,
-        combatOnlyY,
-        addon.L.COOLDOWN_PANEL_COMBAT_ONLY
-    )
-    combatOnlyCheck:SetScript("OnClick", function(self)
-        local profile = CooldownOptions:GetSelectedProfile()
-        if not profile then
-            return
-        end
+    local visibilityHeaderY = Layout:TakeRow(cursor, Size.SECTION_ROW_HEIGHT, Size.SECTION_GAP)
+    Layout:CreateSectionHeader(content, addon.L.COOLDOWN_PANEL_VISIBILITY, visibilityHeaderY)
 
-        addon.Settings:SetCooldownPanelCombatOnly(
-            Widgets:GetCheckValue(self),
-            profile.classToken,
-            profile.talentTab
-        )
-    end)
-    self:RegisterLayoutControl("checkbox", combatOnlyCheck, content, Size.CONTENT_INSET)
+    local worldVisibilityY = Layout:TakeRow(cursor, Size.DROPDOWN_ROW_HEIGHT, Size.ROW_GAP)
+    local worldVisibilityText, worldVisibilityDropdown = Layout:CreateDropdownField(
+        content,
+        "TopDpsCooldownPanelWorldVisibility",
+        worldVisibilityY,
+        addon.L.COOLDOWN_PANEL_VISIBILITY_WORLD
+    )
+    self:RegisterLayoutControl(
+        "dropdown",
+        worldVisibilityDropdown,
+        content,
+        nil,
+        worldVisibilityText
+    )
+    self:InitializeVisibilityDropdown(
+        worldVisibilityDropdown,
+        addon.PANEL_VISIBILITY_CONTEXT_WORLD
+    )
+
+    local pveVisibilityY = Layout:TakeRow(cursor, Size.DROPDOWN_ROW_HEIGHT, Size.ROW_GAP)
+    local pveVisibilityText, pveVisibilityDropdown = Layout:CreateDropdownField(
+        content,
+        "TopDpsCooldownPanelPveVisibility",
+        pveVisibilityY,
+        addon.L.COOLDOWN_PANEL_VISIBILITY_PVE_INSTANCE
+    )
+    self:RegisterLayoutControl(
+        "dropdown",
+        pveVisibilityDropdown,
+        content,
+        nil,
+        pveVisibilityText
+    )
+    self:InitializeVisibilityDropdown(
+        pveVisibilityDropdown,
+        addon.PANEL_VISIBILITY_CONTEXT_PVE_INSTANCE
+    )
 
     self.panel = panel
     self.scrollFrame = scrollFrame
@@ -504,7 +566,8 @@ function CooldownOptions:Create()
     self.activeSpecText = activeSpecText
     self.enabledCheck = enabledCheck
     self.procSoundsEnabledCheck = procSoundsEnabledCheck
-    self.combatOnlyCheck = combatOnlyCheck
+    self.worldVisibilityDropdown = worldVisibilityDropdown
+    self.pveVisibilityDropdown = pveVisibilityDropdown
     self.lockedCheck = lockedCheck
     self.resetButton = resetButton
     self.resetSpecButton = resetSpecButton
@@ -581,12 +644,20 @@ function CooldownOptions:Refresh()
     self.procSoundsEnabledCheck:SetChecked(
         addon.Settings:AreCooldownProcSoundsEnabled() and 1 or nil
     )
-    self.combatOnlyCheck:SetChecked(
-        addon.Settings:IsCooldownPanelCombatOnly(
-            profile.classToken,
-            profile.talentTab
-        ) and 1 or nil
+
+    local worldVisibility = addon.Settings:GetCooldownPanelVisibilityMode(
+        addon.PANEL_VISIBILITY_CONTEXT_WORLD,
+        profile.classToken,
+        profile.talentTab
     )
+    local pveVisibility = addon.Settings:GetCooldownPanelVisibilityMode(
+        addon.PANEL_VISIBILITY_CONTEXT_PVE_INSTANCE,
+        profile.classToken,
+        profile.talentTab
+    )
+    SetVisibilityDropdownValue(self.worldVisibilityDropdown, worldVisibility)
+    SetVisibilityDropdownValue(self.pveVisibilityDropdown, pveVisibility)
+
     self.lockedCheck:SetChecked(addon.db.panel.locked and 1 or nil)
 
     SetSliderValue(self.sizeSlider, addon.db.panel.iconSize)
@@ -635,14 +706,16 @@ function CooldownOptions:Refresh()
 
     if panelEnabled then
         self.procSoundsEnabledCheck:Enable()
-        self.combatOnlyCheck:Enable()
+        UIDropDownMenu_EnableDropDown(self.worldVisibilityDropdown)
+        UIDropDownMenu_EnableDropDown(self.pveVisibilityDropdown)
         self.lockedCheck:Enable()
         self.resetButton:Enable()
         self.sizeSlider:Enable()
         self.opacitySlider:Enable()
     else
         self.procSoundsEnabledCheck:Disable()
-        self.combatOnlyCheck:Disable()
+        UIDropDownMenu_DisableDropDown(self.worldVisibilityDropdown)
+        UIDropDownMenu_DisableDropDown(self.pveVisibilityDropdown)
         self.lockedCheck:Disable()
         self.resetButton:Disable()
         self.sizeSlider:Disable()
