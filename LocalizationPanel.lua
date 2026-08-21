@@ -4,6 +4,11 @@ local L = addon.L
 if GetLocale() == "ruRU" then
     L.COOLDOWN_DESCRIPTION = "Компактная боевая панель: обязательные бафы, активные проки, защитные и вспомогательные способности, трини и дополнительные КД."
     L.COOLDOWN_PANEL_SPEC_VISUALS = "Отображение выбранной специализации"
+    L.COOLDOWN_PANEL_VISIBILITY = "Видимость панели"
+    L.COOLDOWN_PANEL_VISIBILITY_WORLD = "В открытом мире"
+    L.COOLDOWN_PANEL_VISIBILITY_PVE_INSTANCE = "В подземельях и рейдах"
+    L.COOLDOWN_PANEL_VISIBILITY_ALWAYS = "Всегда"
+    L.COOLDOWN_PANEL_VISIBILITY_COMBAT_ONLY = "Только в бою"
     L.COOLDOWN_PANEL_SHOW_TIMERS = "Показывать таймеры"
     L.COOLDOWN_PANEL_ICON_SIZE = "Базовый размер иконок: %d"
     L.COOLDOWN_PANEL_ICON_GAP = "Расстояние между иконками: %d"
@@ -22,6 +27,11 @@ if GetLocale() == "ruRU" then
 else
     L.COOLDOWN_DESCRIPTION = "A compact combat panel for required buffs, active procs, defensive and utility abilities, trinkets, and additional cooldowns."
     L.COOLDOWN_PANEL_SPEC_VISUALS = "Selected specialization display"
+    L.COOLDOWN_PANEL_VISIBILITY = "Panel visibility"
+    L.COOLDOWN_PANEL_VISIBILITY_WORLD = "Open world"
+    L.COOLDOWN_PANEL_VISIBILITY_PVE_INSTANCE = "Dungeons and raids"
+    L.COOLDOWN_PANEL_VISIBILITY_ALWAYS = "Always"
+    L.COOLDOWN_PANEL_VISIBILITY_COMBAT_ONLY = "Combat only"
     L.COOLDOWN_PANEL_SHOW_TIMERS = "Show timers"
     L.COOLDOWN_PANEL_ICON_SIZE = "Base icon size: %d"
     L.COOLDOWN_PANEL_ICON_GAP = "Icon spacing: %d"
