@@ -13,16 +13,65 @@ local function HasUnit(unit)
     return IsApiTrue(UnitExists(unit))
 end
 
-local function BuildCastState(unit, isChannel, name, icon, startTimeMs, endTimeMs, notInterruptible)
+local function PackValues(...)
+    return {
+        count = select("#", ...),
+        ...,
+    }
+end
+
+local function UsesLegacyLayout(values)
+    local startTime = tonumber(values[5]) or 0
+    local endTime = tonumber(values[6]) or 0
+    return startTime > 1000 and endTime > 1000
+end
+
+local function BuildCastState(unit, isChannel, values)
+    local name = values[1]
+    if not name then
+        return nil
+    end
+
+    local legacy = UsesLegacyLayout(values)
+    local icon
+    local startTimeMs
+    local endTimeMs
+    local castId
+    local notInterruptible
+    local spellId
+
+    if legacy then
+        icon = values[4]
+        startTimeMs = values[5]
+        endTimeMs = values[6]
+        castId = values[8]
+        notInterruptible = values[9]
+    elseif isChannel then
+        icon = values[3]
+        startTimeMs = values[4]
+        endTimeMs = values[5]
+        notInterruptible = values[7]
+        spellId = tonumber(values[8])
+    else
+        icon = values[3]
+        startTimeMs = values[4]
+        endTimeMs = values[5]
+        castId = values[7]
+        notInterruptible = values[8]
+        spellId = tonumber(values[9])
+    end
+
     local startTime = math.max(0, (tonumber(startTimeMs) or 0) / 1000)
     local endTime = math.max(0, (tonumber(endTimeMs) or 0) / 1000)
     local now = GetTime()
 
     return {
         unit = unit,
-        active = name ~= nil,
+        active = true,
         name = name,
         icon = icon,
+        spellId = spellId,
+        castId = castId,
         isChannel = isChannel == true,
         startTime = startTime,
         endTime = endTime,
@@ -37,12 +86,7 @@ function CastService:GetCastingState(unit)
         return nil
     end
 
-    local name, _, _, icon, startTime, endTime, _, _, notInterruptible = UnitCastingInfo(unit)
-    if not name then
-        return nil
-    end
-
-    return BuildCastState(unit, false, name, icon, startTime, endTime, notInterruptible)
+    return BuildCastState(unit, false, PackValues(UnitCastingInfo(unit)))
 end
 
 function CastService:GetChannelState(unit)
@@ -50,12 +94,7 @@ function CastService:GetChannelState(unit)
         return nil
     end
 
-    local name, _, _, icon, startTime, endTime, _, notInterruptible = UnitChannelInfo(unit)
-    if not name then
-        return nil
-    end
-
-    return BuildCastState(unit, true, name, icon, startTime, endTime, notInterruptible)
+    return BuildCastState(unit, true, PackValues(UnitChannelInfo(unit)))
 end
 
 function CastService:GetUnitCastState(unit)
