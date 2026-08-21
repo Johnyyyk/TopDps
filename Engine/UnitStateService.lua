@@ -155,16 +155,23 @@ function UnitStateService:GetUnitSnapshot(unit)
     local exists = HasUnit(unit)
     local health = self:GetHealthState(unit)
     local power = self:GetPowerState(unit)
+    local isPlayer = exists and UnitIsPlayer and IsApiTrue(UnitIsPlayer(unit)) or false
     local connected = exists
     local className
     local classToken
 
-    if exists and UnitIsConnected then
+    if isPlayer and UnitIsConnected then
         connected = IsApiTrue(UnitIsConnected(unit))
     end
 
     if exists and UnitClass then
         className, classToken = UnitClass(unit)
+    end
+
+    local dead = exists and IsApiTrue(UnitIsDead(unit)) or false
+    local deadOrGhost = dead
+    if exists and UnitIsDeadOrGhost then
+        deadOrGhost = IsApiTrue(UnitIsDeadOrGhost(unit))
     end
 
     return {
@@ -179,10 +186,12 @@ function UnitStateService:GetUnitSnapshot(unit)
         creatureType = exists and UnitCreatureType(unit) or nil,
         health = health,
         power = power,
-        dead = exists and IsApiTrue(UnitIsDead(unit)) or false,
+        dead = dead,
+        deadOrGhost = deadOrGhost,
         inCombat = exists and UnitAffectingCombat and IsApiTrue(UnitAffectingCombat(unit)) or false,
-        isPlayer = exists and UnitIsPlayer and IsApiTrue(UnitIsPlayer(unit)) or false,
-        attackable = exists and IsApiTrue(UnitCanAttack("player", unit)) or false,
+        isPlayer = isPlayer,
+        attackable = exists and UnitCanAttack and IsApiTrue(UnitCanAttack("player", unit)) or false,
+        assistable = exists and UnitCanAssist and IsApiTrue(UnitCanAssist("player", unit)) or false,
         bossLike = exists and self:IsBossLike(unit) or false,
     }
 end
