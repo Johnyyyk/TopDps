@@ -144,9 +144,14 @@ function Bootstrap:HandleEvent(event, ...)
         end
     elseif event == "PLAYER_REGEN_ENABLED" then
         addon.CombatTracker:Clear()
+        addon.SwingService:Clear()
         addon.RecommendationPresenter:Clear()
     elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
         addon.CombatTracker:RecordCombatEvent(...)
+        addon.SwingService:RecordCombatEvent(...)
+    elseif event == "UNIT_ATTACK_SPEED" then
+        local unit = ...
+        addon.SwingService:HandleAttackSpeedChanged(unit)
     elseif event == "UNIT_AURA" then
         local unit = ...
         addon.CooldownTracker:HandleUnitAura(unit)
@@ -193,6 +198,7 @@ local EVENTS = {
     "UNIT_AURA",
     "UNIT_FLAGS",
     "UNIT_INVENTORY_CHANGED",
+    "UNIT_ATTACK_SPEED",
     "PARTY_MEMBERS_CHANGED",
     "RAID_ROSTER_UPDATE",
     "PLAYER_REGEN_ENABLED",
