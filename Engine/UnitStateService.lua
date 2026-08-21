@@ -60,15 +60,21 @@ function UnitStateService:GetPowerType(unit)
     return tonumber(powerType), powerToken
 end
 
-function UnitStateService:GetPowerState(unit)
+function UnitStateService:GetPowerState(unit, requestedPowerType)
     if not HasUnit(unit) then
         local state = BuildValueState(0, 0)
-        state.type = nil
+        state.type = requestedPowerType
+        state.activeType = nil
         state.token = nil
         return state
     end
 
-    local powerType, powerToken = self:GetPowerType(unit)
+    local activePowerType, powerToken = self:GetPowerType(unit)
+    local powerType = requestedPowerType
+    if powerType == nil then
+        powerType = activePowerType
+    end
+
     local current
     local maximum
 
@@ -90,7 +96,8 @@ function UnitStateService:GetPowerState(unit)
 
     local state = BuildValueState(current, maximum)
     state.type = powerType
-    state.token = powerToken
+    state.activeType = activePowerType
+    state.token = powerType == activePowerType and powerToken or nil
 
     return state
 end
@@ -127,8 +134,15 @@ function UnitStateService:GetUnitSnapshot(unit)
     local health = self:GetHealthState(unit)
     local power = self:GetPowerState(unit)
     local connected = exists
+    local className
+    local classToken
+
     if exists and UnitIsConnected then
         connected = IsApiTrue(UnitIsConnected(unit))
+    end
+
+    if exists and UnitClass then
+        className, classToken = UnitClass(unit)
     end
 
     return {
@@ -137,11 +151,15 @@ function UnitStateService:GetUnitSnapshot(unit)
         connected = connected,
         guid = exists and UnitGUID(unit) or nil,
         level = exists and UnitLevel(unit) or nil,
+        className = className,
+        classToken = classToken,
         classification = exists and UnitClassification(unit) or nil,
         creatureType = exists and UnitCreatureType(unit) or nil,
         health = health,
         power = power,
         dead = exists and IsApiTrue(UnitIsDead(unit)) or false,
+        inCombat = exists and UnitAffectingCombat and IsApiTrue(UnitAffectingCombat(unit)) or false,
+        isPlayer = exists and UnitIsPlayer and IsApiTrue(UnitIsPlayer(unit)) or false,
         attackable = exists and IsApiTrue(UnitCanAttack("player", unit)) or false,
         bossLike = exists and self:IsBossLike(unit) or false,
     }
