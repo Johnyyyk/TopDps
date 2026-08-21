@@ -45,6 +45,20 @@ addon.PANEL_BUFF_SIDE_ORDER = {
     addon.PANEL_BUFF_SIDE_RIGHT,
 }
 
+addon.PANEL_VISIBILITY_ALWAYS = "ALWAYS"
+addon.PANEL_VISIBILITY_COMBAT_ONLY = "COMBAT_ONLY"
+addon.PANEL_VISIBILITY_ORDER = {
+    addon.PANEL_VISIBILITY_ALWAYS,
+    addon.PANEL_VISIBILITY_COMBAT_ONLY,
+}
+
+addon.PANEL_VISIBILITY_CONTEXT_WORLD = "world"
+addon.PANEL_VISIBILITY_CONTEXT_PVE_INSTANCE = "pveInstance"
+addon.PANEL_VISIBILITY_CONTEXT_ORDER = {
+    addon.PANEL_VISIBILITY_CONTEXT_WORLD,
+    addon.PANEL_VISIBILITY_CONTEXT_PVE_INSTANCE,
+}
+
 addon.PANEL_BEHAVIOR_ALWAYS = "ALWAYS"
 addon.PANEL_BEHAVIOR_ACTIVE_ONLY = "ACTIVE_ONLY"
 addon.PANEL_BEHAVIOR_REQUIRED_BUFF = "REQUIRED_BUFF"
@@ -86,7 +100,10 @@ addon.DEFAULTS = {
     showCooldownPanel = true,
     cooldownProcSoundsEnabled = true,
     cooldownPanelShowTimers = true,
-    cooldownPanelCombatOnly = true,
+    cooldownPanelVisibility = {
+        [addon.PANEL_VISIBILITY_CONTEXT_WORLD] = addon.PANEL_VISIBILITY_COMBAT_ONLY,
+        [addon.PANEL_VISIBILITY_CONTEXT_PVE_INSTANCE] = addon.PANEL_VISIBILITY_ALWAYS,
+    },
     cooldownPanelLocked = true,
     cooldownPanelX = 0,
     cooldownPanelY = -166,
