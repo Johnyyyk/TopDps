@@ -14,6 +14,8 @@ local DAMAGE_EVENTS = {
     DAMAGE_SHIELD_MISSED = true,
 }
 
+local ENEMY_ACTIVITY_TIMEOUT = 6
+
 CombatTracker.enemyActivity = CombatTracker.enemyActivity or {}
 
 function CombatTracker:RecordCombatEvent(...)
@@ -36,7 +38,7 @@ function CombatTracker:Clear()
     self.enemyActivity = {}
 end
 
-function CombatTracker:GetEnemyCount()
+function CombatTracker:GetActiveEnemyCount()
     local now = GetTime()
     local targetGuid = UnitGUID("target")
     local count = 0
@@ -44,7 +46,7 @@ function CombatTracker:GetEnemyCount()
     local timestamp
 
     for guid, timestamp in pairs(self.enemyActivity) do
-        if now - timestamp <= 6 then
+        if now - timestamp <= ENEMY_ACTIVITY_TIMEOUT then
             count = count + 1
         else
             self.enemyActivity[guid] = nil
@@ -56,4 +58,9 @@ function CombatTracker:GetEnemyCount()
     end
 
     return count
+end
+
+-- Совместимость со спеками, которые пока используют старое имя.
+function CombatTracker:GetEnemyCount()
+    return self:GetActiveEnemyCount()
 end
