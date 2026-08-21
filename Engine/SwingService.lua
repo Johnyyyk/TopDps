@@ -13,31 +13,40 @@ local function IsApiTrue(value)
     return value == true or value == 1
 end
 
-local function GetOffHandFlag(eventType, ...)
+local function GetExplicitOffHandFlag(eventType, ...)
     local argumentCount = select("#", ...)
 
     if eventType == "SWING_DAMAGE" then
         if argumentCount < 18 then
-            return false
+            return nil
         end
 
-        return IsApiTrue(select(18, ...))
+        local value = select(18, ...)
+        if type(value) == "boolean" or value == 0 or value == 1 then
+            return IsApiTrue(value)
+        end
+
+        return nil
     end
 
     if eventType == "SWING_MISSED" then
+        if argumentCount < 10 then
+            return nil
+        end
+
         local value = select(10, ...)
         if type(value) == "boolean" then
             return value
         end
 
-        -- На ядрах, где после isOffHand передаётся amountMissed,
-        -- наличие третьего swing-аргумента позволяет безопасно принять 0/1.
-        if argumentCount >= 11 then
+        -- На части ядер numeric 0/1 можно отличить от amountMissed
+        -- только когда после него присутствует ещё один swing-аргумент.
+        if argumentCount >= 11 and (value == 0 or value == 1) then
             return IsApiTrue(value)
         end
     end
 
-    return false
+    return nil
 end
 
 local function BuildHandState(hand, speed, now)
@@ -55,6 +64,21 @@ local function BuildHandState(hand, speed, now)
     }
 end
 
+local function RescaleSwingTimer(hand, newSpeed, now)
+    local oldSpeed = math.max(0, tonumber(hand.speed) or 0)
+    newSpeed = math.max(0, tonumber(newSpeed) or 0)
+
+    if not hand.lastSwingAt or not hand.nextSwingAt or oldSpeed <= 0 or newSpeed <= 0 then
+        hand.speed = newSpeed
+        return
+    end
+
+    local oldRemaining = math.max(0, hand.nextSwingAt - now)
+    local remainingFraction = math.min(1, oldRemaining / oldSpeed)
+    hand.nextSwingAt = now + remainingFraction * newSpeed
+    hand.speed = newSpeed
+end
+
 function SwingService:GetAttackSpeeds()
     if not UnitAttackSpeed then
         return 0, 0
@@ -64,12 +88,36 @@ function SwingService:GetAttackSpeeds()
     return math.max(0, tonumber(mainHandSpeed) or 0), math.max(0, tonumber(offHandSpeed) or 0)
 end
 
+function SwingService:ResolveOffHand(explicitOffHand)
+    if explicitOffHand ~= nil then
+        return explicitOffHand == true
+    end
+
+    local _, offHandSpeed = self:GetAttackSpeeds()
+    if offHandSpeed <= 0 then
+        return false
+    end
+
+    if not self.mainHand.lastSwingAt then
+        return false
+    end
+
+    if not self.offHand.lastSwingAt then
+        return true
+    end
+
+    local mainNext = tonumber(self.mainHand.nextSwingAt) or math.huge
+    local offNext = tonumber(self.offHand.nextSwingAt) or math.huge
+    return offNext < mainNext
+end
+
 function SwingService:RecordSwing(isOffHand)
     local now = GetTime()
     local mainHandSpeed, offHandSpeed = self:GetAttackSpeeds()
     local hand = isOffHand and self.offHand or self.mainHand
     local speed = isOffHand and offHandSpeed or mainHandSpeed
 
+    hand.speed = speed
     hand.lastSwingAt = now
     hand.nextSwingAt = speed > 0 and now + speed or nil
 end
@@ -80,7 +128,8 @@ function SwingService:RecordCombatEvent(...)
         return
     end
 
-    self:RecordSwing(GetOffHandFlag(eventType, ...))
+    local explicitOffHand = GetExplicitOffHandFlag(eventType, ...)
+    self:RecordSwing(self:ResolveOffHand(explicitOffHand))
 end
 
 function SwingService:HandleAttackSpeedChanged(unit)
@@ -90,20 +139,8 @@ function SwingService:HandleAttackSpeedChanged(unit)
 
     local now = GetTime()
     local mainHandSpeed, offHandSpeed = self:GetAttackSpeeds()
-
-    if self.mainHand.lastSwingAt and mainHandSpeed > 0 then
-        self.mainHand.nextSwingAt = self.mainHand.lastSwingAt + mainHandSpeed
-        if self.mainHand.nextSwingAt < now then
-            self.mainHand.nextSwingAt = now
-        end
-    end
-
-    if self.offHand.lastSwingAt and offHandSpeed > 0 then
-        self.offHand.nextSwingAt = self.offHand.lastSwingAt + offHandSpeed
-        if self.offHand.nextSwingAt < now then
-            self.offHand.nextSwingAt = now
-        end
-    end
+    RescaleSwingTimer(self.mainHand, mainHandSpeed, now)
+    RescaleSwingTimer(self.offHand, offHandSpeed, now)
 end
 
 function SwingService:IsActionQueued(action)
