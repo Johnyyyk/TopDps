@@ -35,6 +35,9 @@ jobs:
             -not -path './.git/*' \
             -print0 | xargs -0 -n1 luac5.1 -p
 
+      - name: Проверить core primitives
+        run: lua5.1 tools/test_core_primitives.lua
+
       - name: Проверить XML
         shell: bash
         run: |
