@@ -46,12 +46,16 @@ local function BuildCastState(unit, isChannel, values)
         endTimeMs = values[6]
 
         if isChannel then
-            -- WotLK 3.3.5a: name, rank, displayName, icon,
-            -- startTime, endTime, isTradeSkill, notInterruptible.
-            notInterruptible = values[8]
+            -- Оригинальный WotLK layout обычно заканчивается
+            -- notInterruptible восьмым значением. Некоторые private cores
+            -- дополнительно возвращают castId перед ним.
+            if values.count >= 9 then
+                castId = values[8]
+                notInterruptible = values[9]
+            else
+                notInterruptible = values[8]
+            end
         else
-            -- WotLK 3.3.5a: name, rank, displayName, icon,
-            -- startTime, endTime, isTradeSkill, castId, notInterruptible.
             castId = values[8]
             notInterruptible = values[9]
         end
@@ -59,15 +63,27 @@ local function BuildCastState(unit, isChannel, values)
         icon = values[3]
         startTimeMs = values[4]
         endTimeMs = values[5]
-        notInterruptible = values[7]
-        spellId = tonumber(values[8])
+
+        if values.count >= 8 then
+            notInterruptible = values[7]
+            spellId = tonumber(values[8])
+        else
+            -- Некоторые Classic API удаляли notInterruptible полностью,
+            -- сдвигая spellId на его позицию.
+            spellId = tonumber(values[7])
+        end
     else
         icon = values[3]
         startTimeMs = values[4]
         endTimeMs = values[5]
         castId = values[7]
-        notInterruptible = values[8]
-        spellId = tonumber(values[9])
+
+        if values.count >= 9 then
+            notInterruptible = values[8]
+            spellId = tonumber(values[9])
+        else
+            spellId = tonumber(values[8])
+        end
     end
 
     local startTime = math.max(0, (tonumber(startTimeMs) or 0) / 1000)
