@@ -3,6 +3,12 @@ local SpecProvider = addon:CreateModule("SpecProvider")
 
 SpecProvider.__index = SpecProvider
 
+local VALID_SWING_RESETS = {
+    MAIN_HAND = true,
+    OFF_HAND = true,
+    BOTH = true,
+}
+
 local function ValidateRefreshDefinition(category, refresh)
     if refresh == nil then
         return
@@ -28,6 +34,12 @@ local function ValidateRefreshDefinition(category, refresh)
     end
 end
 
+local function ValidateSwingReset(category, swingReset)
+    if swingReset ~= nil and not VALID_SWING_RESETS[swingReset] then
+        error("TopDps: rotation swingReset for " .. tostring(category) .. " is invalid")
+    end
+end
+
 function SpecProvider:Create(definition)
     if type(definition) ~= "table" then
         error("TopDps: specialization provider definition must be a table")
@@ -36,6 +48,7 @@ function SpecProvider:Create(definition)
     local category, ability
     for category, ability in pairs(definition.abilities or {}) do
         ValidateRefreshDefinition(category, ability and ability.refresh or nil)
+        ValidateSwingReset(category, ability and ability.swingReset or nil)
     end
 
     local provider = setmetatable(definition, { __index = self })
