@@ -15,7 +15,8 @@
 - regen основного ресурса игрока через `power.regen.base/casting`;
 - combo points игрока на текущей цели;
 - level / class / classification / creature type;
-- connected / dead / inCombat / isPlayer / attackable;
+- connected / dead / deadOrGhost / inCombat / isPlayer;
+- attackable / assistable;
 - boss-like состояние.
 
 `ContextBuilder` публикует готовые снимки как `context.player` и `context.target`, а сам сервис как `context.unitState`.
@@ -60,7 +61,7 @@
 
 Сервис получает исходящие `SWING_DAMAGE` / `SWING_MISSED` из combat log и реагирует на `UNIT_ATTACK_SPEED`. При изменении haste текущий таймер масштабируется по уже пройденной доле swing, а не пересчитывается как `lastSwing + newSpeed`.
 
-На ядрах, где combat log отдаёт явный `isOffHand`, используется он. На ядрах без этого поля dual-wield рука определяется по состоянию двух swing-таймеров: первый неизвестный удар считается main-hand, второй — off-hand, затем выбирается рука с более ранним ожидаемым swing.
+На ядрах, где combat log отдаёт явный `isOffHand`, используется он. На ядрах без этого поля dual-wield рука определяется по состоянию двух swing-таймеров: первый неизвестный удар считается main-hand, второй — off-hand, затем выбирается рука с более ранним ожидаемым swing. Сразу после `/reload` посреди dual-wield боя до наблюдения обеих рук точность этого fallback ограничена самим API.
 
 Способности, которые заменяют или сбрасывают автоатаку и поэтому приходят как spell-события, объявляются в spec metadata:
 
@@ -81,10 +82,10 @@ Core не знает ID Heroic Strike / Cleave / Maul / Raptor Strike и под�
 - снимки состояния участников;
 - подсчёт наличия ауры;
 - список участников без ауры;
-- подсчёт живых подключённых участников ниже заданного HP threshold;
-- поиск живого подключённого участника с минимальным относительным HP.
+- подсчёт живых, подключённых, доступных для помощи участников ниже заданного HP threshold;
+- поиск участника с минимальным относительным HP по тем же условиям.
 
-Сам сервис не принимает решений для хилов и не выбирает spell. Он только даёт данные specialization-level логике.
+Dead/ghost units исключаются из health-выборок. Сам сервис не принимает решений для хилов и не выбирает spell. Он только даёт данные specialization-level логике.
 
 ## EquipmentSetService
 
@@ -126,6 +127,19 @@ end
 ```
 
 Callback валидируется при создании provider. Это escape hatch для snapshot/overwrite/indirect-refresh механик. Отдельный SnapshotService намеренно не добавляется, пока несколько реальных специализаций не докажут необходимость общего stateful tracker.
+
+## Автоматические проверки
+
+`tools/test_core_primitives.lua` проверяет через Lua 5.1 наиболее рискованные runtime-контракты:
+
+- legacy и alternative/private layout `UnitCastingInfo` / `UnitChannelInfo`;
+- расчёт тиков channel;
+- fallback определения dual-wield рук;
+- явный off-hand flag;
+- сохранение прогресса swing при изменении attack speed;
+- `ability.swingReset` и queued action.
+
+Тест запускается в общем workflow `Проверка проекта` после Lua syntax check.
 
 ## Что намеренно остаётся вне Core
 
