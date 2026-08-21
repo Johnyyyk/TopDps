@@ -26,6 +26,11 @@ Cooldowns\TrinketDatabase.lua
 Cooldowns\EquipmentProcDatabase.lua
 
 Engine\AuraService.lua
+Engine\UnitStateService.lua
+Engine\CastService.lua
+Engine\SwingService.lua
+Engine\GroupService.lua
+Engine\EquipmentSetService.lua
 Engine\EquipmentService.lua
 Engine\RefreshService.lua
 Engine\ActionBarService.lua

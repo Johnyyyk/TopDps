@@ -46,16 +46,32 @@ function RefreshService:IsCategoryRefreshDue(provider, category, context)
         filter,
         definition.ownOnly == true
     )
+    local now = context and tonumber(context.now) or GetTime()
+    local expirationTime = aura and tonumber(aura.expirationTime) or 0
+    local remaining
+    if aura and expirationTime > 0 then
+        remaining = math.max(0, expirationTime - now)
+    end
+
+    local lead = self:GetLeadSeconds(definition, category, context)
+    if definition.isRefreshDue ~= nil then
+        if type(definition.isRefreshDue) ~= "function" then
+            error("TopDps: rotation refresh isRefreshDue for " .. tostring(category) .. " must be a function")
+        end
+
+        local decision = definition.isRefreshDue(context, aura, remaining, lead)
+        if decision ~= nil then
+            return decision == true
+        end
+    end
+
     if not aura then
         return true
     end
 
-    local expirationTime = tonumber(aura.expirationTime) or 0
     if expirationTime <= 0 then
         return false
     end
 
-    local now = context and tonumber(context.now) or GetTime()
-    local remaining = math.max(0, expirationTime - now)
-    return remaining <= self:GetLeadSeconds(definition, category, context)
+    return remaining <= lead
 end
