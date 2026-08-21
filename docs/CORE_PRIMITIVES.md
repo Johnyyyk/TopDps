@@ -12,6 +12,7 @@
 - текущий основной ресурс юнита;
 - чтение конкретного power type при необходимости;
 - тип активного ресурса;
+- regen основного ресурса игрока через `power.regen.base/casting`;
 - combo points игрока на текущей цели;
 - level / class / classification / creature type;
 - connected / dead / inCombat / isPlayer / attackable;
@@ -23,7 +24,7 @@
 
 ## CastService
 
-`Engine/CastService.lua` читает текущий cast/channel юнита и нормализует старую 3.3.5a и более новые/private-core раскладки return values.
+`Engine/CastService.lua` читает текущий cast/channel юнита и нормализует старую 3.3.5a и более новые/private-core раскладки return values, включая варианты с отсутствующим `notInterruptible`.
 
 Состояние содержит:
 
@@ -57,9 +58,20 @@
 - remaining до следующего swing;
 - `IsActionQueued(action)` для next-swing abilities вроде Heroic Strike / Cleave / Maul.
 
-Сервис получает исходящие `SWING_DAMAGE` / `SWING_MISSED` из combat log и реагирует на `UNIT_ATTACK_SPEED`.
+Сервис получает исходящие `SWING_DAMAGE` / `SWING_MISSED` из combat log и реагирует на `UNIT_ATTACK_SPEED`. При изменении haste текущий таймер масштабируется по уже пройденной доле swing, а не пересчитывается как `lastSwing + newSpeed`.
 
-У различных 3.3.5a/private-server ядер payload combat log может отличаться наличием `isOffHand`. Если off-hand нельзя определить однозначно, событие консервативно считается main-hand: сервис не должен выдавать ложную точность.
+На ядрах, где combat log отдаёт явный `isOffHand`, используется он. На ядрах без этого поля dual-wield рука определяется по состоянию двух swing-таймеров: первый неизвестный удар считается main-hand, второй — off-hand, затем выбирается рука с более ранним ожидаемым swing.
+
+Способности, которые заменяют или сбрасывают автоатаку и поэтому приходят как spell-события, объявляются в spec metadata:
+
+```lua
+ability = {
+    spellIds = { ... },
+    swingReset = "MAIN_HAND", -- MAIN_HAND / OFF_HAND / BOTH
+}
+```
+
+Core не знает ID Heroic Strike / Cleave / Maul / Raptor Strike и подобных способностей. Он только применяет универсальное `swingReset`.
 
 ## GroupService
 
@@ -86,7 +98,7 @@
 
 ## Active enemy count
 
-Старое имя `enemyCount` было слишком сильным: `CombatTracker` не знает реальное количество противников в радиусе AoE. Он знает только цели, которые недавно участвовали в боевых событиях с игроком, плюс текущую цель.
+Старое имя `enemyCount` было слишком сильным: `CombatTracker` не знает реальное количество противников в радиусе AoE. Он знает только цели, которые недавно участвовали в боевых событиях с игроком, его pet/guardian или текущей атакуемой целью.
 
 Поэтому основной контракт теперь называется:
 
@@ -94,6 +106,8 @@
 - `context.activeEnemyCount`.
 
 `context.enemyCount` и `CombatTracker:GetEnemyCount()` временно оставлены как compatibility alias для существующих специализаций.
+
+Текущая дружественная цель не добавляется в счётчик. Pet и собственные guardians учитываются через GUID/`COMBATLOG_OBJECT_AFFILIATION_MINE`, когда ядро предоставляет соответствующие flags.
 
 Это значение следует воспринимать только как автоматическую эвристику, а не как точный spatial scan.
 
@@ -111,7 +125,7 @@ isRefreshDue = function(context, aura, remaining, lead)
 end
 ```
 
-Это escape hatch для snapshot/overwrite/indirect-refresh механик. Отдельный SnapshotService намеренно не добавляется, пока несколько реальных специализаций не докажут необходимость общего stateful tracker.
+Callback валидируется при создании provider. Это escape hatch для snapshot/overwrite/indirect-refresh механик. Отдельный SnapshotService намеренно не добавляется, пока несколько реальных специализаций не докажут необходимость общего stateful tracker.
 
 ## Что намеренно остаётся вне Core
 
