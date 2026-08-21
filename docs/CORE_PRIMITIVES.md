@@ -10,11 +10,12 @@
 
 - здоровье: current / maximum / missing / fraction / percent;
 - текущий основной ресурс юнита;
-- тип ресурса;
+- чтение конкретного power type при необходимости;
+- тип активного ресурса;
 - combo points игрока на текущей цели;
-- level / classification / creature type;
-- boss-like состояние;
-- dead / attackable.
+- level / class / classification / creature type;
+- connected / dead / inCombat / isPlayer / attackable;
+- boss-like состояние.
 
 `ContextBuilder` публикует готовые снимки как `context.player` и `context.target`, а сам сервис как `context.unitState`.
 
@@ -22,14 +23,27 @@
 
 ## CastService
 
-`Engine/CastService.lua` читает текущий cast/channel юнита и возвращает:
+`Engine/CastService.lua` читает текущий cast/channel юнита и нормализует старую 3.3.5a и более новые/private-core раскладки return values.
+
+Состояние содержит:
 
 - active;
 - name / icon;
+- spellId / castId, когда клиент их предоставляет;
 - isChannel;
 - startTime / endTime;
 - duration / remaining;
 - notInterruptible, если клиент предоставляет это значение.
+
+Для каналов доступен `GetChannelTickState(state, tickCount)`. Спек передаёт только количество тиков конкретного channel spell, а Core вычисляет:
+
+- tickDuration;
+- completedTicks;
+- nextTickIndex;
+- nextTickAt;
+- nextTickRemaining.
+
+Это позволяет Mind Flay / Drain Soul / Arcane Missiles-подобной логике принимать решение о clip между тиками без class-specific таймера в Core.
 
 В `context.cast` находится состояние текущего каста игрока. Решение о том, можно ли прерывать канал или начинать следующий spell заранее, остаётся за specialization provider.
 
@@ -55,8 +69,8 @@
 - снимки состояния участников;
 - подсчёт наличия ауры;
 - список участников без ауры;
-- подсчёт участников ниже заданного HP threshold;
-- поиск участника с минимальным относительным HP.
+- подсчёт живых подключённых участников ниже заданного HP threshold;
+- поиск живого подключённого участника с минимальным относительным HP.
 
 Сам сервис не принимает решений для хилов и не выбирает spell. Он только даёт данные specialization-level логике.
 
