@@ -22,6 +22,10 @@ local function ValidateRefreshDefinition(category, refresh)
             error("TopDps: rotation refresh lead for " .. tostring(category) .. " must be non-negative")
         end
     end
+
+    if refresh.isRefreshDue ~= nil and type(refresh.isRefreshDue) ~= "function" then
+        error("TopDps: rotation refresh isRefreshDue for " .. tostring(category) .. " must be a function")
+    end
 end
 
 function SpecProvider:Create(definition)
