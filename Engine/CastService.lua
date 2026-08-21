@@ -1,6 +1,18 @@
 local addon = TopDps
 local CastService = addon:CreateModule("CastService")
 
+local function IsApiTrue(value)
+    return value == true or value == 1
+end
+
+local function HasUnit(unit)
+    if not unit or not UnitExists then
+        return false
+    end
+
+    return IsApiTrue(UnitExists(unit))
+end
+
 local function BuildCastState(unit, isChannel, name, icon, startTimeMs, endTimeMs, notInterruptible)
     local startTime = math.max(0, (tonumber(startTimeMs) or 0) / 1000)
     local endTime = math.max(0, (tonumber(endTimeMs) or 0) / 1000)
@@ -16,7 +28,7 @@ local function BuildCastState(unit, isChannel, name, icon, startTimeMs, endTimeM
         endTime = endTime,
         duration = math.max(0, endTime - startTime),
         remaining = math.max(0, endTime - now),
-        notInterruptible = notInterruptible == true or notInterruptible == 1,
+        notInterruptible = IsApiTrue(notInterruptible),
     }
 end
 
@@ -47,7 +59,7 @@ function CastService:GetChannelState(unit)
 end
 
 function CastService:GetUnitCastState(unit)
-    if not unit or not UnitExists(unit) then
+    if not HasUnit(unit) then
         return {
             unit = unit,
             active = false,
