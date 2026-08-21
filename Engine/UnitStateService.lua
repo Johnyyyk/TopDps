@@ -102,6 +102,28 @@ function UnitStateService:GetPowerState(unit, requestedPowerType)
     return state
 end
 
+function UnitStateService:GetPlayerPowerRegen()
+    if not GetPowerRegen then
+        return {
+            base = 0,
+            casting = 0,
+        }
+    end
+
+    local ok, base, casting = pcall(GetPowerRegen)
+    if not ok then
+        return {
+            base = 0,
+            casting = 0,
+        }
+    end
+
+    return {
+        base = tonumber(base) or 0,
+        casting = tonumber(casting) or 0,
+    }
+end
+
 function UnitStateService:GetComboPoints(sourceUnit, targetUnit)
     if not GetComboPoints then
         return 0
@@ -168,6 +190,7 @@ end
 function UnitStateService:GetPlayerSnapshot()
     local snapshot = self:GetUnitSnapshot("player")
     snapshot.comboPoints = self:GetComboPoints("player", "target")
+    snapshot.power.regen = self:GetPlayerPowerRegen()
 
     return snapshot
 end
