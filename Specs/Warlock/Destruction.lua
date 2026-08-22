@@ -1,5 +1,6 @@
 local addon = TopDps
 local Warlock = addon.Warlock
+local BACKLASH_PROC_SPELL_ID = 34936
 
 local Destruction = addon.SpecProvider:Create({
     id = "WARLOCK_DESTRUCTION",
@@ -75,6 +76,7 @@ local PRIORITY_MOVING = {
     "lifeTap",
     "curse",
     "conflagrate",
+    "incinerate",
     "corruption",
 }
 
@@ -102,6 +104,10 @@ function Destruction:IsCategoryAllowed(category, context)
 
     if category == "conflagrate" then
         return Warlock:HasOwnTargetAura({ Warlock.SPELL_IDS.immolate })
+    end
+
+    if category == "incinerate" and IsMovementPriorityActive(self, context) then
+        return Warlock:HasPlayerAura({ BACKLASH_PROC_SPELL_ID })
     end
 
     if category == "corruption" then
