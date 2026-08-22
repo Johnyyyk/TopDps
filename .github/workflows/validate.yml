@@ -41,6 +41,9 @@ jobs:
       - name: Проверить движение и movement priority
         run: lua5.1 tools/test_movement_priority.lua
 
+      - name: Проверить Backlash на движении
+        run: lua5.1 tools/test_movement_backlash.lua
+
       - name: Проверить XML
         shell: bash
         run: |
