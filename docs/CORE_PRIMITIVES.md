@@ -4,6 +4,8 @@
 
 Цель — вынести в Engine только повторяющиеся игровые механики. Правила конкретного класса или специализации по-прежнему должны оставаться в `Specs/<Class>`.
 
+Полноценные rotation provider'ы предназначены только для DPS-специализаций. Для healer/tank-спеков TopDps использует панель подсказок и состояний: обязательные бафы/состояния, проки, defensive/utility cooldown'ы и другие ситуационные элементы.
+
 ## UnitStateService
 
 `Engine/UnitStateService.lua` централизует чтение состояния юнитов:
@@ -16,7 +18,7 @@
 - combo points игрока на текущей цели;
 - level / class / classification / creature type;
 - connected / dead / deadOrGhost / inCombat / isPlayer;
-- attackable / assistable;
+- attackable;
 - boss-like состояние.
 
 `ContextBuilder` публикует готовые снимки как `context.player` и `context.target`, а сам сервис как `context.unitState`.
@@ -63,7 +65,7 @@
 
 На ядрах, где combat log отдаёт явный `isOffHand`, используется он. На ядрах без этого поля dual-wield рука определяется по состоянию двух swing-таймеров: первый неизвестный удар считается main-hand, второй — off-hand, затем выбирается рука с более ранним ожидаемым swing. Сразу после `/reload` посреди dual-wield боя до наблюдения обеих рук точность этого fallback ограничена самим API.
 
-Способности, которые заменяют или сбрасывают автоатаку и поэтому приходят как spell-события, объявляются в spec metadata:
+Способности, которые заменяют/сбрасывают автоатаку и поэтому приходят как spell-события, объявляются в spec metadata:
 
 ```lua
 ability = {
@@ -73,19 +75,6 @@ ability = {
 ```
 
 Core не знает ID Heroic Strike / Cleave / Maul / Raptor Strike и подобных способностей. Он только применяет универсальное `swingReset`.
-
-## GroupService
-
-`Engine/GroupService.lua` предоставляет общий доступ к party/raid:
-
-- список unit token'ов;
-- снимки состояния участников;
-- подсчёт наличия ауры;
-- список участников без ауры;
-- подсчёт живых, подключённых, доступных для помощи участников ниже заданного HP threshold;
-- поиск участника с минимальным относительным HP по тем же условиям.
-
-Dead/ghost units исключаются из health-выборок. Сам сервис не принимает решений для хилов и не выбирает spell. Он только даёт данные specialization-level логике.
 
 ## EquipmentSetService
 
@@ -149,7 +138,7 @@ Callback валидируется при создании provider. Это escap
 - stance/form/presence/seal/aspect rules;
 - позиционные проверки конкретных способностей;
 - snapshot rules конкретного DoT;
-- выбор цели лечения;
-- конкретные execute/resource thresholds.
+- конкретные execute/resource thresholds;
+- healer/tank rotation logic и выбор friendly-target: для этих ролей используется ситуационная панель, а не RotationEngine.
 
-Для них Core предоставляет факты, а решение принимает class/spec-код.
+Для них Core предоставляет факты, а решение принимает class/spec-код либо соответствующий panel definition.

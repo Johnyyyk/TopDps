@@ -11,7 +11,6 @@ function ContextBuilder:Build(provider, actionsByCategory)
         unitState = addon.UnitStateService,
         castService = addon.CastService,
         swingService = addon.SwingService,
-        groupService = addon.GroupService,
         actionsByCategory = actionsByCategory,
         activeEnemyCount = activeEnemyCount,
         enemyCount = activeEnemyCount,
