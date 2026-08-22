@@ -8,12 +8,6 @@ local function AssertEqual(actual, expected, message)
     end
 end
 
-local function AssertNear(actual, expected, epsilon, message)
-    if math.abs(actual - expected) > epsilon then
-        Fail((message or "values differ") .. ": expected=" .. tostring(expected) .. ", actual=" .. tostring(actual))
-    end
-end
-
 local function AssertSequence(actual, expected, message)
     AssertEqual(#actual, #expected, (message or "sequence") .. " length")
 
