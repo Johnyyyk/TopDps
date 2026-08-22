@@ -8,6 +8,12 @@ local function AssertEqual(actual, expected, message)
     end
 end
 
+local function AssertNear(actual, expected, epsilon, message)
+    if math.abs(actual - expected) > epsilon then
+        Fail((message or "values differ") .. ": expected=" .. tostring(expected) .. ", actual=" .. tostring(actual))
+    end
+end
+
 local function AssertSequence(actual, expected, message)
     AssertEqual(#actual, #expected, (message or "sequence") .. " length")
 
@@ -272,10 +278,11 @@ end
 local function TestDestructionMovementPriority()
     AssertSequence(
         Destruction:GetPriority(movingContext),
-        { "lifeTap", "curse", "conflagrate", "corruption" },
+        { "lifeTap", "curse", "conflagrate", "incinerate", "corruption" },
         "destro moving priority"
     )
 
+    AssertEqual(Destruction:IsCategoryAllowed("incinerate", movingContext), false, "destro moving Incinerate without Backlash")
     AssertEqual(Destruction:IsCategoryAllowed("corruption", movingContext), true, "destro moving corruption")
     AssertEqual(Destruction:IsCategoryAllowed("corruption", stationaryContext), false, "destro stationary corruption")
 
