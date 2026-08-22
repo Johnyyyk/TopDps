@@ -191,7 +191,6 @@ function UnitStateService:GetUnitSnapshot(unit)
         inCombat = exists and UnitAffectingCombat and IsApiTrue(UnitAffectingCombat(unit)) or false,
         isPlayer = isPlayer,
         attackable = exists and UnitCanAttack and IsApiTrue(UnitCanAttack("player", unit)) or false,
-        assistable = exists and UnitCanAssist and IsApiTrue(UnitCanAssist("player", unit)) or false,
         bossLike = exists and self:IsBossLike(unit) or false,
     }
 end
