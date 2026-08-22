@@ -139,6 +139,34 @@ function UnitStateService:GetComboPoints(sourceUnit, targetUnit)
     return math.max(0, tonumber(points) or 0)
 end
 
+function UnitStateService:GetMovementState(unit)
+    local requestedUnit = unit or "player"
+    local speed = 0
+
+    if GetUnitSpeed then
+        local ok, currentSpeed = pcall(GetUnitSpeed, requestedUnit)
+        if ok then
+            speed = math.max(0, tonumber(currentSpeed) or 0)
+        end
+    end
+
+    local falling = false
+    if IsFalling then
+        local ok, result = pcall(IsFalling, requestedUnit)
+        if not ok then
+            ok, result = pcall(IsFalling)
+        end
+
+        falling = ok and IsApiTrue(result) or false
+    end
+
+    return {
+        speed = speed,
+        moving = speed > 0 or falling,
+        falling = falling,
+    }
+end
+
 function UnitStateService:IsBossLike(unit)
     if not HasUnit(unit) then
         return false
@@ -199,6 +227,7 @@ function UnitStateService:GetPlayerSnapshot()
     local snapshot = self:GetUnitSnapshot("player")
     snapshot.comboPoints = self:GetComboPoints("player", "target")
     snapshot.power.regen = self:GetPlayerPowerRegen()
+    snapshot.movement = self:GetMovementState("player")
 
     return snapshot
 end

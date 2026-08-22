@@ -1,5 +1,6 @@
 local addon = TopDps
 local Warlock = addon.Warlock
+local BACKLASH_PROC_SPELL_ID = 34936
 
 local Destruction = addon.SpecProvider:Create({
     id = "WARLOCK_DESTRUCTION",
@@ -13,6 +14,7 @@ local Destruction = addon.SpecProvider:Create({
         "conflagrate",
         "chaosBolt",
         "incinerate",
+        "corruption",
     },
 
     abilities = {
@@ -45,10 +47,19 @@ local Destruction = addon.SpecProvider:Create({
         incinerate = {
             spellIds = { Warlock.SPELL_IDS.incinerate },
         },
+        corruption = {
+            spellIds = { Warlock.SPELL_IDS.corruption },
+        },
     },
 
     settings = {
         Warlock:CreateCurseSetting(),
+        {
+            type = "checkbox",
+            key = "useMovementPriority",
+            labelKey = "ROTATION_USE_MOVEMENT_PRIORITY",
+            default = true,
+        },
     },
 })
 
@@ -61,6 +72,22 @@ local PRIORITY = {
     "incinerate",
 }
 
+local PRIORITY_MOVING = {
+    "lifeTap",
+    "curse",
+    "conflagrate",
+    "incinerate",
+    "corruption",
+}
+
+local function IsMovementPriorityActive(provider, context)
+    return provider:GetSetting("useMovementPriority") ~= false
+        and context
+        and context.player
+        and context.player.movement
+        and context.player.movement.moving == true
+end
+
 function Destruction:GetReadyEntries(readiness, entries, category, context)
     if category == "curse" then
         return Warlock:GetCurseReadyEntries(self, readiness, entries, category, context)
@@ -69,7 +96,7 @@ function Destruction:GetReadyEntries(readiness, entries, category, context)
     return readiness:GetDefaultReadyEntries(entries, category, self, context)
 end
 
-function Destruction:IsCategoryAllowed(category)
+function Destruction:IsCategoryAllowed(category, context)
     local commonAllowed = Warlock:GetCommonCategoryAllowed(self, category)
     if commonAllowed ~= nil then
         return commonAllowed
@@ -79,10 +106,23 @@ function Destruction:IsCategoryAllowed(category)
         return Warlock:HasOwnTargetAura({ Warlock.SPELL_IDS.immolate })
     end
 
+    if category == "incinerate" and IsMovementPriorityActive(self, context) then
+        return Warlock:HasPlayerAura({ BACKLASH_PROC_SPELL_ID })
+    end
+
+    if category == "corruption" then
+        return IsMovementPriorityActive(self, context)
+            and not Warlock:HasOwnTargetAura({ Warlock.SPELL_IDS.corruption })
+    end
+
     return true
 end
 
-function Destruction:GetPriority()
+function Destruction:GetPriority(context)
+    if IsMovementPriorityActive(self, context) then
+        return PRIORITY_MOVING
+    end
+
     return PRIORITY
 end
 
