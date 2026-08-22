@@ -8,6 +8,15 @@ local function AssertEqual(actual, expected, message)
     end
 end
 
+local function AssertSequence(actual, expected, message)
+    AssertEqual(#actual, #expected, (message or "sequence") .. " length")
+
+    local index
+    for index = 1, #expected do
+        AssertEqual(actual[index], expected[index], (message or "sequence") .. " item " .. tostring(index))
+    end
+end
+
 local function NewAddon()
     local addon = {
         Modules = {},
@@ -167,5 +176,125 @@ TestMovingMovement()
 TestFallingMovement()
 TestLegacyIsFallingFallback()
 TestMovementApiUnavailable()
+
+TopDps = NewAddon()
+TopDps.REFRESH_LEAD_CAST_TIME = "CAST_TIME"
+TopDps.SpecProvider = {}
+TopDps.SpecRegistry = {
+    providers = {},
+}
+
+function TopDps.SpecProvider:Create(definition)
+    definition.testSettings = {
+        curseMode = "auto",
+        useMovementPriority = true,
+    }
+
+    function definition:GetSetting(key)
+        return self.testSettings[key]
+    end
+
+    return definition
+end
+
+function TopDps.SpecRegistry:Register(provider)
+    self.providers[provider.id] = provider
+end
+
+dofile("Specs/Warlock/Common.lua")
+
+local Warlock = TopDps.Warlock
+Warlock.HasPlayerAura = function()
+    return false
+end
+Warlock.HasSpellCritDebuff = function()
+    return false
+end
+Warlock.HasOwnTargetAura = function()
+    return false
+end
+
+dofile("Specs/Warlock/Demonology.lua")
+dofile("Specs/Warlock/Destruction.lua")
+
+local Demonology = TopDps.SpecRegistry.providers.WARLOCK_DEMONOLOGY
+local Destruction = TopDps.SpecRegistry.providers.WARLOCK_DESTRUCTION
+local movingContext = {
+    player = {
+        movement = {
+            moving = true,
+        },
+    },
+}
+local stationaryContext = {
+    player = {
+        movement = {
+            moving = false,
+        },
+    },
+}
+
+local function FindSetting(provider, key)
+    local index
+    for index = 1, #(provider.settings or {}) do
+        local setting = provider.settings[index]
+        if setting.key == key then
+            return setting
+        end
+    end
+
+    return nil
+end
+
+local function TestMovementSettingDefaults()
+    local demoSetting = FindSetting(Demonology, "useMovementPriority")
+    local destroSetting = FindSetting(Destruction, "useMovementPriority")
+
+    AssertEqual(demoSetting ~= nil, true, "demo movement setting")
+    AssertEqual(demoSetting.default, true, "demo movement setting default")
+    AssertEqual(destroSetting ~= nil, true, "destro movement setting")
+    AssertEqual(destroSetting.default, true, "destro movement setting default")
+end
+
+local function TestDemonologyMovementPriority()
+    AssertSequence(
+        Demonology:GetPriority(movingContext),
+        { "lifeTap", "curse", "corruption" },
+        "demo moving priority"
+    )
+
+    Demonology.testSettings.useMovementPriority = false
+    local priority = Demonology:GetPriority(movingContext)
+    AssertEqual(priority[5], "shadowBolt", "demo disabled movement priority should use regular rotation")
+    Demonology.testSettings.useMovementPriority = true
+end
+
+local function TestDestructionMovementPriority()
+    AssertSequence(
+        Destruction:GetPriority(movingContext),
+        { "lifeTap", "curse", "conflagrate", "corruption" },
+        "destro moving priority"
+    )
+
+    AssertEqual(Destruction:IsCategoryAllowed("corruption", movingContext), true, "destro moving corruption")
+    AssertEqual(Destruction:IsCategoryAllowed("corruption", stationaryContext), false, "destro stationary corruption")
+
+    Destruction.testSettings.useMovementPriority = false
+    AssertSequence(
+        Destruction:GetPriority(movingContext),
+        { "lifeTap", "curse", "immolate", "conflagrate", "chaosBolt", "incinerate" },
+        "destro disabled movement priority"
+    )
+    AssertEqual(
+        Destruction:IsCategoryAllowed("corruption", movingContext),
+        false,
+        "destro disabled movement corruption"
+    )
+    Destruction.testSettings.useMovementPriority = true
+end
+
+TestMovementSettingDefaults()
+TestDemonologyMovementPriority()
+TestDestructionMovementPriority()
 
 print("movement priority smoke tests passed")

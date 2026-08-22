@@ -53,6 +53,12 @@ local Demonology = addon.SpecProvider:Create({
 
     settings = {
         Warlock:CreateCurseSetting(),
+        {
+            type = "checkbox",
+            key = "useMovementPriority",
+            labelKey = "ROTATION_USE_MOVEMENT_PRIORITY",
+            default = true,
+        },
     },
 })
 
@@ -96,6 +102,20 @@ local PRIORITY_DECIMATION_REFRESH_CRIT = {
     "incinerate",
 }
 
+local PRIORITY_MOVING = {
+    "lifeTap",
+    "curse",
+    "corruption",
+}
+
+local function IsMovementPriorityActive(provider, context)
+    return provider:GetSetting("useMovementPriority") ~= false
+        and context
+        and context.player
+        and context.player.movement
+        and context.player.movement.moving == true
+end
+
 function Demonology:GetReadyEntries(readiness, entries, category, context)
     if category == "curse" then
         return Warlock:GetCurseReadyEntries(self, readiness, entries, category, context)
@@ -128,7 +148,11 @@ function Demonology:IsCategoryAllowed(category)
     return true
 end
 
-function Demonology:GetPriority()
+function Demonology:GetPriority(context)
+    if IsMovementPriorityActive(self, context) then
+        return PRIORITY_MOVING
+    end
+
     local moltenCore = Warlock:HasPlayerAura({ Warlock.SPELL_IDS.moltenCoreProc })
     local decimation = Warlock:HasPlayerAura({ Warlock.SPELL_IDS.decimationProc })
     local spellCritDebuff = Warlock:HasSpellCritDebuff()
