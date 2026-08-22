@@ -38,6 +38,9 @@ jobs:
       - name: Проверить core primitives
         run: lua5.1 tools/test_core_primitives.lua
 
+      - name: Проверить движение и movement priority
+        run: lua5.1 tools/test_movement_priority.lua
+
       - name: Проверить XML
         shell: bash
         run: |
