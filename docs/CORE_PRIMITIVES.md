@@ -31,7 +31,7 @@ context.player.movement = {
 }
 ```
 
-`moving` считается активным при ненулевой скорости или падении. Core только предоставляет этот факт; решение о mobile-priority остаётся за DPS provider'ом. Правила интеграции и per-spec настройка описаны в `docs/ROTATION_MOVEMENT.md`.
+`moving` считается активным при ненулевой скорости или падении. Core только предоставляет этот факт; решение о mobile-priority остаётся за DPS provider'ом. Правила интеграции, instant-proc edge cases и per-spec настройка описаны в `docs/ROTATION_MOVEMENT.md`.
 
 `ContextBuilder` публикует готовые снимки как `context.player` и `context.target`, а сам сервис как `context.unitState`.
 
@@ -140,9 +140,9 @@ Callback валидируется при создании provider. Это escap
 - сохранение прогресса swing при изменении attack speed;
 - `ability.swingReset` и queued action.
 
-`tools/test_movement_priority.lua` отдельно проверяет movement state, private-core fallback и movement-aware приоритеты существующих Warlock provider'ов.
+`tools/test_movement_priority.lua` отдельно проверяет movement state, private-core fallback и movement-aware приоритеты существующих Warlock provider'ов. `tools/test_movement_backlash.lua` покрывает instant-cast `Incinerate` от Backlash на движении.
 
-Оба теста запускаются в общем workflow `Проверка проекта` после Lua syntax check.
+Все smoke-тесты запускаются в общем workflow `Проверка проекта` после Lua syntax check.
 
 ## Что намеренно остаётся вне Core
 
