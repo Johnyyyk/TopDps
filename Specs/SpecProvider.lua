@@ -80,6 +80,13 @@ function SpecProvider:BuildSettingsCatalog()
     end
 
     local customSettings = self.settings or {}
+    if #customSettings > 0 then
+        table.insert(self.effectiveSettings, {
+            type = "header",
+            labelKey = "ROTATION_BEHAVIOR_SETTINGS",
+        })
+    end
+
     local customIndex
     for customIndex = 1, #customSettings do
         table.insert(self.effectiveSettings, customSettings[customIndex])

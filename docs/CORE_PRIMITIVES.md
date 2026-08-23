@@ -21,6 +21,18 @@
 - attackable;
 - boss-like состояние.
 
+Снимок игрока дополнительно содержит состояние движения:
+
+```lua
+context.player.movement = {
+    speed = number,
+    moving = boolean,
+    falling = boolean,
+}
+```
+
+`moving` считается активным при ненулевой скорости или падении. Core только предоставляет этот факт; решение о mobile-priority остаётся за DPS provider'ом. Правила интеграции, instant-proc edge cases и per-spec настройка описаны в `docs/ROTATION_MOVEMENT.md`.
+
 `ContextBuilder` публикует готовые снимки как `context.player` и `context.target`, а сам сервис как `context.unitState`.
 
 Руны DK намеренно не входят в этот сервис: их отдельные cooldown-состояния являются class-specific механикой и должны жить в `Specs/DeathKnight/Common`.
@@ -128,7 +140,9 @@ Callback валидируется при создании provider. Это escap
 - сохранение прогресса swing при изменении attack speed;
 - `ability.swingReset` и queued action.
 
-Тест запускается в общем workflow `Проверка проекта` после Lua syntax check.
+`tools/test_movement_priority.lua` отдельно проверяет movement state, private-core fallback и movement-aware приоритеты существующих Warlock provider'ов. `tools/test_movement_backlash.lua` покрывает instant-cast `Incinerate` от Backlash на движении.
+
+Все smoke-тесты запускаются в общем workflow `Проверка проекта` после Lua syntax check.
 
 ## Что намеренно остаётся вне Core
 
@@ -139,6 +153,7 @@ Callback валидируется при создании provider. Это escap
 - позиционные проверки конкретных способностей;
 - snapshot rules конкретного DoT;
 - конкретные execute/resource thresholds;
+- mobile-priority конкретной специализации: Core сообщает только состояние движения;
 - healer/tank rotation logic и выбор friendly-target: для этих ролей используется ситуационная панель, а не RotationEngine.
 
 Для них Core предоставляет факты, а решение принимает class/spec-код либо соответствующий panel definition.
