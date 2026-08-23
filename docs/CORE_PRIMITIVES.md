@@ -113,6 +113,20 @@ Core не знает ID Heroic Strike / Cleave / Maul / Raptor Strike и под�
 
 Это значение следует воспринимать только как автоматическую эвристику, а не как точный spatial scan.
 
+## TimeToDieService
+
+`Engine/TimeToDieService.lua` предоставляет экспериментальную оценку оставшегося времени жизни текущей цели. Сервис хранит короткую историю здоровья одного GUID и рассчитывает линейный тренд по окну samples.
+
+Provider не должен обращаться к сервису напрямую. Если для спека объявлен experimental feature-toggle TTD и пользователь прошёл двойной opt-in, `ContextBuilder` публикует:
+
+```lua
+context.target.timeToDie = number | nil
+```
+
+При выключенном gate поле равно `nil`, а история TTD сбрасывается. Сам Core не принимает решения о DoT/execute/spender thresholds.
+
+TTD намеренно считается экспериментальной эвристикой и по умолчанию полностью выключен. Подробный алгоритм, reset-условия и ограничения описаны в `docs/TIME_TO_DIE.md`; общий механизм experimental settings — в `docs/EXPERIMENTAL_FEATURES.md`.
+
 ## Нестандартный refresh
 
 Обычный `ability.refresh` по-прежнему работает декларативно через остаток ауры и `lead`.
@@ -142,6 +156,8 @@ Callback валидируется при создании provider. Это escap
 
 `tools/test_movement_priority.lua` отдельно проверяет movement state, private-core fallback и movement-aware приоритеты существующих Warlock provider'ов. `tools/test_movement_backlash.lua` покрывает instant-cast `Incinerate` от Backlash на движении.
 
+`tools/test_experimental_features.lua` проверяет двойной opt-in, группировку experimental settings и обязательный `default = false` для feature-toggle. `tools/test_time_to_die.lua` покрывает стабильный тренд HP, reset-сценарии и invalid API/unit.
+
 Все smoke-тесты запускаются в общем workflow `Проверка проекта` после Lua syntax check.
 
 ## Что намеренно остаётся вне Core
@@ -152,7 +168,7 @@ Callback валидируется при создании provider. Это escap
 - stance/form/presence/seal/aspect rules;
 - позиционные проверки конкретных способностей;
 - snapshot rules конкретного DoT;
-- конкретные execute/resource thresholds;
+- конкретные execute/resource/TTD thresholds;
 - mobile-priority конкретной специализации: Core сообщает только состояние движения;
 - healer/tank rotation logic и выбор friendly-target: для этих ролей используется ситуационная панель, а не RotationEngine.
 

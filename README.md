@@ -72,3 +72,7 @@ TopDps предназначен для WoW **3.3.5a** и сейчас работ
 Архитектура проекта, структура SavedVariables, точки расширения и release-процесс описаны в [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Правила реализации movement-aware DPS-ротаций, граница ответственности Core и per-spec настройки описаны в [docs/ROTATION_MOVEMENT.md](docs/ROTATION_MOVEMENT.md).
+
+Контракт экспериментальных функций и двойного opt-in описан в [docs/EXPERIMENTAL_FEATURES.md](docs/EXPERIMENTAL_FEATURES.md).
+
+Алгоритм и ограничения экспериментальной оценки time-to-die описаны в [docs/TIME_TO_DIE.md](docs/TIME_TO_DIE.md).
