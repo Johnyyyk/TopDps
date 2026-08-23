@@ -36,6 +36,7 @@ Engine\RefreshService.lua
 Engine\ActionBarService.lua
 Engine\ReadinessService.lua
 Engine\CombatTracker.lua
+Engine\TimeToDieService.lua
 Engine\ContextBuilder.lua
 Engine\RotationEngine.lua
 Engine\CooldownTracker.lua
