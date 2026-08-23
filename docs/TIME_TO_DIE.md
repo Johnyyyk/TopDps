@@ -92,9 +92,20 @@ Combat log намеренно не является источником TTD: ч
 
 ## Текущее использование
 
-На момент добавления сервиса существующие Retribution, Demonology и Destruction provider'ы TTD не используют и не показывают соответствующий per-spec toggle. Это намеренно: experimental setting следует добавлять только одновременно с доказанной spec-level логикой, которой действительно нужен TTD.
+Demonology и Destruction Warlock используют TTD как экспериментальный уточнитель режима `Проклятие: Авто`.
 
-Первые ожидаемые потребители — DoT/execute-спеки вроде Feral Cat, Shadow Priest и Affliction Warlock.
+Если на цели уже есть внешний аналог `Curse of the Elements`, то при известном TTD:
+
+- `TTD > 60 секунд` → выбирается `Curse of Doom`;
+- `TTD <= 60 секунд` → выбирается `Curse of Agony`.
+
+Если TTD ещё неизвестен (`nil`), сохраняется прежний fallback: boss-like цель выбирает Doom, обычная цель — Agony. Если внешний magic-vulnerability debuff отсутствует, по-прежнему требуется `Curse of the Elements` независимо от TTD. Ручные режимы Doom/Agony/Elements и `Не предлагать` TTD не переопределяет.
+
+Когда оценка пересекает 60-секундный порог и на цели висит неподходящее собственное damage-curse, требование проклятия снова считается невыполненным, чтобы ротация могла предложить замену.
+
+Переключатель `Учитывать время жизни цели` у Demo/Destro является experimental, появляется только после глобального opt-in и по умолчанию выключен. При выключенном переключателе текущая стабильная логика проклятий остаётся без изменений.
+
+Будущие потребители TTD — другие DoT/execute-спеки вроде Feral Cat, Shadow Priest и Affliction Warlock.
 
 ## Тесты
 
@@ -111,3 +122,5 @@ Combat log намеренно не является источником TTD: ч
 - invalid unit и отсутствие API.
 
 `tools/test_experimental_features.lua` отдельно проверяет двойной opt-in и валидацию experimental feature-toggle.
+
+`tools/test_warlock_ttd_curse.lua` проверяет TTD-порог Doom/Agony, legacy fallback при `nil`, приоритет `Curse of the Elements`, ручные режимы и замену уже активного damage-curse при изменении оценки.
