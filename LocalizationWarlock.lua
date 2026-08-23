@@ -21,6 +21,7 @@ if GetLocale() == "ruRU" then
     L.WARLOCK_CURSE_DOOM = "Проклятие рока"
     L.WARLOCK_CURSE_AGONY = "Проклятие агонии"
     L.WARLOCK_CURSE_NONE = "Не предлагать"
+    L.WARLOCK_USE_TARGET_TIME_TO_DIE_FOR_CURSE = "Учитывать время жизни цели при выборе проклятия"
 
     L.WARLOCK_FELGUARD_STATE = "Страж Скверны"
     L.WARLOCK_IMP_STATE = "Бес"
@@ -47,6 +48,7 @@ else
     L.WARLOCK_CURSE_DOOM = "Curse of Doom"
     L.WARLOCK_CURSE_AGONY = "Curse of Agony"
     L.WARLOCK_CURSE_NONE = "Do not suggest"
+    L.WARLOCK_USE_TARGET_TIME_TO_DIE_FOR_CURSE = "Use target time-to-die for curse selection"
 
     L.WARLOCK_FELGUARD_STATE = "Felguard"
     L.WARLOCK_IMP_STATE = "Imp"

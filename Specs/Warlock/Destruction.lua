@@ -60,6 +60,14 @@ local Destruction = addon.SpecProvider:Create({
             labelKey = "ROTATION_USE_MOVEMENT_PRIORITY",
             default = true,
         },
+        {
+            type = "checkbox",
+            key = "useTargetTimeToDie",
+            labelKey = "WARLOCK_USE_TARGET_TIME_TO_DIE_FOR_CURSE",
+            default = false,
+            experimental = true,
+            experimentalFeature = addon.EXPERIMENTAL_FEATURE_TARGET_TIME_TO_DIE,
+        },
     },
 })
 
@@ -97,7 +105,7 @@ function Destruction:GetReadyEntries(readiness, entries, category, context)
 end
 
 function Destruction:IsCategoryAllowed(category, context)
-    local commonAllowed = Warlock:GetCommonCategoryAllowed(self, category)
+    local commonAllowed = Warlock:GetCommonCategoryAllowed(self, category, context)
     if commonAllowed ~= nil then
         return commonAllowed
     end
