@@ -18,6 +18,7 @@ LocalizationWarlock.lua
 Core\GameApi.lua
 Core\Logger.lua
 Core\Settings.lua
+Core\ExperimentalFeatures.lua
 Core\PanelSettings.lua
 Core\PanelSettingsRows.lua
 

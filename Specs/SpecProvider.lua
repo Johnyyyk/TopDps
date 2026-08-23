@@ -40,6 +40,24 @@ local function ValidateSwingReset(category, swingReset)
     end
 end
 
+local function ValidateExperimentalSetting(setting)
+    if not setting or setting.experimentalFeature == nil then
+        return
+    end
+
+    if setting.experimental ~= true then
+        error("TopDps: experimentalFeature requires experimental = true")
+    end
+
+    if setting.type ~= "checkbox" then
+        error("TopDps: experimentalFeature must be controlled by a checkbox")
+    end
+
+    if setting.default ~= false then
+        error("TopDps: experimentalFeature checkbox must default to false")
+    end
+end
+
 function SpecProvider:Create(definition)
     if type(definition) ~= "table" then
         error("TopDps: specialization provider definition must be a table")
@@ -51,6 +69,12 @@ function SpecProvider:Create(definition)
         ValidateSwingReset(category, ability and ability.swingReset or nil)
     end
 
+    local settings = definition.settings or {}
+    local settingIndex
+    for settingIndex = 1, #settings do
+        ValidateExperimentalSetting(settings[settingIndex])
+    end
+
     local provider = setmetatable(definition, { __index = self })
     provider:BuildSettingsCatalog()
 
@@ -60,6 +84,7 @@ end
 function SpecProvider:BuildSettingsCatalog()
     self.settingDefinitionsByKey = {}
     self.categorySettingKeys = {}
+    self.experimentalSettingKeysByFeature = {}
     self.effectiveSettings = {
         {
             type = "header",
@@ -80,16 +105,40 @@ function SpecProvider:BuildSettingsCatalog()
     end
 
     local customSettings = self.settings or {}
-    if #customSettings > 0 then
+    local stableSettings = {}
+    local experimentalSettings = {}
+    local customIndex
+
+    for customIndex = 1, #customSettings do
+        local definition = customSettings[customIndex]
+        if definition.experimental == true then
+            table.insert(experimentalSettings, definition)
+        else
+            table.insert(stableSettings, definition)
+        end
+    end
+
+    if #stableSettings > 0 then
         table.insert(self.effectiveSettings, {
             type = "header",
             labelKey = "ROTATION_BEHAVIOR_SETTINGS",
         })
     end
 
-    local customIndex
-    for customIndex = 1, #customSettings do
-        table.insert(self.effectiveSettings, customSettings[customIndex])
+    for customIndex = 1, #stableSettings do
+        table.insert(self.effectiveSettings, stableSettings[customIndex])
+    end
+
+    if #experimentalSettings > 0 then
+        table.insert(self.effectiveSettings, {
+            type = "header",
+            labelKey = "ROTATION_EXPERIMENTAL_SETTINGS",
+            experimental = true,
+        })
+    end
+
+    for customIndex = 1, #experimentalSettings do
+        table.insert(self.effectiveSettings, experimentalSettings[customIndex])
     end
 
     local index
@@ -102,6 +151,18 @@ function SpecProvider:BuildSettingsCatalog()
         if definition.category and definition.key then
             self.categorySettingKeys[definition.category] = definition.key
         end
+
+        if definition.experimentalFeature and definition.key then
+            if self.experimentalSettingKeysByFeature[definition.experimentalFeature] then
+                error(
+                    "TopDps: duplicate experimentalFeature "
+                        .. tostring(definition.experimentalFeature)
+                        .. " in provider " .. tostring(self.id)
+                )
+            end
+
+            self.experimentalSettingKeysByFeature[definition.experimentalFeature] = definition.key
+        end
     end
 end
 
@@ -113,11 +174,35 @@ function SpecProvider:GetSettingDefinition(key)
     return self.settingDefinitionsByKey and self.settingDefinitionsByKey[key] or nil
 end
 
+function SpecProvider:GetExperimentalFeatureSettingKey(feature)
+    if not self.experimentalSettingKeysByFeature then
+        return nil
+    end
+
+    return self.experimentalSettingKeysByFeature[feature]
+end
+
 function SpecProvider:GetSetting(key)
+    local definition = self:GetSettingDefinition(key)
+    if definition
+        and definition.experimental == true
+        and addon.Settings.IsExperimentalFeaturesEnabled
+        and not addon.Settings:IsExperimentalFeaturesEnabled() then
+        return definition.default
+    end
+
     return addon.Settings:GetSpecSetting(self, key)
 end
 
 function SpecProvider:SetSetting(key, value)
+    local definition = self:GetSettingDefinition(key)
+    if definition
+        and definition.experimental == true
+        and addon.Settings.IsExperimentalFeaturesEnabled
+        and not addon.Settings:IsExperimentalFeaturesEnabled() then
+        return
+    end
+
     addon.Settings:SetSpecSetting(self, key, value)
 end
 

@@ -44,6 +44,9 @@ jobs:
       - name: Проверить Backlash на движении
         run: lua5.1 tools/test_movement_backlash.lua
 
+      - name: Проверить экспериментальные функции
+        run: lua5.1 tools/test_experimental_features.lua
+
       - name: Проверить XML
         shell: bash
         run: |
