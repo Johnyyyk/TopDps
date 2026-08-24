@@ -53,6 +53,9 @@ jobs:
       - name: Проверить TTD-выбор проклятия чернокнижника
         run: lua5.1 tools/test_warlock_ttd_curse.lua
 
+      - name: Проверить Affliction Warlock
+        run: lua5.1 tools/test_warlock_affliction.lua
+
       - name: Проверить XML
         shell: bash
         run: |
