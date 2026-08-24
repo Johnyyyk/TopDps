@@ -18,6 +18,7 @@ function GeneralOptions:ApplyLayout()
     Layout:ApplyTextWidth(self.description, self.content, Size.CONTENT_INSET)
     Layout:ApplyTextWidth(self.modeLabel, self.content, Size.CONTENT_INSET)
     Layout:ApplyCheckLabelWidth(self.showMinimapCheck, self.content, 6)
+    Layout:ApplyCheckLabelWidth(self.experimentalFeaturesCheck, self.content, 6)
     Layout:ApplyDropdownWidth(self.modeDropdown, self.content)
 end
 
@@ -60,6 +61,18 @@ function GeneralOptions:Create()
         addon.MinimapButton:Refresh()
     end)
 
+    local experimentalY = Layout:TakeRow(cursor, Size.CHECKBOX_ROW_HEIGHT, Size.ROW_GAP)
+    local experimentalFeaturesCheck = Layout:CreateCheckButton(
+        content,
+        "TopDpsOptionsExperimentalFeatures",
+        6,
+        experimentalY,
+        addon.L.EXPERIMENTAL_FEATURES_ENABLED
+    )
+    experimentalFeaturesCheck:SetScript("OnClick", function(self)
+        addon.Settings:SetExperimentalFeaturesEnabled(Widgets:GetCheckValue(self))
+    end)
+
     Layout:AddGap(cursor, Size.SECTION_GAP)
 
     local modeY = Layout:TakeRow(cursor, Size.DROPDOWN_ROW_HEIGHT)
@@ -91,6 +104,7 @@ function GeneralOptions:Create()
     self.description = description
     self.modeLabel = modeLabel
     self.showMinimapCheck = showMinimap
+    self.experimentalFeaturesCheck = experimentalFeaturesCheck
     self.modeDropdown = modeDropdown
 
     panel:SetScript("OnSizeChanged", function()
@@ -114,6 +128,9 @@ function GeneralOptions:Refresh()
     self:ApplyLayout()
 
     self.showMinimapCheck:SetChecked(addon.db.minimap.show and 1 or nil)
+    self.experimentalFeaturesCheck:SetChecked(
+        addon.Settings:IsExperimentalFeaturesEnabled() and 1 or nil
+    )
 
     UIDropDownMenu_SetSelectedValue(self.modeDropdown, addon.db.mode)
     UIDropDownMenu_SetText(self.modeDropdown, GetModeText(addon.db.mode))

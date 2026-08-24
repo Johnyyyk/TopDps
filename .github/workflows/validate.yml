@@ -44,6 +44,15 @@ jobs:
       - name: Проверить Backlash на движении
         run: lua5.1 tools/test_movement_backlash.lua
 
+      - name: Проверить экспериментальные функции
+        run: lua5.1 tools/test_experimental_features.lua
+
+      - name: Проверить time-to-die
+        run: lua5.1 tools/test_time_to_die.lua
+
+      - name: Проверить TTD-выбор проклятия чернокнижника
+        run: lua5.1 tools/test_warlock_ttd_curse.lua
+
       - name: Проверить XML
         shell: bash
         run: |

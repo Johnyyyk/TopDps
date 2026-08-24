@@ -59,6 +59,14 @@ local Demonology = addon.SpecProvider:Create({
             labelKey = "ROTATION_USE_MOVEMENT_PRIORITY",
             default = true,
         },
+        {
+            type = "checkbox",
+            key = "useTargetTimeToDie",
+            labelKey = "WARLOCK_USE_TARGET_TIME_TO_DIE_FOR_CURSE",
+            default = false,
+            experimental = true,
+            experimentalFeature = addon.EXPERIMENTAL_FEATURE_TARGET_TIME_TO_DIE,
+        },
     },
 })
 
@@ -124,8 +132,8 @@ function Demonology:GetReadyEntries(readiness, entries, category, context)
     return readiness:GetDefaultReadyEntries(entries, category, self, context)
 end
 
-function Demonology:IsCategoryAllowed(category)
-    local commonAllowed = Warlock:GetCommonCategoryAllowed(self, category)
+function Demonology:IsCategoryAllowed(category, context)
+    local commonAllowed = Warlock:GetCommonCategoryAllowed(self, category, context)
     if commonAllowed ~= nil then
         return commonAllowed
     end

@@ -91,6 +91,14 @@ local function FormatSliderText(provider, definition, value)
     return string.format("%s: %s", GetSettingLabel(provider, definition), tostring(value))
 end
 
+local function IsDefinitionVisible(definition)
+    if definition.experimental ~= true then
+        return true
+    end
+
+    return addon.Settings:IsExperimentalFeaturesEnabled()
+end
+
 function RotationOptions:CreateCheckbox(view, provider, definition, index, rowTop)
     local name = "TopDpsRotation"
         .. MakeFrameToken(provider.id)
@@ -176,40 +184,147 @@ function RotationOptions:CreateDropdown(view, provider, definition, index, rowTo
     }
 end
 
+function RotationOptions:SetProviderEntryVisible(entry, visible)
+    local visibilityMethod = visible and "Show" or "Hide"
+
+    if entry.type == "header" then
+        entry.label[visibilityMethod](entry.label)
+        entry.line[visibilityMethod](entry.line)
+        return
+    end
+
+    entry.frame[visibilityMethod](entry.frame)
+    if entry.type == "dropdown" then
+        entry.label[visibilityMethod](entry.label)
+    end
+end
+
+function RotationOptions:PositionProviderEntry(entry, rowTop)
+    if entry.type == "header" then
+        entry.label:ClearAllPoints()
+        entry.label:SetPoint("TOPLEFT", entry.layoutParent, "TOPLEFT", Size.CONTENT_INSET, rowTop)
+        return
+    end
+
+    entry.frame:ClearAllPoints()
+
+    if entry.type == "checkbox" then
+        entry.frame:SetPoint("TOPLEFT", entry.layoutParent, "TOPLEFT", entry.x, rowTop)
+    elseif entry.type == "slider" then
+        entry.frame:SetPoint(
+            "TOPLEFT",
+            entry.layoutParent,
+            "TOPLEFT",
+            Size.SLIDER_LEFT_INSET,
+            rowTop - Size.SLIDER_BAR_TOP_OFFSET
+        )
+    elseif entry.type == "dropdown" then
+        entry.label:ClearAllPoints()
+        entry.label:SetPoint("TOPLEFT", entry.layoutParent, "TOPLEFT", entry.labelX, rowTop)
+        entry.frame:SetPoint(
+            "TOPLEFT",
+            entry.layoutParent,
+            "TOPLEFT",
+            Size.DROPDOWN_LEFT_OFFSET,
+            rowTop - Size.DROPDOWN_LABEL_TO_FRAME
+        )
+    end
+end
+
+function RotationOptions:GetProviderEntryHeight(entry)
+    if entry.type == "header" then
+        return Size.SECTION_ROW_HEIGHT
+    end
+
+    if entry.type == "checkbox" then
+        return Size.CHECKBOX_ROW_HEIGHT
+    end
+
+    if entry.type == "slider" then
+        return Size.SLIDER_ROW_HEIGHT
+    end
+
+    if entry.type == "dropdown" then
+        return Size.DROPDOWN_ROW_HEIGHT
+    end
+
+    return 0
+end
+
+function RotationOptions:RelayoutProviderView(view)
+    local cursor = Layout:CreateCursor(-2)
+    local index
+
+    for index = 1, #view.entries do
+        local entry = view.entries[index]
+        local visible = IsDefinitionVisible(entry.definition)
+        self:SetProviderEntryVisible(entry, visible)
+
+        if visible then
+            local rowTop = Layout:TakeRow(
+                cursor,
+                self:GetProviderEntryHeight(entry),
+                Size.ROW_GAP
+            )
+            self:PositionProviderEntry(entry, rowTop)
+        end
+    end
+
+    local viewHeight = Layout:GetRequiredHeight(cursor)
+    view.frame:SetHeight(viewHeight)
+    view.height = viewHeight
+
+    return viewHeight
+end
+
 function RotationOptions:CreateProviderView(content, provider, top)
-    local view = CreateFrame("Frame", nil, content)
-    view:SetPoint("TOPLEFT", content, "TOPLEFT", 0, top)
-    Layout:ApplyFrameWidth(view, content, 0, 0, Size.FALLBACK_CONTENT_WIDTH)
+    local viewFrame = CreateFrame("Frame", nil, content)
+    viewFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, top)
+    Layout:ApplyFrameWidth(viewFrame, content, 0, 0, Size.FALLBACK_CONTENT_WIDTH)
 
     local controls = {}
+    local entries = {}
     local definitions = provider:GetSettingsDefinition()
-    local cursor = Layout:CreateCursor(-2)
     local index
 
     for index = 1, #definitions do
         local definition = definitions[index]
         if definition.type == "header" then
-            local headerY = Layout:TakeRow(cursor, Size.SECTION_ROW_HEIGHT, Size.ROW_GAP)
-            Layout:CreateSectionHeader(view, GetSettingLabel(provider, definition), headerY)
+            local label, line = Layout:CreateSectionHeader(
+                viewFrame,
+                GetSettingLabel(provider, definition),
+                0
+            )
+            table.insert(entries, {
+                type = "header",
+                definition = definition,
+                label = label,
+                line = line,
+                layoutParent = viewFrame,
+            })
         elseif definition.type == "checkbox" then
-            local rowTop = Layout:TakeRow(cursor, Size.CHECKBOX_ROW_HEIGHT, Size.ROW_GAP)
-            table.insert(controls, self:CreateCheckbox(view, provider, definition, index, rowTop))
+            local control = self:CreateCheckbox(viewFrame, provider, definition, index, 0)
+            table.insert(controls, control)
+            table.insert(entries, control)
         elseif definition.type == "slider" then
-            local rowTop = Layout:TakeRow(cursor, Size.SLIDER_ROW_HEIGHT, Size.ROW_GAP)
-            table.insert(controls, self:CreateSlider(view, provider, definition, index, rowTop))
+            local control = self:CreateSlider(viewFrame, provider, definition, index, 0)
+            table.insert(controls, control)
+            table.insert(entries, control)
         elseif definition.type == "dropdown" then
-            local rowTop = Layout:TakeRow(cursor, Size.DROPDOWN_ROW_HEIGHT, Size.ROW_GAP)
-            table.insert(controls, self:CreateDropdown(view, provider, definition, index, rowTop))
+            local control = self:CreateDropdown(viewFrame, provider, definition, index, 0)
+            table.insert(controls, control)
+            table.insert(entries, control)
         end
     end
 
-    local viewHeight = Layout:GetRequiredHeight(cursor)
-    view:SetHeight(viewHeight)
-
-    return {
-        frame = view,
+    local view = {
+        frame = viewFrame,
         controls = controls,
-    }, viewHeight
+        entries = entries,
+    }
+    local viewHeight = self:RelayoutProviderView(view)
+
+    return view, viewHeight
 end
 
 function RotationOptions:ApplyControlLayout(control)
@@ -428,6 +543,7 @@ function RotationOptions:Create()
     self.scrollFrame = scrollFrame
     self.content = content
     self.requiredContentHeight = requiredContentHeight
+    self.providerViewTop = providerViewTop
     self.providers = providers
     self.providerViews = providerViews
     self.providerDropdown = providerDropdown
@@ -501,8 +617,6 @@ function RotationOptions:Refresh()
         return
     end
 
-    self:ApplyLayout()
-
     self.characterEnabledCheck:SetChecked(addon.Settings:IsRotationEnabled() and 1 or nil)
 
     self.cooldownLookaheadSlider:SetValue(
@@ -537,6 +651,7 @@ function RotationOptions:Refresh()
     local provider = self:GetSelectedProvider()
     if not provider then
         UIDropDownMenu_SetText(self.providerDropdown, addon.L.NO_SUPPORTED_SPECS)
+        self:ApplyLayout()
         return
     end
 
@@ -554,11 +669,17 @@ function RotationOptions:Refresh()
 
     view = self.providerViews[provider.id]
     if not view then
+        self:ApplyLayout()
         return
     end
+
+    local viewHeight = self:RelayoutProviderView(view)
+    self.requiredContentHeight = -self.providerViewTop + viewHeight + Size.BOTTOM_INSET
 
     local index
     for index = 1, #view.controls do
         self:RefreshControl(provider, view.controls[index])
     end
+
+    self:ApplyLayout()
 end

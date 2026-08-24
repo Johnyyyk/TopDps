@@ -88,6 +88,7 @@ Warlock.WEAPON_ENCHANT_SPELL_IDS = {
 local LIFE_TAP_REFRESH_SECONDS = 3
 local MAIN_HAND_SLOT = 16
 local PET_REQUIREMENT_GRACE_SECONDS = 0.5
+local CURSE_DOOM_MIN_TTD_SECONDS = 60
 
 Warlock.petRequirementContext = Warlock.petRequirementContext or {}
 
@@ -106,6 +107,16 @@ local function IsAuraFromPlayer(aura)
     end
 
     return false
+end
+
+local function GetTargetTimeToDie(context)
+    local target = context and context.target or nil
+    local timeToDie = target and tonumber(target.timeToDie) or nil
+    if not timeToDie or timeToDie < 0 then
+        return nil
+    end
+
+    return timeToDie
 end
 
 function Warlock:CreateCurseSetting()
@@ -226,28 +237,7 @@ function Warlock:GetManualCurseSpellId(mode)
     return nil
 end
 
-function Warlock:GetAcceptableCurseSpellIds(provider)
-    local mode = provider:GetSetting("curseMode")
-    if mode == self.CURSE_MODE_NONE then
-        return {}
-    end
-
-    if mode ~= self.CURSE_MODE_AUTO then
-        local spellId = self:GetManualCurseSpellId(mode)
-        return spellId and { spellId } or {}
-    end
-
-    if self:HasExternalMagicVulnerability() then
-        return {
-            self.SPELL_IDS.curseDoom,
-            self.SPELL_IDS.curseAgony,
-        }
-    end
-
-    return { self.SPELL_IDS.curseElements }
-end
-
-function Warlock:GetPreferredCurseSpellId(provider)
+function Warlock:GetPreferredCurseSpellId(provider, context)
     local mode = provider:GetSetting("curseMode")
     if mode == self.CURSE_MODE_NONE then
         return nil
@@ -261,6 +251,15 @@ function Warlock:GetPreferredCurseSpellId(provider)
         return self.SPELL_IDS.curseElements
     end
 
+    local timeToDie = GetTargetTimeToDie(context)
+    if timeToDie ~= nil then
+        if timeToDie > CURSE_DOOM_MIN_TTD_SECONDS then
+            return self.SPELL_IDS.curseDoom
+        end
+
+        return self.SPELL_IDS.curseAgony
+    end
+
     if self:IsBossLikeTarget() then
         return self.SPELL_IDS.curseDoom
     end
@@ -268,8 +267,34 @@ function Warlock:GetPreferredCurseSpellId(provider)
     return self.SPELL_IDS.curseAgony
 end
 
-function Warlock:IsCurseRequirementSatisfied(provider)
-    local acceptableSpellIds = self:GetAcceptableCurseSpellIds(provider)
+function Warlock:GetAcceptableCurseSpellIds(provider, context)
+    local mode = provider:GetSetting("curseMode")
+    if mode == self.CURSE_MODE_NONE then
+        return {}
+    end
+
+    if mode ~= self.CURSE_MODE_AUTO then
+        local spellId = self:GetManualCurseSpellId(mode)
+        return spellId and { spellId } or {}
+    end
+
+    if not self:HasExternalMagicVulnerability() then
+        return { self.SPELL_IDS.curseElements }
+    end
+
+    if GetTargetTimeToDie(context) ~= nil then
+        local preferredSpellId = self:GetPreferredCurseSpellId(provider, context)
+        return preferredSpellId and { preferredSpellId } or {}
+    end
+
+    return {
+        self.SPELL_IDS.curseDoom,
+        self.SPELL_IDS.curseAgony,
+    }
+end
+
+function Warlock:IsCurseRequirementSatisfied(provider, context)
+    local acceptableSpellIds = self:GetAcceptableCurseSpellIds(provider, context)
     if #acceptableSpellIds == 0 then
         return true
     end
@@ -278,7 +303,7 @@ function Warlock:IsCurseRequirementSatisfied(provider)
 end
 
 function Warlock:GetCurseReadyEntries(provider, readiness, entries, category, context)
-    local spellId = self:GetPreferredCurseSpellId(provider)
+    local spellId = self:GetPreferredCurseSpellId(provider, context)
     if not spellId then
         return {}
     end
@@ -319,13 +344,13 @@ function Warlock:ShouldRefreshGlyphLifeTap()
     return expirationTime - GetTime() <= LIFE_TAP_REFRESH_SECONDS
 end
 
-function Warlock:GetCommonCategoryAllowed(provider, category)
+function Warlock:GetCommonCategoryAllowed(provider, category, context)
     if category == "lifeTap" then
         return self:ShouldRefreshGlyphLifeTap()
     end
 
     if category == "curse" then
-        return not self:IsCurseRequirementSatisfied(provider)
+        return not self:IsCurseRequirementSatisfied(provider, context)
     end
 
     return nil
