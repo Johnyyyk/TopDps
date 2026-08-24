@@ -19,6 +19,7 @@ LocalizationDruid.lua
 LocalizationHunter.lua
 LocalizationMage.lua
 LocalizationPriest.lua
+LocalizationRogue.lua
 LocalizationWarlock.lua
 LocalizationWarlockAffliction.lua
 Core\GameApi.lua
@@ -85,6 +86,10 @@ Specs\Paladin\Common.lua
 Specs\Paladin\Retribution.lua
 Specs\Priest\Common.lua
 Specs\Priest\Shadow.lua
+Specs\Rogue\Common.lua
+Specs\Rogue\Assassination.lua
+Specs\Rogue\Combat.lua
+Specs\Rogue\Subtlety.lua
 Specs\Warlock\Common.lua
 Specs\Warlock\Affliction.lua
 Specs\Warlock\Demonology.lua
@@ -103,6 +108,8 @@ Cooldowns\Paladin.lua
 Cooldowns\PaladinDefaults.lua
 Cooldowns\Priest.lua
 Cooldowns\PriestDefaults.lua
+Cooldowns\Rogue.lua
+Cooldowns\RogueDefaults.lua
 Cooldowns\Warlock.lua
 Cooldowns\WarlockAffliction.lua
 Cooldowns\WarlockDefaults.lua

@@ -71,6 +71,9 @@ jobs:
       - name: Проверить Priest
         run: lua5.1 tools/test_priest.lua
 
+      - name: Проверить Rogue
+        run: lua5.1 tools/test_rogue.lua
+
       - name: Проверить XML
         shell: bash
         run: |
