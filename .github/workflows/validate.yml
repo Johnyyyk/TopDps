@@ -56,6 +56,9 @@ jobs:
       - name: Проверить Affliction Warlock
         run: lua5.1 tools/test_warlock_affliction.lua
 
+      - name: Проверить Death Knight
+        run: lua5.1 tools/test_death_knight.lua
+
       - name: Проверить XML
         shell: bash
         run: |

@@ -14,6 +14,7 @@ Localization.lua
 LocalizationPanel.lua
 LocalizationPanelExtra.lua
 LocalizationFeatureSettings.lua
+LocalizationDeathKnight.lua
 LocalizationWarlock.lua
 LocalizationWarlockAffliction.lua
 Core\GameApi.lua
@@ -61,6 +62,10 @@ Presentation\CooldownPanelState.lua
 Presentation\ProcSoundAlerts.lua
 
 # TopDps-Specs-Start
+Specs\DeathKnight\Common.lua
+Specs\DeathKnight\Blood.lua
+Specs\DeathKnight\Frost.lua
+Specs\DeathKnight\Unholy.lua
 Specs\Paladin\Common.lua
 Specs\Paladin\Retribution.lua
 Specs\Warlock\Common.lua
@@ -69,6 +74,8 @@ Specs\Warlock\Demonology.lua
 Specs\Warlock\Destruction.lua
 # TopDps-Specs-End
 
+Cooldowns\DeathKnight.lua
+Cooldowns\DeathKnightDefaults.lua
 Cooldowns\Paladin.lua
 Cooldowns\PaladinDefaults.lua
 Cooldowns\Warlock.lua
