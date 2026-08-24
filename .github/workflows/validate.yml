@@ -62,6 +62,9 @@ jobs:
       - name: Проверить Druid
         run: lua5.1 tools/test_druid.lua
 
+      - name: Проверить Hunter
+        run: lua5.1 tools/test_hunter.lua
+
       - name: Проверить XML
         shell: bash
         run: |
