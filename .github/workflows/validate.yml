@@ -59,6 +59,9 @@ jobs:
       - name: Проверить Death Knight
         run: lua5.1 tools/test_death_knight.lua
 
+      - name: Проверить Druid
+        run: lua5.1 tools/test_druid.lua
+
       - name: Проверить XML
         shell: bash
         run: |
