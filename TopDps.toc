@@ -17,6 +17,7 @@ LocalizationFeatureSettings.lua
 LocalizationDeathKnight.lua
 LocalizationDruid.lua
 LocalizationHunter.lua
+LocalizationMage.lua
 LocalizationWarlock.lua
 LocalizationWarlockAffliction.lua
 Core\GameApi.lua
@@ -75,6 +76,10 @@ Specs\Hunter\Common.lua
 Specs\Hunter\BeastMastery.lua
 Specs\Hunter\Marksmanship.lua
 Specs\Hunter\Survival.lua
+Specs\Mage\Common.lua
+Specs\Mage\Arcane.lua
+Specs\Mage\Fire.lua
+Specs\Mage\Frost.lua
 Specs\Paladin\Common.lua
 Specs\Paladin\Retribution.lua
 Specs\Warlock\Common.lua
@@ -89,6 +94,8 @@ Cooldowns\Druid.lua
 Cooldowns\DruidDefaults.lua
 Cooldowns\Hunter.lua
 Cooldowns\HunterDefaults.lua
+Cooldowns\Mage.lua
+Cooldowns\MageDefaults.lua
 Cooldowns\Paladin.lua
 Cooldowns\PaladinDefaults.lua
 Cooldowns\Warlock.lua
