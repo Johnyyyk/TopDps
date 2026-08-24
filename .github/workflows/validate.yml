@@ -68,6 +68,9 @@ jobs:
       - name: Проверить Mage
         run: lua5.1 tools/test_mage.lua
 
+      - name: Проверить Priest
+        run: lua5.1 tools/test_priest.lua
+
       - name: Проверить XML
         shell: bash
         run: |
