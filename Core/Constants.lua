@@ -139,6 +139,7 @@ addon.CENTER_ICON_SIZE_MAX = 96
 
 addon.ACTION_BUTTON_PREFIXES = {
     "ActionButton",
+    "BonusActionButton",
     "MultiBarBottomLeftButton",
     "MultiBarBottomRightButton",
     "MultiBarRightButton",
