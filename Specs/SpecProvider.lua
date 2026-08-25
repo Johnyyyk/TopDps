@@ -393,7 +393,7 @@ function SpecProvider:CanTreatUnusableAsUsable()
 end
 
 function SpecProvider:IsEntryInRange(readiness, entry)
-    return readiness:IsActionInRange(entry.action)
+    return readiness:IsSpellInRange(entry)
 end
 
 function SpecProvider:GetReadyEntries(readiness, entries, category, context)

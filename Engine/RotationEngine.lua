@@ -50,12 +50,12 @@ function RotationEngine:GetAvailability(provider)
     return true, "active"
 end
 
-function RotationEngine:GetReadyRecommendation(provider, priority, actionsByCategory, context, isCategoryAllowed)
+function RotationEngine:GetReadyRecommendation(provider, priority, abilitiesByCategory, context, isCategoryAllowed)
     local index
 
     for index = 1, #(priority or {}) do
         local category = priority[index]
-        local entries = actionsByCategory[category]
+        local entries = abilitiesByCategory[category]
 
         if entries
             and provider:IsCategoryEnabled(category)
@@ -81,19 +81,19 @@ function RotationEngine:UpdateRecommendation()
         return
     end
 
-    local actionsByCategory = addon.ActionBarService:CollectVisibleActions(provider)
-    local context = addon.ContextBuilder:Build(provider, actionsByCategory)
-    local actionSummary = addon.ActionBarService:BuildActionSummary(provider, actionsByCategory)
+    local abilitiesByCategory = addon.AbilityService:GetAbilities(provider)
+    local context = addon.ContextBuilder:Build(provider, abilitiesByCategory)
+    local abilitySummary = addon.AbilityService:BuildAbilitySummary(provider, abilitiesByCategory)
 
     local primaryCategory, primaryEntries = self:GetReadyRecommendation(
         provider,
         provider:GetPriority(context),
-        actionsByCategory,
+        abilitiesByCategory,
         context,
         IsPrimaryCategoryAllowed
     )
 
-    local queuedNextSwingCategory = addon.SwingService:GetQueuedNextSwingCategory(provider, actionsByCategory)
+    local queuedNextSwingCategory = addon.SwingService:GetQueuedNextSwingCategory(provider)
     local nextSwingCategory
     local nextSwingEntries
 
@@ -101,7 +101,7 @@ function RotationEngine:UpdateRecommendation()
         nextSwingCategory, nextSwingEntries = self:GetReadyRecommendation(
             provider,
             provider:GetNextSwingPriority(context),
-            actionsByCategory,
+            abilitiesByCategory,
             context,
             IsNextSwingCategoryAllowed
         )
@@ -133,6 +133,6 @@ function RotationEngine:UpdateRecommendation()
         "primary=" .. primaryState
             .. "; next_swing=" .. nextSwingState
             .. "; enemies=" .. tostring(context.enemyCount)
-            .. "; " .. actionSummary
+            .. "; abilities=" .. abilitySummary
     )
 end

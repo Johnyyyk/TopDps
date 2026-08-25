@@ -1,7 +1,7 @@
 local addon = TopDps
 local ContextBuilder = addon:CreateModule("ContextBuilder")
 
-function ContextBuilder:Build(provider, actionsByCategory)
+function ContextBuilder:Build(provider, abilitiesByCategory)
     local activeEnemyCount = addon.CombatTracker:GetActiveEnemyCount()
     local target = addon.UnitStateService:GetTargetSnapshot()
 
@@ -22,7 +22,10 @@ function ContextBuilder:Build(provider, actionsByCategory)
         unitState = addon.UnitStateService,
         castService = addon.CastService,
         swingService = addon.SwingService,
-        actionsByCategory = actionsByCategory,
+        abilitiesByCategory = abilitiesByCategory,
+        -- Старое имя оставлено как alias для provider-контекста; здесь уже
+        -- находятся spellbook abilities, а не видимые action-bar entries.
+        actionsByCategory = abilitiesByCategory,
         activeEnemyCount = activeEnemyCount,
         enemyCount = activeEnemyCount,
         player = addon.UnitStateService:GetPlayerSnapshot(),
