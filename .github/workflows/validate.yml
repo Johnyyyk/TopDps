@@ -41,6 +41,9 @@ jobs:
       - name: Проверить core primitives
         run: lua5.1 tools/test_core_primitives.lua
 
+      - name: Проверить CombatTracker
+        run: lua5.1 tools/test_combat_tracker.lua
+
       - name: Проверить движение и movement priority
         run: lua5.1 tools/test_movement_priority.lua
 
