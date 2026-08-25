@@ -27,23 +27,25 @@ local function NewAddon()
     return addon
 end
 
-local function TestSpellbookCatalogUsesLearnedRank()
+local function TestSpellCatalogUsesWotlkApiAndLearnedRank()
     TopDps = NewAddon()
-    BOOKTYPE_SPELL = "spell"
 
-    GetNumSpellTabs = function() return 1 end
-    GetSpellTabInfo = function() return "Warrior", nil, 0, 2 end
-    GetSpellBookItemInfo = function(index)
-        if index == 1 then return "SPELL", 47467 end
-        if index == 2 then return "SPELL", 30335 end
+    GetSpellInfo = function(spell)
+        if spell == 7386 or spell == 47467 or spell == "Sunder Armor" then return "Sunder Armor" end
+        if spell == 23881 or spell == 30335 or spell == "Bloodthirst" then return "Bloodthirst" end
         return nil
     end
-    GetSpellInfo = function(spellId)
-        if spellId == 7386 or spellId == 47467 then return "Sunder Armor" end
-        if spellId == 23881 or spellId == 30335 then return "Bloodthirst" end
+    GetSpellLink = function(spell)
+        if spell == "Sunder Armor" then
+            return "|cff71d5ff|Hspell:47467:0|h[Sunder Armor]|h|r"
+        end
+        if spell == "Bloodthirst" then
+            return "|cff71d5ff|Hspell:30335:0|h[Bloodthirst]|h|r"
+        end
         return nil
     end
     IsSpellKnown = function() return false end
+    GetSpellBookItemInfo = nil
 
     dofile("Engine/AbilityService.lua")
 
@@ -55,16 +57,10 @@ local function TestSpellbookCatalogUsesLearnedRank()
         },
     }
 
-    function provider:GetSpellCategory(_, spellName)
-        if spellName == "Sunder Armor" then return "sunderArmor" end
-        if spellName == "Bloodthirst" then return "bloodthirst" end
-        return nil
-    end
-
     local abilities = TopDps.AbilityService:GetAbilities(provider)
-    AssertEqual(#abilities.sunderArmor, 1, "Sunder is discovered without action bar")
-    AssertEqual(abilities.sunderArmor[1].spellId, 47467, "learned Sunder rank is used")
-    AssertEqual(abilities.bloodthirst[1].spellId, 30335, "learned Bloodthirst rank is used")
+    AssertEqual(#abilities.sunderArmor, 1, "Sunder is discovered without Cataclysm spellbook API")
+    AssertEqual(abilities.sunderArmor[1].spellId, 47467, "learned Sunder rank is resolved from spell link")
+    AssertEqual(abilities.bloodthirst[1].spellId, 30335, "learned Bloodthirst rank is resolved from spell link")
 end
 
 local function TestSpellReadinessDoesNotNeedActionSlot()
@@ -81,6 +77,10 @@ local function TestSpellReadinessDoesNotNeedActionSlot()
     GetSpellCooldown = function() return 0, 0, 1 end
 
     dofile("Engine/ReadinessService.lua")
+
+    AssertEqual(TopDps.ReadinessService.IsActionReady, nil, "readiness has no action compatibility proxy")
+    AssertEqual(TopDps.ReadinessService.IsActionInRange, nil, "readiness has no action range fallback")
+    AssertEqual(TopDps.ReadinessService.IsActionCooldownReady, nil, "readiness has no action cooldown fallback")
 
     local provider = {}
     function provider:CanTreatUnusableAsUsable() return false end
@@ -239,7 +239,7 @@ local function TestHiddenNextSwingSlotStillTracksQueue()
     )
 end
 
-TestSpellbookCatalogUsesLearnedRank()
+TestSpellCatalogUsesWotlkApiAndLearnedRank()
 TestSpellReadinessDoesNotNeedActionSlot()
 TestPrioritySelectionIgnoresVisibleButtons()
 TestPresentationSeparatesRecommendationFromHighlight()
