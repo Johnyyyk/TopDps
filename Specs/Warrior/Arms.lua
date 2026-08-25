@@ -48,7 +48,7 @@ function Arms:IsCategoryAllowed(category, context)
 
     if category == "overpower" then
         -- Taste for Blood — основной источник окна, но обычный dodge proc также
-        -- должен проходить. Реальную доступность проверяет IsUsableAction.
+        -- должен проходить. Реальную доступность проверяет общий spell readiness.
         return true
     end
 

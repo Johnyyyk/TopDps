@@ -23,9 +23,6 @@ function ContextBuilder:Build(provider, abilitiesByCategory)
         castService = addon.CastService,
         swingService = addon.SwingService,
         abilitiesByCategory = abilitiesByCategory,
-        -- Старое имя оставлено как alias для provider-контекста; здесь уже
-        -- находятся spellbook abilities, а не видимые action-bar entries.
-        actionsByCategory = abilitiesByCategory,
         activeEnemyCount = activeEnemyCount,
         enemyCount = activeEnemyCount,
         player = addon.UnitStateService:GetPlayerSnapshot(),
