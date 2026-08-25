@@ -23,6 +23,7 @@ LocalizationRogue.lua
 LocalizationShaman.lua
 LocalizationWarlock.lua
 LocalizationWarlockAffliction.lua
+LocalizationWarrior.lua
 Core\GameApi.lua
 Core\Logger.lua
 Core\Settings.lua
@@ -98,6 +99,9 @@ Specs\Warlock\Common.lua
 Specs\Warlock\Affliction.lua
 Specs\Warlock\Demonology.lua
 Specs\Warlock\Destruction.lua
+Specs\Warrior\Common.lua
+Specs\Warrior\Arms.lua
+Specs\Warrior\Fury.lua
 # TopDps-Specs-End
 
 Cooldowns\DeathKnight.lua
@@ -120,6 +124,8 @@ Cooldowns\Warlock.lua
 Cooldowns\WarlockAffliction.lua
 Cooldowns\WarlockDefaults.lua
 Cooldowns\WarlockAfflictionDefaults.lua
+Cooldowns\Warrior.lua
+Cooldowns\WarriorDefaults.lua
 
 UI\OptionsWidgets.lua
 UI\OptionsLayout.lua

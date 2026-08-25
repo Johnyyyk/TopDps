@@ -1,0 +1,52 @@
+local addon = TopDps
+local L = addon.L
+
+if GetLocale() == "ruRU" then
+    L.SPEC_WARRIOR_ARMS = "Воин — Оружие"
+    L.SPEC_WARRIOR_FURY = "Воин — Неистовство"
+    L.SPEC_WARRIOR_PROTECTION = "Воин — Защита"
+
+    L.ABILITY_SUNDERARMOR = "Раскол брони"
+    L.ABILITY_REND = "Кровопускание"
+    L.ABILITY_EXECUTE = "Казнь"
+    L.ABILITY_OVERPOWER = "Превосходство"
+    L.ABILITY_BLADESTORM = "Вихрь клинков"
+    L.ABILITY_SWEEPINGSTRIKES = "Размашистые удары"
+    L.ABILITY_THUNDERCLAP = "Удар грома"
+    L.ABILITY_MORTALSTRIKE = "Смертельный удар"
+    L.ABILITY_SLAM = "Мощный удар"
+    L.ABILITY_HEROICSTRIKE = "Удар героя"
+    L.ABILITY_CLEAVE = "Рассекающий удар"
+    L.ABILITY_BLOODTHIRST = "Кровожадность"
+    L.ABILITY_WHIRLWIND = "Вихрь"
+
+    L.WARRIOR_MAINTAIN_SUNDER_ARMOR = "Поддерживать 5 стаков Раскола брони"
+    L.WARRIOR_CURRENT_SHOUT = "Текущий крик"
+    L.WARRIOR_BATTLE_STANCE_STATE = "Боевая стойка"
+    L.WARRIOR_BERSERKER_STANCE_STATE = "Стойка берсерка"
+    L.WARRIOR_DEFENSIVE_STANCE_STATE = "Оборонительная стойка"
+else
+    L.SPEC_WARRIOR_ARMS = "Warrior — Arms"
+    L.SPEC_WARRIOR_FURY = "Warrior — Fury"
+    L.SPEC_WARRIOR_PROTECTION = "Warrior — Protection"
+
+    L.ABILITY_SUNDERARMOR = "Sunder Armor"
+    L.ABILITY_REND = "Rend"
+    L.ABILITY_EXECUTE = "Execute"
+    L.ABILITY_OVERPOWER = "Overpower"
+    L.ABILITY_BLADESTORM = "Bladestorm"
+    L.ABILITY_SWEEPINGSTRIKES = "Sweeping Strikes"
+    L.ABILITY_THUNDERCLAP = "Thunder Clap"
+    L.ABILITY_MORTALSTRIKE = "Mortal Strike"
+    L.ABILITY_SLAM = "Slam"
+    L.ABILITY_HEROICSTRIKE = "Heroic Strike"
+    L.ABILITY_CLEAVE = "Cleave"
+    L.ABILITY_BLOODTHIRST = "Bloodthirst"
+    L.ABILITY_WHIRLWIND = "Whirlwind"
+
+    L.WARRIOR_MAINTAIN_SUNDER_ARMOR = "Maintain 5 stacks of Sunder Armor"
+    L.WARRIOR_CURRENT_SHOUT = "Current Shout"
+    L.WARRIOR_BATTLE_STANCE_STATE = "Battle Stance"
+    L.WARRIOR_BERSERKER_STANCE_STATE = "Berserker Stance"
+    L.WARRIOR_DEFENSIVE_STANCE_STATE = "Defensive Stance"
+end

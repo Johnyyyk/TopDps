@@ -77,6 +77,9 @@ jobs:
       - name: Проверить Shaman
         run: lua5.1 tools/test_shaman.lua
 
+      - name: Проверить Warrior
+        run: lua5.1 tools/test_warrior.lua
+
       - name: Проверить XML
         shell: bash
         run: |
