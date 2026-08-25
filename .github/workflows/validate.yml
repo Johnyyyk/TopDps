@@ -17,6 +17,9 @@ jobs:
       - name: Проверить список специализаций в TOC
         run: python3 tools/generate_toc.py --check
 
+      - name: Проверить покрытие классов и специализаций
+        run: python3 tools/check_class_coverage.py
+
       - name: Проверить версии проекта
         run: python3 tools/check_version.py
 
@@ -38,6 +41,12 @@ jobs:
       - name: Проверить core primitives
         run: lua5.1 tools/test_core_primitives.lua
 
+      - name: Проверить action bars
+        run: lua5.1 tools/test_action_bar_service.lua
+
+      - name: Проверить CombatTracker
+        run: lua5.1 tools/test_combat_tracker.lua
+
       - name: Проверить движение и movement priority
         run: lua5.1 tools/test_movement_priority.lua
 
@@ -52,6 +61,33 @@ jobs:
 
       - name: Проверить TTD-выбор проклятия чернокнижника
         run: lua5.1 tools/test_warlock_ttd_curse.lua
+
+      - name: Проверить Affliction Warlock
+        run: lua5.1 tools/test_warlock_affliction.lua
+
+      - name: Проверить Death Knight
+        run: lua5.1 tools/test_death_knight.lua
+
+      - name: Проверить Druid
+        run: lua5.1 tools/test_druid.lua
+
+      - name: Проверить Hunter
+        run: lua5.1 tools/test_hunter.lua
+
+      - name: Проверить Mage
+        run: lua5.1 tools/test_mage.lua
+
+      - name: Проверить Priest
+        run: lua5.1 tools/test_priest.lua
+
+      - name: Проверить Rogue
+        run: lua5.1 tools/test_rogue.lua
+
+      - name: Проверить Shaman
+        run: lua5.1 tools/test_shaman.lua
+
+      - name: Проверить Warrior
+        run: lua5.1 tools/test_warrior.lua
 
       - name: Проверить XML
         shell: bash

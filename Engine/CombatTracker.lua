@@ -18,6 +18,8 @@ local ENEMY_ACTIVITY_TIMEOUT = 6
 local bitBand = bit and bit.band or nil
 
 CombatTracker.enemyActivity = CombatTracker.enemyActivity or {}
+CombatTracker.lastPlayerSpellCastsById = CombatTracker.lastPlayerSpellCastsById or {}
+CombatTracker.lastPlayerSpellCastsByName = CombatTracker.lastPlayerSpellCastsByName or {}
 
 local function IsApiTrue(value)
     return value == true or value == 1
@@ -43,13 +45,58 @@ local function IsOwnedUnit(guid, flags, playerGuid, petGuid)
     return HasMineAffiliation(flags)
 end
 
+function CombatTracker:RecordPlayerSpellCast(spellId, spellName)
+    spellId = tonumber(spellId)
+    local state = {
+        spellId = spellId,
+        spellName = spellName,
+        time = GetTime(),
+    }
+
+    if spellId then
+        self.lastPlayerSpellCastsById[spellId] = state
+    end
+
+    if spellName and spellName ~= "" then
+        self.lastPlayerSpellCastsByName[spellName] = state
+    end
+end
+
+function CombatTracker:GetLastPlayerSpellCast(spellIds)
+    local latest
+    local index
+
+    for index = 1, #(spellIds or {}) do
+        local spellId = tonumber(spellIds[index])
+        local candidate = spellId and self.lastPlayerSpellCastsById[spellId] or nil
+        if candidate and (not latest or candidate.time > latest.time) then
+            latest = candidate
+        end
+
+        if spellId and GetSpellInfo then
+            local spellName = GetSpellInfo(spellId)
+            candidate = spellName and self.lastPlayerSpellCastsByName[spellName] or nil
+            if candidate and (not latest or candidate.time > latest.time) then
+                latest = candidate
+            end
+        end
+    end
+
+    return latest
+end
+
 function CombatTracker:RecordCombatEvent(...)
     local _, eventType, sourceGuid, _, sourceFlags, destinationGuid, _, destinationFlags = ...
+    local playerGuid = UnitGUID("player")
+
+    if eventType == "SPELL_CAST_SUCCESS" and sourceGuid == playerGuid then
+        self:RecordPlayerSpellCast(select(9, ...), select(10, ...))
+    end
+
     if not DAMAGE_EVENTS[eventType] then
         return
     end
 
-    local playerGuid = UnitGUID("player")
     local petGuid = UnitGUID("pet")
     local sourceOwned = IsOwnedUnit(sourceGuid, sourceFlags, playerGuid, petGuid)
     local destinationOwned = IsOwnedUnit(destinationGuid, destinationFlags, playerGuid, petGuid)
@@ -64,6 +111,8 @@ end
 
 function CombatTracker:Clear()
     self.enemyActivity = {}
+    self.lastPlayerSpellCastsById = {}
+    self.lastPlayerSpellCastsByName = {}
 end
 
 function CombatTracker:GetActiveEnemyCount()

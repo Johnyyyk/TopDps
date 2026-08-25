@@ -268,15 +268,18 @@ function GameApi:GetButtonAction(button)
         end
     end
 
-    if button.action then
-        return button.action
-    end
-
+    -- В WotLK stance/form/stealth панели используют paged action slots.
+    -- Предпочитаем Blizzard helper статическому button.action, который на
+    -- части 3.3.5 клиентов может оставаться ID кнопки, а не активного слота.
     if ActionButton_GetPagedID then
         local ok, action = pcall(ActionButton_GetPagedID, button)
         if ok and action then
             return action
         end
+    end
+
+    if button.action then
+        return button.action
     end
 
     if button.GetAttribute then
