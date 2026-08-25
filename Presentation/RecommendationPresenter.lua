@@ -2,11 +2,7 @@ local addon = TopDps
 local RecommendationPresenter = addon:CreateModule("RecommendationPresenter")
 
 local function GetHighlightEntries(provider, category, entries)
-    if addon.ActionBarService and addon.ActionBarService.FindVisibleActions then
-        return addon.ActionBarService:FindVisibleActions(provider, category, entries)
-    end
-
-    return entries
+    return addon.ActionBarService:FindVisibleActions(provider, category, entries)
 end
 
 function RecommendationPresenter:Set(provider, category, entries)
@@ -14,8 +10,10 @@ function RecommendationPresenter:Set(provider, category, entries)
     self.category = category
     self.entries = entries
 
-    local highlightEntries = GetHighlightEntries(provider, category, entries)
-    addon.HighlightManager:SetEntries(addon.HIGHLIGHT_CHANNEL_PRIMARY, highlightEntries)
+    addon.HighlightManager:SetEntries(
+        addon.HIGHLIGHT_CHANNEL_PRIMARY,
+        GetHighlightEntries(provider, category, entries)
+    )
     addon.CenterIcons:Show(entries)
 
     local recommendationName = provider:GetRecommendationName(category, entries)
@@ -39,8 +37,10 @@ function RecommendationPresenter:SetNextSwing(provider, category, entries)
     self.nextSwingCategory = category
     self.nextSwingEntries = entries
 
-    local highlightEntries = GetHighlightEntries(provider, category, entries)
-    addon.HighlightManager:SetEntries(addon.HIGHLIGHT_CHANNEL_NEXT_SWING, highlightEntries)
+    addon.HighlightManager:SetEntries(
+        addon.HIGHLIGHT_CHANNEL_NEXT_SWING,
+        GetHighlightEntries(provider, category, entries)
+    )
 
     local recommendationName = provider:GetRecommendationName(category, entries)
     local signature = recommendationName or "NONE"

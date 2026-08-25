@@ -3,7 +3,53 @@ local AbilityService = addon:CreateModule("AbilityService")
 
 AbilityService.catalogByProvider = AbilityService.catalogByProvider or {}
 
-local function AddEntry(entriesByCategory, entryIndexByKey, category, spellId, spellName, spellBookIndex)
+local function GetSpellIdFromLink(link)
+    if type(link) ~= "string" then
+        return nil
+    end
+
+    return tonumber(string.match(link, "Hspell:(%d+)"))
+end
+
+local function ResolveKnownSpell(spellId)
+    if not spellId or not GetSpellInfo then
+        return nil, nil
+    end
+
+    local ok, spellName = pcall(GetSpellInfo, spellId)
+    if not ok or not spellName then
+        return nil, nil
+    end
+
+    -- В 3.3.5a GetSpellBookItemInfo ещё нет. GetSpellLink(name), напротив,
+    -- существует с TBC и по имени возвращает ссылку только для заклинания,
+    -- которое находится в spellbook. Из ссылки заодно получаем фактически
+    -- изученный rank, даже когда provider хранит только базовый spell ID.
+    if GetSpellLink then
+        local linkOk, link, linkedSpellId = pcall(GetSpellLink, spellName)
+        if linkOk and link then
+            return tonumber(linkedSpellId) or GetSpellIdFromLink(link) or spellId, spellName
+        end
+    end
+
+    -- Fallback для нестандартных 3.3.5 cores. Проверка по имени важнее
+    -- IsSpellKnown(baseRank): provider часто хранит только ID первого ранга.
+    local knownOk, knownName = pcall(GetSpellInfo, spellName)
+    if knownOk and knownName then
+        return spellId, spellName
+    end
+
+    if IsSpellKnown then
+        local isKnownOk, known = pcall(IsSpellKnown, spellId)
+        if isKnownOk and (known == true or known == 1) then
+            return spellId, spellName
+        end
+    end
+
+    return nil, nil
+end
+
+local function AddEntry(entriesByCategory, entryIndexByKey, category, spellId, spellName)
     if not category or not spellName then
         return
     end
@@ -15,32 +61,19 @@ local function AddEntry(entriesByCategory, entryIndexByKey, category, spellId, s
         entryIndexByKey[category] = {}
     end
 
-    local key = spellName
-    local index = entryIndexByKey[category][key]
+    local index = entryIndexByKey[category][spellName]
     local entry = {
         spellId = spellId,
         spellName = spellName,
-        spellBookIndex = spellBookIndex,
     }
 
     if index then
-        -- Если клиент показывает несколько рангов одного заклинания,
-        -- последний spellbook slot соответствует наиболее актуальному рангу.
         entries[index] = entry
         return
     end
 
     table.insert(entries, entry)
-    entryIndexByKey[category][key] = #entries
-end
-
-local function IsKnownSpell(spellId)
-    if not IsSpellKnown or not spellId then
-        return false
-    end
-
-    local ok, known = pcall(IsSpellKnown, spellId)
-    return ok and (known == true or known == 1)
+    entryIndexByKey[category][spellName] = #entries
 end
 
 function AbilityService:BuildCatalog(provider)
@@ -51,69 +84,24 @@ function AbilityService:BuildCatalog(provider)
         return entriesByCategory
     end
 
-    local spellbookScanned = false
-    if GetNumSpellTabs and GetSpellTabInfo and GetSpellBookItemInfo and GetSpellInfo then
-        local ok, tabCount = pcall(GetNumSpellTabs)
-        if ok and type(tabCount) == "number" then
-            spellbookScanned = true
-            local bookType = BOOKTYPE_SPELL or "spell"
-            local tabIndex
-
-            for tabIndex = 1, tabCount do
-                local tabOk, _, _, offset, numSlots = pcall(GetSpellTabInfo, tabIndex)
-                if tabOk then
-                    offset = tonumber(offset) or 0
-                    numSlots = tonumber(numSlots) or 0
-
-                    local spellBookIndex
-                    for spellBookIndex = offset + 1, offset + numSlots do
-                        local itemOk, spellType, spellId = pcall(GetSpellBookItemInfo, spellBookIndex, bookType)
-                        if itemOk and spellType == "SPELL" and spellId then
-                            local spellName = GetSpellInfo(spellId)
-                            local category = provider:GetSpellCategory(spellId, spellName)
-                            AddEntry(
-                                entriesByCategory,
-                                entryIndexByKey,
-                                category,
-                                spellId,
-                                spellName,
-                                spellBookIndex
-                            )
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    -- Основной путь для 3.3.5a — spellbook scan: он сразу даёт фактически
-    -- изученный rank, даже когда provider хранит только базовый spell ID.
-    -- Fallback нужен для нестандартных cores с неполным spellbook API.
     local categories = provider.categories or {}
     local abilities = provider.abilities or {}
     local categoryIndex
 
     for categoryIndex = 1, #categories do
         local category = categories[categoryIndex]
-        if not entriesByCategory[category] then
-            local ability = abilities[category]
-            local spellIds = ability and ability.spellIds or nil
-            local spellIndex
+        local ability = abilities[category]
+        local spellIds = ability and ability.spellIds or nil
+        local spellIndex
 
-            for spellIndex = 1, #(spellIds or {}) do
-                local spellId = spellIds[spellIndex]
-                if IsKnownSpell(spellId) then
-                    local spellName = GetSpellInfo and GetSpellInfo(spellId) or nil
-                    AddEntry(entriesByCategory, entryIndexByKey, category, spellId, spellName, nil)
-                end
-            end
+        for spellIndex = 1, #(spellIds or {}) do
+            local spellId, spellName = ResolveKnownSpell(spellIds[spellIndex])
+            AddEntry(entriesByCategory, entryIndexByKey, category, spellId, spellName)
         end
     end
 
-    -- Не считаем отсутствие spellbook entries ошибкой: на низком уровне
-    -- provider вполне может не иметь ни одной изученной ротационной способности.
     self.catalogByProvider[provider] = entriesByCategory
-    return entriesByCategory, spellbookScanned
+    return entriesByCategory
 end
 
 function AbilityService:Refresh(provider)

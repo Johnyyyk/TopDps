@@ -2,23 +2,17 @@ local addon = TopDps
 local CenterIcons = addon:CreateModule("CenterIcons")
 
 local function GetEntryTexture(entry)
-    if not entry then
+    if not entry or not GetSpellInfo then
         return nil
     end
 
-    local spell = entry.spellId or entry.spellName
-    if spell and GetSpellInfo then
-        local _, _, texture = GetSpellInfo(spell)
-        if texture then
-            return texture
-        end
+    local spell = entry.spellName or entry.spellId
+    if not spell then
+        return nil
     end
 
-    if entry.action and GetActionTexture then
-        return GetActionTexture(entry.action)
-    end
-
-    return nil
+    local _, _, texture = GetSpellInfo(spell)
+    return texture
 end
 
 local function CreateIconFrame(name)

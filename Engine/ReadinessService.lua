@@ -8,21 +8,14 @@ local function GetEntrySpell(entry)
         return nil
     end
 
+    -- Имена намеренно предпочтительнее ID: spell API WotLK стабильно работает
+    -- с известным заклинанием по имени независимо от конкретного изученного rank.
     return entry.spellName or entry.spellId
-end
-
-function ReadinessService:IsActionInRange(action)
-    local inRange = IsActionInRange(action)
-    return inRange ~= 0
 end
 
 function ReadinessService:IsSpellInRange(entry)
     local spell = GetEntrySpell(entry)
     if not spell or not IsSpellInRange then
-        if entry and entry.action and IsActionInRange then
-            return self:IsActionInRange(entry.action)
-        end
-
         return true
     end
 
@@ -31,37 +24,13 @@ function ReadinessService:IsSpellInRange(entry)
         return true
     end
 
-    -- Как и IsActionInRange, nil означает, что range check неприменим.
+    -- nil означает, что range check для этого заклинания неприменим.
     return inRange ~= 0
-end
-
-function ReadinessService:GetActionCooldownRemaining(action)
-    local start, duration, enabled = GetActionCooldown(action)
-    duration = tonumber(duration) or 0
-
-    if enabled == 0 then
-        return math.huge, duration, enabled
-    end
-
-    if not start or start == 0 or duration == 0 then
-        return 0, duration, enabled
-    end
-
-    local remaining = start + duration - GetTime()
-    if remaining < 0 then
-        remaining = 0
-    end
-
-    return remaining, duration, enabled
 end
 
 function ReadinessService:GetSpellCooldownRemaining(entry)
     local spell = GetEntrySpell(entry)
     if not spell or not GetSpellCooldown then
-        if entry and entry.action and GetActionCooldown then
-            return self:GetActionCooldownRemaining(entry.action)
-        end
-
         return math.huge, 0, 0
     end
 
@@ -114,13 +83,8 @@ function ReadinessService:IsCooldownReady(remaining, duration, enabled)
         return true
     end
 
-    -- Сохраняем текущее поведение: cooldown длительностью GCD не блокирует рекомендацию.
+    -- Cooldown длительностью GCD не блокирует рекомендацию.
     return duration <= 1.6
-end
-
-function ReadinessService:IsActionCooldownReady(action)
-    local remaining, duration, enabled = self:GetActionCooldownRemaining(action)
-    return self:IsCooldownReady(remaining, duration, enabled)
 end
 
 function ReadinessService:IsSpellCooldownReady(entry)
@@ -134,18 +98,16 @@ end
 
 function ReadinessService:IsEntryUsable(entry)
     local spell = GetEntrySpell(entry)
-    if spell and IsUsableSpell then
-        local ok, usable, notEnoughPower = pcall(IsUsableSpell, spell)
-        if ok then
-            return usable, notEnoughPower
-        end
+    if not spell or not IsUsableSpell then
+        return false, false
     end
 
-    if entry and entry.action and IsUsableAction then
-        return IsUsableAction(entry.action)
+    local ok, usable, notEnoughPower = pcall(IsUsableSpell, spell)
+    if not ok then
+        return false, false
     end
 
-    return false, false
+    return usable, notEnoughPower
 end
 
 function ReadinessService:IsEntryReady(entry, category, provider, context)
@@ -165,11 +127,6 @@ function ReadinessService:IsEntryReady(entry, category, provider, context)
     end
 
     return self:IsSpellCooldownReady(entry)
-end
-
--- Сохраняем имя метода для существующих provider/tests; семантика теперь spell-based.
-function ReadinessService:IsActionReady(entry, category, provider, context)
-    return self:IsEntryReady(entry, category, provider, context)
 end
 
 function ReadinessService:GetDefaultReadyEntries(entries, category, provider, context)
