@@ -8,6 +8,10 @@ Warrior.TALENT_TABS = {
     PROTECTION = 3,
 }
 
+Warrior.NEXT_SWING_WINDOW = 1.0
+Warrior.HEROIC_STRIKE_RAGE_THRESHOLD = 60
+Warrior.CLEAVE_RAGE_THRESHOLD = 50
+
 Warrior.SPELL_IDS = {
     rend = 772,
     mortalStrike = 12294,
@@ -89,6 +93,34 @@ function Warrior:IsCategoryQueued(context, category)
         if addon.SwingService:IsActionQueued(entries[index].action) then
             return true
         end
+    end
+
+    return false
+end
+
+function Warrior:IsNextSwingWindowOpen(context)
+    local mainHand = context and context.swing and context.swing.mainHand or nil
+    if not mainHand or mainHand.nextSwingAt == nil then
+        return false
+    end
+
+    local remaining = tonumber(mainHand.remaining)
+    return remaining ~= nil and remaining <= self.NEXT_SWING_WINDOW
+end
+
+function Warrior:IsNextSwingCategoryAllowed(category, context)
+    if not self:IsNextSwingWindowOpen(context) then
+        return false
+    end
+
+    if category == "heroicStrike" then
+        return self:GetEnemyCount(context) < 2
+            and self:GetRage(context) >= self.HEROIC_STRIKE_RAGE_THRESHOLD
+    end
+
+    if category == "cleave" then
+        return self:GetEnemyCount(context) >= 2
+            and self:GetRage(context) >= self.CLEAVE_RAGE_THRESHOLD
     end
 
     return false

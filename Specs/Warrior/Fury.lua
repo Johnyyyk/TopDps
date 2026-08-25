@@ -17,6 +17,11 @@ local Fury = addon.SpecProvider:Create({
         "thunderClap",
     },
 
+    nextSwingCategories = {
+        "heroicStrike",
+        "cleave",
+    },
+
     abilities = {
         sunderArmor = { spellIds = { Warrior.SPELL_IDS.sunderArmor } },
         bloodthirst = { spellIds = { Warrior.SPELL_IDS.bloodthirst } },
@@ -49,7 +54,6 @@ local PRIORITY_SINGLE = {
     "bloodthirst",
     "whirlwind",
     "slam",
-    "heroicStrike",
     "execute",
 }
 
@@ -58,9 +62,16 @@ local PRIORITY_AOE = {
     "whirlwind",
     "thunderClap",
     "bloodthirst",
-    "cleave",
     "slam",
     "execute",
+}
+
+local NEXT_SWING_SINGLE = {
+    "heroicStrike",
+}
+
+local NEXT_SWING_AOE = {
+    "cleave",
 }
 
 function Fury:IsCategoryAllowed(category, context)
@@ -70,18 +81,6 @@ function Fury:IsCategoryAllowed(category, context)
 
     if category == "slam" then
         return Warrior:HasPlayerAura({ Warrior.SPELL_IDS.bloodsurge })
-    end
-
-    if category == "heroicStrike" then
-        return Warrior:GetEnemyCount(context) < 2
-            and Warrior:GetRage(context) >= 60
-            and not Warrior:IsCategoryQueued(context, category)
-    end
-
-    if category == "cleave" then
-        return Warrior:GetEnemyCount(context) >= 2
-            and Warrior:GetRage(context) >= 50
-            and not Warrior:IsCategoryQueued(context, category)
     end
 
     if category == "execute" then
@@ -101,6 +100,18 @@ function Fury:GetPriority(context)
     end
 
     return PRIORITY_SINGLE
+end
+
+function Fury:GetNextSwingPriority(context)
+    if Warrior:GetEnemyCount(context) >= 2 then
+        return NEXT_SWING_AOE
+    end
+
+    return NEXT_SWING_SINGLE
+end
+
+function Fury:IsNextSwingCategoryAllowed(category, context)
+    return Warrior:IsNextSwingCategoryAllowed(category, context)
 end
 
 addon.SpecRegistry:Register(Fury)
