@@ -258,6 +258,11 @@ local function TestRecommendationPresenterKeepsCenterIconsPrimaryOnly()
         end,
         Refresh = function() end,
     }
+    TopDps.ActionBarService = {
+        FindVisibleActions = function(_, _, _, entries)
+            return entries
+        end,
+    }
 
     local centerShows = 0
     local centerHides = 0
