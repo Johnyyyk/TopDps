@@ -17,6 +17,9 @@ jobs:
       - name: Проверить список специализаций в TOC
         run: python3 tools/generate_toc.py --check
 
+      - name: Проверить покрытие классов и специализаций
+        run: python3 tools/check_class_coverage.py
+
       - name: Проверить версии проекта
         run: python3 tools/check_version.py
 

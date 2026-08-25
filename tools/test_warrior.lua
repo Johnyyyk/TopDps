@@ -35,19 +35,10 @@ function TopDps.SpecRegistry:Register(provider)
     self.providers[provider.id] = provider
 end
 
-TopDps.AuraService.FindAura = function()
-    return nil
-end
-TopDps.SwingService.IsActionQueued = function()
-    return false
-end
-
-GetSpellInfo = function(id)
-    return tostring(id)
-end
-GetTime = function()
-    return 100
-end
+TopDps.AuraService.FindAura = function() return nil end
+TopDps.SwingService.IsActionQueued = function() return false end
+GetSpellInfo = function(id) return tostring(id) end
+GetTime = function() return 100 end
 
 dofile("Specs/Warrior/Common.lua")
 dofile("Specs/Warrior/Arms.lua")
@@ -59,13 +50,8 @@ local Fury = TopDps.SpecRegistry.providers.WARRIOR_FURY
 
 local context = {
     activeEnemyCount = 1,
-    player = {
-        power = { current = 80 },
-        movement = { moving = false },
-    },
-    target = {
-        health = { maximum = 100, fraction = 0.50 },
-    },
+    player = { power = { current = 80 }, movement = { moving = false } },
+    target = { health = { maximum = 100, fraction = 0.50 } },
     actionsByCategory = {},
 }
 
@@ -79,8 +65,10 @@ AssertEqual(Arms:IsCategoryAllowed("execute", context), false, "arms execute gat
 activeAuras[Warrior.SPELL_IDS.suddenDeath] = true
 AssertEqual(Arms:IsCategoryAllowed("execute", context), true, "sudden death enables execute")
 activeAuras[Warrior.SPELL_IDS.suddenDeath] = nil
+
+AssertEqual(Arms:IsCategoryAllowed("overpower", context), true, "dodge Overpower window is not blocked by aura gate")
 activeAuras[Warrior.SPELL_IDS.tasteForBlood] = true
-AssertEqual(Arms:IsCategoryAllowed("overpower", context), true, "taste for blood enables overpower")
+AssertEqual(Arms:IsCategoryAllowed("overpower", context), true, "taste for blood also leaves overpower enabled")
 
 AssertEqual(Fury:GetPriority(context)[2], "bloodthirst", "fury single target starts with Bloodthirst after optional Sunder")
 activeAuras[Warrior.SPELL_IDS.bloodsurge] = false
@@ -96,7 +84,6 @@ AssertEqual(Fury:IsCategoryAllowed("cleave", context), true, "cleave enabled for
 context.target.health.fraction = 0.15
 context.player.power.current = 60
 AssertEqual(Fury:IsCategoryAllowed("execute", context), true, "fury execute requires execute range and excess rage")
-
 AssertEqual(Warrior.TALENT_TABS.PROTECTION, 3, "protection remains panel-only talent tab")
 
 print("warrior smoke tests passed")
