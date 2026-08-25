@@ -50,6 +50,9 @@ jobs:
       - name: Проверить action bars
         run: lua5.1 tools/test_action_bar_service.lua
 
+      - name: Проверить независимость ротации от action bar
+        run: lua5.1 tools/test_actionbar_independent_rotation.lua
+
       - name: Проверить CombatTracker
         run: lua5.1 tools/test_combat_tracker.lua
 
