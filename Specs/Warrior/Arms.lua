@@ -5,33 +5,14 @@ local Arms = addon.SpecProvider:Create({
     id = "WARRIOR_ARMS",
     classToken = Warrior.CLASS_TOKEN,
     talentTab = Warrior.TALENT_TABS.ARMS,
-
-    categories = {
-        "sunderArmor",
-        "rend",
-        "execute",
-        "overpower",
-        "bladestorm",
-        "sweepingStrikes",
-        "thunderClap",
-        "mortalStrike",
-        "slam",
-        "heroicStrike",
-        "cleave",
-    },
-
+    categories = { "sunderArmor", "rend", "execute", "overpower", "bladestorm", "sweepingStrikes", "thunderClap", "mortalStrike", "slam", "heroicStrike", "cleave" },
     abilities = {
         sunderArmor = { spellIds = { Warrior.SPELL_IDS.sunderArmor } },
         rend = {
             spellIds = { Warrior.SPELL_IDS.rend },
             refresh = {
-                auraSpellIds = { Warrior.SPELL_IDS.rend },
-                unit = "target",
-                filter = "HARMFUL",
-                ownOnly = true,
-                isRefreshDue = function(_, aura)
-                    return aura == nil
-                end,
+                auraSpellIds = { Warrior.SPELL_IDS.rend }, unit = "target", filter = "HARMFUL", ownOnly = true,
+                isRefreshDue = function(_, aura) return aura == nil end,
             },
         },
         execute = { spellIds = { Warrior.SPELL_IDS.execute } },
@@ -41,56 +22,17 @@ local Arms = addon.SpecProvider:Create({
         thunderClap = { spellIds = { Warrior.SPELL_IDS.thunderClap } },
         mortalStrike = { spellIds = { Warrior.SPELL_IDS.mortalStrike } },
         slam = { spellIds = { Warrior.SPELL_IDS.slam } },
-        heroicStrike = {
-            spellIds = { Warrior.SPELL_IDS.heroicStrike },
-            swingReset = "MAIN_HAND",
-        },
-        cleave = {
-            spellIds = { Warrior.SPELL_IDS.cleave },
-            swingReset = "MAIN_HAND",
-        },
+        heroicStrike = { spellIds = { Warrior.SPELL_IDS.heroicStrike }, swingReset = "MAIN_HAND" },
+        cleave = { spellIds = { Warrior.SPELL_IDS.cleave }, swingReset = "MAIN_HAND" },
     },
-
     settings = {
-        {
-            type = "checkbox",
-            key = "maintainSunderArmor",
-            labelKey = "WARRIOR_MAINTAIN_SUNDER_ARMOR",
-            default = false,
-        },
+        { type = "checkbox", key = "maintainSunderArmor", labelKey = "WARRIOR_MAINTAIN_SUNDER_ARMOR", default = false },
     },
 })
 
-local PRIORITY_SINGLE = {
-    "sunderArmor",
-    "rend",
-    "execute",
-    "overpower",
-    "bladestorm",
-    "mortalStrike",
-    "slam",
-    "heroicStrike",
-}
-
-local PRIORITY_EXECUTE = {
-    "sunderArmor",
-    "execute",
-    "overpower",
-    "rend",
-    "mortalStrike",
-}
-
-local PRIORITY_AOE = {
-    "sunderArmor",
-    "rend",
-    "sweepingStrikes",
-    "overpower",
-    "bladestorm",
-    "thunderClap",
-    "mortalStrike",
-    "cleave",
-    "slam",
-}
+local PRIORITY_SINGLE = { "sunderArmor", "rend", "execute", "overpower", "bladestorm", "mortalStrike", "slam", "heroicStrike" }
+local PRIORITY_EXECUTE = { "sunderArmor", "execute", "overpower", "rend", "mortalStrike" }
+local PRIORITY_AOE = { "sunderArmor", "rend", "sweepingStrikes", "overpower", "bladestorm", "thunderClap", "mortalStrike", "cleave", "slam" }
 
 function Arms:IsCategoryAllowed(category, context)
     if category == "sunderArmor" then
@@ -98,55 +40,37 @@ function Arms:IsCategoryAllowed(category, context)
     end
 
     if category == "execute" then
-        return Warrior:IsExecuteRange(context)
-            or Warrior:HasPlayerAura({ Warrior.SPELL_IDS.suddenDeath })
+        return Warrior:IsExecuteRange(context) or Warrior:HasPlayerAura({ Warrior.SPELL_IDS.suddenDeath })
     end
 
     if category == "overpower" then
-        return Warrior:HasPlayerAura({ Warrior.SPELL_IDS.tasteForBlood })
+        -- Taste for Blood — основной источник окна, но обычный dodge proc также
+        -- должен проходить. Реальную доступность проверяет IsUsableAction.
+        return true
     end
 
     if category == "bladestorm" then
-        if Warrior:HasPlayerAura({ Warrior.SPELL_IDS.suddenDeath, Warrior.SPELL_IDS.tasteForBlood }) then
-            return false
-        end
-
+        if Warrior:HasPlayerAura({ Warrior.SPELL_IDS.suddenDeath, Warrior.SPELL_IDS.tasteForBlood }) then return false end
         local rend = Warrior:FindTargetAura({ Warrior.SPELL_IDS.rend }, true)
         return Warrior:GetAuraRemaining(rend, context) >= 7
     end
 
-    if category == "sweepingStrikes" or category == "thunderClap" then
-        return Warrior:GetEnemyCount(context) >= 2
-    end
-
+    if category == "sweepingStrikes" or category == "thunderClap" then return Warrior:GetEnemyCount(context) >= 2 end
     if category == "heroicStrike" then
-        return Warrior:GetEnemyCount(context) < 2
-            and Warrior:GetRage(context) >= 60
-            and not Warrior:IsCategoryQueued(context, category)
+        return Warrior:GetEnemyCount(context) < 2 and Warrior:GetRage(context) >= 60 and not Warrior:IsCategoryQueued(context, category)
     end
-
     if category == "cleave" then
-        return Warrior:GetEnemyCount(context) >= 2
-            and Warrior:GetRage(context) >= 50
-            and not Warrior:IsCategoryQueued(context, category)
+        return Warrior:GetEnemyCount(context) >= 2 and Warrior:GetRage(context) >= 50 and not Warrior:IsCategoryQueued(context, category)
     end
-
     if category == "slam" then
         return not (context and context.player and context.player.movement and context.player.movement.moving)
     end
-
     return true
 end
 
 function Arms:GetPriority(context)
-    if Warrior:GetEnemyCount(context) >= 3 then
-        return PRIORITY_AOE
-    end
-
-    if Warrior:IsExecuteRange(context) then
-        return PRIORITY_EXECUTE
-    end
-
+    if Warrior:GetEnemyCount(context) >= 3 then return PRIORITY_AOE end
+    if Warrior:IsExecuteRange(context) then return PRIORITY_EXECUTE end
     return PRIORITY_SINGLE
 end
 

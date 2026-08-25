@@ -4,26 +4,22 @@ local Shaman = addon.Shaman
 local function Allowlist(ids)
     local result = { __allowlist = true }
     local index
-    for index = 1, #ids do
-        result[ids[index]] = true
-    end
+    for index = 1, #ids do result[ids[index]] = true end
     return result
 end
 
 local function SetDefaults(talentTab, ids)
     local profile = addon.CooldownRegistry:GetProfile(Shaman.CLASS_TOKEN, talentTab)
-    if profile then
-        profile.defaultElementEnabled = Allowlist(ids)
-    end
+    if profile then profile.defaultElementEnabled = Allowlist(ids) end
 end
 
 SetDefaults(Shaman.TALENT_TABS.ELEMENTAL, {
     "weaponImbue",
     "waterShield",
     "fireTotem",
+    "fireElementalTotem",
     "elementalMastery",
-    "thunderstorm",
-    "windShear",
+    "bloodlustHeroism",
 })
 
 SetDefaults(Shaman.TALENT_TABS.ENHANCEMENT, {
@@ -31,10 +27,11 @@ SetDefaults(Shaman.TALENT_TABS.ENHANCEMENT, {
     "offHandFlametongue",
     "lightningShield",
     "fireTotem",
+    "fireElementalTotem",
     "feralSpirit",
     "shamanisticRage",
     "maelstromWeapon",
-    "windShear",
+    "bloodlustHeroism",
 })
 
 SetDefaults(Shaman.TALENT_TABS.RESTORATION, {
@@ -45,5 +42,6 @@ SetDefaults(Shaman.TALENT_TABS.RESTORATION, {
     "manaTide",
     "tidalForce",
     "riptide",
-    "windShear",
+    "tidalWaves",
+    "bloodlustHeroism",
 })

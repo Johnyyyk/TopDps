@@ -9,9 +9,6 @@ if profile then
         glyphLifeTap = true,
         correctPet = true,
         weaponStone = true,
-        shadowWard = true,
-        soulshatter = true,
-        demonicCircleTeleport = true,
         shadowTrance = true,
     }
 end

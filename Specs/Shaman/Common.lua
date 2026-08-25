@@ -2,11 +2,7 @@ local addon = TopDps
 local Shaman = addon:CreateModule("Shaman")
 
 Shaman.CLASS_TOKEN = "SHAMAN"
-Shaman.TALENT_TABS = {
-    ELEMENTAL = 1,
-    ENHANCEMENT = 2,
-    RESTORATION = 3,
-}
+Shaman.TALENT_TABS = { ELEMENTAL = 1, ENHANCEMENT = 2, RESTORATION = 3 }
 
 Shaman.SPELL_IDS = {
     lightningBolt = 403,
@@ -15,30 +11,26 @@ Shaman.SPELL_IDS = {
     flameShock = 8050,
     lavaBurst = 51505,
     fireNova = 1535,
-
     stormstrike = 17364,
     lavaLash = 60103,
     maelstromWeapon = 53817,
-
     lightningShield = 49281,
     waterShield = 57960,
     elementalFocus = 16246,
     elementalMastery = 16166,
     thunderstorm = 51490,
+    fireElementalTotem = 2894,
     feralSpirit = 51533,
     shamanisticRage = 30823,
-
     natureSwiftness = 16188,
     manaTide = 16190,
     tidalForce = 55198,
     tidalWaves = 53390,
     earthShield = 974,
     riptide = 61295,
-
     flametongueWeapon = 58790,
     windfuryWeapon = 58804,
     earthlivingWeapon = 51994,
-
     bloodlust = 2825,
     heroism = 32182,
     windShear = 57994,
@@ -89,20 +81,12 @@ function Shaman:GetEnemyCount(context)
 end
 
 function Shaman:IsMoving(context)
-    return context
-        and context.player
-        and context.player.movement
-        and context.player.movement.moving == true
-        or false
+    return context and context.player and context.player.movement and context.player.movement.moving == true or false
 end
 
 function Shaman:GetWeaponImbueState(slot, displaySpellId, enchantSpellIds)
     if not addon.EquipmentService then
-        return {
-            active = false,
-            spellId = displaySpellId,
-            statusText = "?",
-        }
+        return { active = false, spellId = displaySpellId, statusText = "?" }
     end
 
     local active, enchant = addon.EquipmentService:MatchesTemporaryEnchantSpellIds(slot, enchantSpellIds)
@@ -115,21 +99,13 @@ end
 
 function Shaman:GetFireTotemState()
     if not GetTotemInfo then
-        return {
-            active = false,
-            spellId = self.SPELL_IDS.callOfTheElements,
-            statusText = "?",
-        }
+        return { active = false, spellId = self.SPELL_IDS.callOfTheElements, statusText = "?" }
     end
 
     local slot = FIRE_TOTEM_SLOT or 1
     local ok, haveTotem, name, startTime, duration, icon = pcall(GetTotemInfo, slot)
     if not ok then
-        return {
-            active = false,
-            spellId = self.SPELL_IDS.callOfTheElements,
-            statusText = "?",
-        }
+        return { active = false, spellId = self.SPELL_IDS.callOfTheElements, statusText = "?" }
     end
 
     local active = haveTotem == true or haveTotem == 1

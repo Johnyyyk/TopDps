@@ -22,8 +22,8 @@ Druid.SPELL_IDS = {
     lunarEclipse = 48518,
 
     catForm = 768,
+    bearForm = 5487,
     mangleCat = 33876,
-    trauma = 46857,
     rake = 1822,
     rip = 1079,
     savageRoar = 52610,
