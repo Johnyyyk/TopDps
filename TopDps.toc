@@ -20,6 +20,7 @@ LocalizationHunter.lua
 LocalizationMage.lua
 LocalizationPriest.lua
 LocalizationRogue.lua
+LocalizationShaman.lua
 LocalizationWarlock.lua
 LocalizationWarlockAffliction.lua
 Core\GameApi.lua
@@ -90,6 +91,9 @@ Specs\Rogue\Common.lua
 Specs\Rogue\Assassination.lua
 Specs\Rogue\Combat.lua
 Specs\Rogue\Subtlety.lua
+Specs\Shaman\Common.lua
+Specs\Shaman\Elemental.lua
+Specs\Shaman\Enhancement.lua
 Specs\Warlock\Common.lua
 Specs\Warlock\Affliction.lua
 Specs\Warlock\Demonology.lua
@@ -110,6 +114,8 @@ Cooldowns\Priest.lua
 Cooldowns\PriestDefaults.lua
 Cooldowns\Rogue.lua
 Cooldowns\RogueDefaults.lua
+Cooldowns\Shaman.lua
+Cooldowns\ShamanDefaults.lua
 Cooldowns\Warlock.lua
 Cooldowns\WarlockAffliction.lua
 Cooldowns\WarlockDefaults.lua
