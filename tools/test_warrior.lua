@@ -22,7 +22,6 @@ end
 TopDps = {
     Modules = {},
     AuraService = {},
-    SwingService = {},
     SpecProvider = {},
     SpecRegistry = { providers = {} },
 }
@@ -47,7 +46,6 @@ function TopDps.SpecRegistry:Register(provider)
 end
 
 TopDps.AuraService.FindAura = function() return nil end
-TopDps.SwingService.IsActionQueued = function() return false end
 GetSpellInfo = function(id) return tostring(id) end
 GetTime = function() return 100 end
 
@@ -101,7 +99,11 @@ activeAuras[Warrior.SPELL_IDS.bloodsurge] = true
 AssertEqual(Fury:IsCategoryAllowed("slam", context), true, "bloodsurge enables slam")
 AssertEqual(Fury:IsNextSwingCategoryAllowed("heroicStrike", context), true, "fury Heroic Strike is available near the main-hand swing")
 
-context.swing.mainHand.remaining = 1.25
+context.swing.mainHand.nextSwingAt = 101.50
+context.swing.mainHand.remaining = 1.50
+AssertEqual(Fury:IsNextSwingCategoryAllowed("heroicStrike", context), true, "next-swing window includes the 1.5 second boundary")
+context.swing.mainHand.nextSwingAt = 101.75
+context.swing.mainHand.remaining = 1.75
 AssertEqual(Fury:IsNextSwingCategoryAllowed("heroicStrike", context), false, "next-swing does not stay highlighted through the full swing interval")
 context.swing.mainHand.remaining = 0.75
 context.swing.mainHand.nextSwingAt = nil

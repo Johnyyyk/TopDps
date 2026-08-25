@@ -8,7 +8,7 @@ Warrior.TALENT_TABS = {
     PROTECTION = 3,
 }
 
-Warrior.NEXT_SWING_WINDOW = 1.0
+Warrior.NEXT_SWING_WINDOW = 1.5
 Warrior.HEROIC_STRIKE_RAGE_THRESHOLD = 60
 Warrior.CLEAVE_RAGE_THRESHOLD = 50
 
@@ -80,22 +80,6 @@ end
 function Warrior:IsExecuteRange(context)
     local health = context and context.target and context.target.health or nil
     return health and health.maximum > 0 and health.fraction <= 0.20 or false
-end
-
-function Warrior:IsCategoryQueued(context, category)
-    if not addon.SwingService or not addon.SwingService.IsActionQueued then
-        return false
-    end
-
-    local entries = context and context.actionsByCategory and context.actionsByCategory[category] or nil
-    local index
-    for index = 1, #(entries or {}) do
-        if addon.SwingService:IsActionQueued(entries[index].action) then
-            return true
-        end
-    end
-
-    return false
 end
 
 function Warrior:IsNextSwingWindowOpen(context)
