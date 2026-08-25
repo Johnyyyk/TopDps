@@ -10,10 +10,10 @@ local Unholy = addon.SpecProvider:Create({
         "deathAndDecay",
         "icyTouch",
         "plagueStrike",
+        "pestilence",
         "scourgeStrike",
         "bloodStrike",
         "deathCoil",
-        "pestilence",
         "bloodBoil",
     },
 
@@ -39,10 +39,10 @@ local Unholy = addon.SpecProvider:Create({
                 lead = 0,
             },
         },
+        pestilence = { spellIds = { DeathKnight.SPELL_IDS.pestilence } },
         scourgeStrike = { spellIds = { DeathKnight.SPELL_IDS.scourgeStrike } },
         bloodStrike = { spellIds = { DeathKnight.SPELL_IDS.bloodStrike } },
         deathCoil = { spellIds = { DeathKnight.SPELL_IDS.deathCoil } },
-        pestilence = { spellIds = { DeathKnight.SPELL_IDS.pestilence } },
         bloodBoil = { spellIds = { DeathKnight.SPELL_IDS.bloodBoil } },
     },
 })
@@ -51,6 +51,7 @@ local PRIORITY_SINGLE_TARGET = {
     "deathAndDecay",
     "icyTouch",
     "plagueStrike",
+    "pestilence",
     "scourgeStrike",
     "bloodStrike",
     "deathCoil",
@@ -80,7 +81,7 @@ function Unholy:IsCategoryAllowed(category, context)
     end
 
     if category == "pestilence" then
-        return enemyCount >= 2 and DeathKnight:HasBothDiseases()
+        return DeathKnight:ShouldUsePestilence(context)
     end
 
     if category == "bloodBoil" then

@@ -9,11 +9,11 @@ local Blood = addon.SpecProvider:Create({
     categories = {
         "icyTouch",
         "plagueStrike",
+        "pestilence",
         "heartStrike",
         "deathStrike",
         "deathCoil",
         "deathAndDecay",
-        "pestilence",
         "bloodBoil",
     },
 
@@ -38,11 +38,11 @@ local Blood = addon.SpecProvider:Create({
                 lead = 0,
             },
         },
+        pestilence = { spellIds = { DeathKnight.SPELL_IDS.pestilence } },
         heartStrike = { spellIds = { DeathKnight.SPELL_IDS.heartStrike } },
         deathStrike = { spellIds = { DeathKnight.SPELL_IDS.deathStrike } },
         deathCoil = { spellIds = { DeathKnight.SPELL_IDS.deathCoil } },
         deathAndDecay = { spellIds = { DeathKnight.SPELL_IDS.deathAndDecay } },
-        pestilence = { spellIds = { DeathKnight.SPELL_IDS.pestilence } },
         bloodBoil = { spellIds = { DeathKnight.SPELL_IDS.bloodBoil } },
     },
 })
@@ -50,6 +50,7 @@ local Blood = addon.SpecProvider:Create({
 local PRIORITY_SINGLE_TARGET = {
     "icyTouch",
     "plagueStrike",
+    "pestilence",
     "heartStrike",
     "deathStrike",
     "deathCoil",
@@ -92,7 +93,7 @@ function Blood:IsCategoryAllowed(category, context)
     end
 
     if category == "pestilence" then
-        return enemyCount >= 2 and DeathKnight:HasBothDiseases()
+        return DeathKnight:ShouldUsePestilence(context)
     end
 
     if category == "bloodBoil" then

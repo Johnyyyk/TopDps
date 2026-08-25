@@ -10,12 +10,12 @@ local Frost = addon.SpecProvider:Create({
     categories = {
         "icyTouch",
         "plagueStrike",
+        "pestilence",
         "obliterate",
         "frostStrike",
         "howlingBlast",
         "bloodStrike",
         "deathAndDecay",
-        "pestilence",
         "bloodBoil",
     },
 
@@ -40,12 +40,12 @@ local Frost = addon.SpecProvider:Create({
                 lead = 0,
             },
         },
+        pestilence = { spellIds = { DeathKnight.SPELL_IDS.pestilence } },
         obliterate = { spellIds = { DeathKnight.SPELL_IDS.obliterate } },
         frostStrike = { spellIds = { DeathKnight.SPELL_IDS.frostStrike } },
         howlingBlast = { spellIds = { DeathKnight.SPELL_IDS.howlingBlast } },
         bloodStrike = { spellIds = { DeathKnight.SPELL_IDS.bloodStrike } },
         deathAndDecay = { spellIds = { DeathKnight.SPELL_IDS.deathAndDecay } },
-        pestilence = { spellIds = { DeathKnight.SPELL_IDS.pestilence } },
         bloodBoil = { spellIds = { DeathKnight.SPELL_IDS.bloodBoil } },
     },
 })
@@ -53,6 +53,7 @@ local Frost = addon.SpecProvider:Create({
 local PRIORITY_NORMAL = {
     "icyTouch",
     "plagueStrike",
+    "pestilence",
     "obliterate",
     "bloodStrike",
     "frostStrike",
@@ -62,6 +63,7 @@ local PRIORITY_NORMAL = {
 local PRIORITY_KILLING_MACHINE = {
     "icyTouch",
     "plagueStrike",
+    "pestilence",
     "frostStrike",
     "howlingBlast",
     "obliterate",
@@ -71,6 +73,7 @@ local PRIORITY_KILLING_MACHINE = {
 local PRIORITY_RIME = {
     "icyTouch",
     "plagueStrike",
+    "pestilence",
     "howlingBlast",
     "obliterate",
     "bloodStrike",
@@ -102,7 +105,7 @@ function Frost:IsCategoryAllowed(category, context)
     end
 
     if category == "pestilence" then
-        return enemyCount >= 2 and DeathKnight:HasBothDiseases()
+        return DeathKnight:ShouldUsePestilence(context)
     end
 
     if category == "bloodBoil" then

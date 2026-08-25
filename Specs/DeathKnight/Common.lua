@@ -25,6 +25,7 @@ DeathKnight.SPELL_IDS = {
 
     frostFever = 55095,
     bloodPlague = 55078,
+    glyphDisease = 63334,
 
     bloodPresence = 48266,
     frostPresence = 48263,
@@ -76,6 +77,75 @@ end
 
 function DeathKnight:GetEnemyCount(context)
     return tonumber(context and (context.activeEnemyCount or context.enemyCount)) or 0
+end
+
+function DeathKnight:GetAuraRemaining(aura, context)
+    if not aura then
+        return 0
+    end
+
+    local expirationTime = tonumber(aura.expirationTime) or 0
+    if expirationTime <= 0 then
+        return math.huge
+    end
+
+    local now = context and tonumber(context.now) or GetTime()
+    return math.max(0, expirationTime - now)
+end
+
+function DeathKnight:GetLastPlayerSpellCastAt(spellIds)
+    if not addon.CombatTracker or not addon.CombatTracker.GetLastPlayerSpellCast then
+        return nil
+    end
+
+    local cast = addon.CombatTracker:GetLastPlayerSpellCast(spellIds)
+    return cast and tonumber(cast.time) or nil
+end
+
+function DeathKnight:HasGlyphDisease()
+    return addon.GameApi
+        and addon.GameApi.HasGlyphSpell
+        and addon.GameApi:HasGlyphSpell({ self.SPELL_IDS.glyphDisease })
+        or false
+end
+
+function DeathKnight:ShouldUsePestilence(context)
+    local frostFever = self:FindOwnTargetAura({ self.SPELL_IDS.frostFever })
+    local bloodPlague = self:FindOwnTargetAura({ self.SPELL_IDS.bloodPlague })
+    if not frostFever or not bloodPlague then
+        return false
+    end
+
+    local now = context and tonumber(context.now) or GetTime()
+    local lastPestilence = self:GetLastPlayerSpellCastAt({ self.SPELL_IDS.pestilence })
+
+    -- Сразу после успешного каста не даём запоздавшему UNIT_AURA снова
+    -- рекомендовать Pestilence на следующем обновлении.
+    if lastPestilence and now - lastPestilence < 1.5 then
+        return false
+    end
+
+    if self:HasGlyphDisease() then
+        local minimumRemaining = math.min(
+            self:GetAuraRemaining(frostFever, context),
+            self:GetAuraRemaining(bloodPlague, context)
+        )
+        if minimumRemaining <= 3 then
+            return true
+        end
+    end
+
+    if self:GetEnemyCount(context) < 2 then
+        return false
+    end
+
+    if not lastPestilence then
+        return true
+    end
+
+    local lastIcyTouch = self:GetLastPlayerSpellCastAt({ self.SPELL_IDS.icyTouch }) or -math.huge
+    local lastPlagueStrike = self:GetLastPlayerSpellCastAt({ self.SPELL_IDS.plagueStrike }) or -math.huge
+    return math.max(lastIcyTouch, lastPlagueStrike) > lastPestilence
 end
 
 function DeathKnight:GetPermanentGhoulState()
