@@ -68,11 +68,16 @@ dofile("Specs/Warlock/Affliction.lua")
 local Warlock = TopDps.Warlock
 local Affliction = TopDps.SpecRegistry.providers.WARLOCK_AFFLICTION
 local hasCritDebuff = true
+local hasMagicVulnerability = true
 local hasShadowTrance = false
 local activeTargetAuras = {}
 
 Warlock.HasSpellCritDebuff = function()
     return hasCritDebuff
+end
+
+Warlock.HasExternalMagicVulnerability = function()
+    return hasMagicVulnerability
 end
 
 Warlock.HasPlayerAura = function(_, spellIds)
@@ -146,6 +151,13 @@ local function TestSettings()
         TopDps.EXPERIMENTAL_FEATURE_TARGET_TIME_TO_DIE,
         "TTD feature"
     )
+end
+
+local function TestMagicVulnerabilityPriority()
+    hasMagicVulnerability = false
+    local needsElements = Affliction:GetPriority(Context(0.80, false, 1, nil))
+    AssertBefore(needsElements, "curse", "shadowBolt", "Curse of Elements before Shadow Bolt")
+    hasMagicVulnerability = true
 end
 
 local function TestNormalAndExecutePriority()
@@ -266,6 +278,7 @@ local function TestDotAndAoeGates()
 end
 
 TestSettings()
+TestMagicVulnerabilityPriority()
 TestNormalAndExecutePriority()
 TestMovementPriority()
 TestExecuteShadowBolt()
