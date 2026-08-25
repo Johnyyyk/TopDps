@@ -163,9 +163,9 @@ end
 local function TestNormalAndExecutePriority()
     hasCritDebuff = true
     local normal = Affliction:GetPriority(Context(0.80, false, 1, nil))
-    AssertBefore(normal, "corruption", "unstableAffliction", "normal Corruption")
-    AssertBefore(normal, "unstableAffliction", "haunt", "normal UA")
-    AssertBefore(normal, "haunt", "shadowBolt", "normal Haunt")
+    AssertBefore(normal, "haunt", "unstableAffliction", "normal Haunt")
+    AssertBefore(normal, "unstableAffliction", "corruption", "normal UA")
+    AssertBefore(normal, "corruption", "shadowBolt", "normal Corruption")
 
     local execute = Affliction:GetPriority(Context(0.25, false, 1, nil))
     AssertBefore(execute, "haunt", "drainSoul", "execute Haunt")
