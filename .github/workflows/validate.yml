@@ -44,6 +44,9 @@ jobs:
       - name: Проверить next-swing канал
         run: lua5.1 tools/test_next_swing.lua
 
+      - name: Проверить восстановление next-swing после очереди
+        run: lua5.1 tools/test_next_swing_recovery.lua
+
       - name: Проверить action bars
         run: lua5.1 tools/test_action_bar_service.lua
 

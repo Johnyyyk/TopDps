@@ -8,9 +8,26 @@ Warrior.TALENT_TABS = {
     PROTECTION = 3,
 }
 
-Warrior.NEXT_SWING_WINDOW = 1.0
+Warrior.NEXT_SWING_WINDOW = 1.5
 Warrior.HEROIC_STRIKE_RAGE_THRESHOLD = 60
 Warrior.CLEAVE_RAGE_THRESHOLD = 50
+
+Warrior.SUNDER_MODE_DISABLED = "DISABLED"
+Warrior.SUNDER_MODE_BOSSES = "BOSSES"
+Warrior.SUNDER_MODE_BOSSES_AND_ELITES = "BOSSES_AND_ELITES"
+Warrior.SUNDER_MODE_ALWAYS = "ALWAYS"
+Warrior.SUNDER_MODE_ORDER = {
+    Warrior.SUNDER_MODE_DISABLED,
+    Warrior.SUNDER_MODE_BOSSES,
+    Warrior.SUNDER_MODE_BOSSES_AND_ELITES,
+    Warrior.SUNDER_MODE_ALWAYS,
+}
+Warrior.SUNDER_MODE_LABELS = {
+    [Warrior.SUNDER_MODE_DISABLED] = "WARRIOR_SUNDER_MODE_DISABLED",
+    [Warrior.SUNDER_MODE_BOSSES] = "WARRIOR_SUNDER_MODE_BOSSES",
+    [Warrior.SUNDER_MODE_BOSSES_AND_ELITES] = "WARRIOR_SUNDER_MODE_BOSSES_AND_ELITES",
+    [Warrior.SUNDER_MODE_ALWAYS] = "WARRIOR_SUNDER_MODE_ALWAYS",
+}
 
 Warrior.SPELL_IDS = {
     rend = 772,
@@ -57,6 +74,17 @@ Warrior.SPELL_IDS = {
     vigilance = 50720,
 }
 
+function Warrior:CreateSunderArmorSetting()
+    return {
+        type = "dropdown",
+        key = "sunderArmorMode",
+        labelKey = "WARRIOR_SUNDER_ARMOR_MODE",
+        default = self.SUNDER_MODE_BOSSES,
+        values = self.SUNDER_MODE_ORDER,
+        valueLabels = self.SUNDER_MODE_LABELS,
+    }
+end
+
 function Warrior:FindPlayerAura(spellIds)
     return addon.AuraService:FindAura("player", spellIds, "HELPFUL", false)
 end
@@ -80,22 +108,6 @@ end
 function Warrior:IsExecuteRange(context)
     local health = context and context.target and context.target.health or nil
     return health and health.maximum > 0 and health.fraction <= 0.20 or false
-end
-
-function Warrior:IsCategoryQueued(context, category)
-    if not addon.SwingService or not addon.SwingService.IsActionQueued then
-        return false
-    end
-
-    local entries = context and context.actionsByCategory and context.actionsByCategory[category] or nil
-    local index
-    for index = 1, #(entries or {}) do
-        if addon.SwingService:IsActionQueued(entries[index].action) then
-            return true
-        end
-    end
-
-    return false
 end
 
 function Warrior:IsNextSwingWindowOpen(context)
@@ -140,7 +152,36 @@ function Warrior:GetAuraRemaining(aura, context)
     return math.max(0, expirationTime - now)
 end
 
-function Warrior:ShouldMaintainSunder(context)
+function Warrior:IsSunderTargetAllowed(mode, context)
+    if mode == self.SUNDER_MODE_ALWAYS then
+        return true
+    end
+
+    if mode == self.SUNDER_MODE_DISABLED then
+        return false
+    end
+
+    local target = context and context.target or nil
+    if not target then
+        return false
+    end
+
+    if target.bossLike == true then
+        return true
+    end
+
+    if mode == self.SUNDER_MODE_BOSSES_AND_ELITES then
+        return target.classification == "elite" or target.classification == "rareelite"
+    end
+
+    return false
+end
+
+function Warrior:ShouldMaintainSunder(context, mode)
+    if not self:IsSunderTargetAllowed(mode, context) then
+        return false
+    end
+
     local expose = self:FindTargetAura({ 8647, 11197, 11198, 26866, 48669 })
     if expose then
         return false

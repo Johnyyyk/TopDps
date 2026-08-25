@@ -22,7 +22,6 @@ end
 TopDps = {
     Modules = {},
     AuraService = {},
-    SwingService = {},
     SpecProvider = {},
     SpecRegistry = { providers = {} },
 }
@@ -35,7 +34,7 @@ function TopDps:CreateModule(name)
 end
 
 function TopDps.SpecProvider:Create(definition)
-    definition.testSettings = { maintainSunderArmor = false }
+    definition.testSettings = { sunderArmorMode = "BOSSES" }
     function definition:GetSetting(key)
         return self.testSettings[key]
     end
@@ -46,8 +45,23 @@ function TopDps.SpecRegistry:Register(provider)
     self.providers[provider.id] = provider
 end
 
-TopDps.AuraService.FindAura = function() return nil end
-TopDps.SwingService.IsActionQueued = function() return false end
+local sunderAura
+local exposeAura
+TopDps.AuraService.FindAura = function(_, unit, spellIds)
+    if unit ~= "target" or type(spellIds) ~= "table" then
+        return nil
+    end
+
+    if spellIds[1] == 8647 then
+        return exposeAura
+    end
+
+    if spellIds[1] == 7386 then
+        return sunderAura
+    end
+
+    return nil
+end
 GetSpellInfo = function(id) return tostring(id) end
 GetTime = function() return 100 end
 
@@ -62,7 +76,11 @@ local Fury = TopDps.SpecRegistry.providers.WARRIOR_FURY
 local context = {
     activeEnemyCount = 1,
     player = { power = { current = 80 }, movement = { moving = false } },
-    target = { health = { maximum = 100, fraction = 0.50 } },
+    target = {
+        health = { maximum = 100, fraction = 0.50 },
+        bossLike = false,
+        classification = "normal",
+    },
     actionsByCategory = {},
     swing = {
         mainHand = {
@@ -76,6 +94,41 @@ local activeAuras = {}
 Warrior.HasPlayerAura = function(_, ids)
     return activeAuras[ids[1]] == true
 end
+
+AssertEqual(Arms.settings[1].type, "dropdown", "arms Sunder setting uses target-mode dropdown")
+AssertEqual(Arms.settings[1].default, Warrior.SUNDER_MODE_BOSSES, "Sunder defaults to bosses only")
+AssertEqual(Fury.settings[1].default, Warrior.SUNDER_MODE_BOSSES, "fury Sunder uses the same default")
+
+AssertEqual(Arms:IsCategoryAllowed("sunderArmor", context), false, "default Sunder mode ignores normal mobs")
+context.target.bossLike = true
+AssertEqual(Arms:IsCategoryAllowed("sunderArmor", context), true, "default Sunder mode allows bosses")
+
+sunderAura = { stacks = 4, expirationTime = 110 }
+AssertEqual(Arms:IsCategoryAllowed("sunderArmor", context), true, "Sunder continues stacking below five stacks")
+sunderAura = { stacks = 5, expirationTime = 110 }
+AssertEqual(Arms:IsCategoryAllowed("sunderArmor", context), false, "fresh five-stack Sunder is not refreshed early")
+sunderAura.expirationTime = 104
+AssertEqual(Arms:IsCategoryAllowed("sunderArmor", context), true, "five-stack Sunder is refreshed near expiration")
+
+exposeAura = { stacks = 5, expirationTime = 110 }
+AssertEqual(Arms:IsCategoryAllowed("sunderArmor", context), false, "Expose Armor suppresses Sunder maintenance")
+exposeAura = nil
+sunderAura = nil
+
+Arms.testSettings.sunderArmorMode = Warrior.SUNDER_MODE_DISABLED
+AssertEqual(Arms:IsCategoryAllowed("sunderArmor", context), false, "disabled Sunder mode suppresses bosses too")
+Arms.testSettings.sunderArmorMode = Warrior.SUNDER_MODE_BOSSES_AND_ELITES
+context.target.bossLike = false
+context.target.classification = "elite"
+AssertEqual(Arms:IsCategoryAllowed("sunderArmor", context), true, "bosses-and-elites mode allows elite mobs")
+context.target.classification = "rareelite"
+AssertEqual(Arms:IsCategoryAllowed("sunderArmor", context), true, "bosses-and-elites mode allows rare elites")
+context.target.classification = "normal"
+AssertEqual(Arms:IsCategoryAllowed("sunderArmor", context), false, "bosses-and-elites mode still ignores normal mobs")
+Arms.testSettings.sunderArmorMode = Warrior.SUNDER_MODE_ALWAYS
+AssertEqual(Arms:IsCategoryAllowed("sunderArmor", context), true, "always mode allows normal mobs")
+Arms.testSettings.sunderArmorMode = Warrior.SUNDER_MODE_BOSSES
+context.target.bossLike = false
 
 AssertEqual(Arms:GetPriority(context)[2], "rend", "arms prioritizes Rend after optional Sunder")
 AssertEqual(Contains(Arms:GetPriority(context), "heroicStrike"), false, "arms primary priority excludes Heroic Strike")
@@ -101,7 +154,11 @@ activeAuras[Warrior.SPELL_IDS.bloodsurge] = true
 AssertEqual(Fury:IsCategoryAllowed("slam", context), true, "bloodsurge enables slam")
 AssertEqual(Fury:IsNextSwingCategoryAllowed("heroicStrike", context), true, "fury Heroic Strike is available near the main-hand swing")
 
-context.swing.mainHand.remaining = 1.25
+context.swing.mainHand.nextSwingAt = 101.50
+context.swing.mainHand.remaining = 1.50
+AssertEqual(Fury:IsNextSwingCategoryAllowed("heroicStrike", context), true, "next-swing window includes the 1.5 second boundary")
+context.swing.mainHand.nextSwingAt = 101.75
+context.swing.mainHand.remaining = 1.75
 AssertEqual(Fury:IsNextSwingCategoryAllowed("heroicStrike", context), false, "next-swing does not stay highlighted through the full swing interval")
 context.swing.mainHand.remaining = 0.75
 context.swing.mainHand.nextSwingAt = nil
