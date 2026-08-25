@@ -6,6 +6,7 @@ local Arms = addon.SpecProvider:Create({
     classToken = Warrior.CLASS_TOKEN,
     talentTab = Warrior.TALENT_TABS.ARMS,
     categories = { "sunderArmor", "rend", "execute", "overpower", "bladestorm", "sweepingStrikes", "thunderClap", "mortalStrike", "slam", "heroicStrike", "cleave" },
+    nextSwingCategories = { "heroicStrike", "cleave" },
     abilities = {
         sunderArmor = { spellIds = { Warrior.SPELL_IDS.sunderArmor } },
         rend = {
@@ -30,9 +31,11 @@ local Arms = addon.SpecProvider:Create({
     },
 })
 
-local PRIORITY_SINGLE = { "sunderArmor", "rend", "execute", "overpower", "bladestorm", "mortalStrike", "slam", "heroicStrike" }
+local PRIORITY_SINGLE = { "sunderArmor", "rend", "execute", "overpower", "bladestorm", "mortalStrike", "slam" }
 local PRIORITY_EXECUTE = { "sunderArmor", "execute", "overpower", "rend", "mortalStrike" }
-local PRIORITY_AOE = { "sunderArmor", "rend", "sweepingStrikes", "overpower", "bladestorm", "thunderClap", "mortalStrike", "cleave", "slam" }
+local PRIORITY_AOE = { "sunderArmor", "rend", "sweepingStrikes", "overpower", "bladestorm", "thunderClap", "mortalStrike", "slam" }
+local NEXT_SWING_SINGLE = { "heroicStrike" }
+local NEXT_SWING_AOE = { "cleave" }
 
 function Arms:IsCategoryAllowed(category, context)
     if category == "sunderArmor" then
@@ -56,12 +59,6 @@ function Arms:IsCategoryAllowed(category, context)
     end
 
     if category == "sweepingStrikes" or category == "thunderClap" then return Warrior:GetEnemyCount(context) >= 2 end
-    if category == "heroicStrike" then
-        return Warrior:GetEnemyCount(context) < 2 and Warrior:GetRage(context) >= 60 and not Warrior:IsCategoryQueued(context, category)
-    end
-    if category == "cleave" then
-        return Warrior:GetEnemyCount(context) >= 2 and Warrior:GetRage(context) >= 50 and not Warrior:IsCategoryQueued(context, category)
-    end
     if category == "slam" then
         return not (context and context.player and context.player.movement and context.player.movement.moving)
     end
@@ -72,6 +69,22 @@ function Arms:GetPriority(context)
     if Warrior:GetEnemyCount(context) >= 3 then return PRIORITY_AOE end
     if Warrior:IsExecuteRange(context) then return PRIORITY_EXECUTE end
     return PRIORITY_SINGLE
+end
+
+function Arms:GetNextSwingPriority(context)
+    if Warrior:GetEnemyCount(context) >= 2 then
+        return NEXT_SWING_AOE
+    end
+
+    return NEXT_SWING_SINGLE
+end
+
+function Arms:IsNextSwingCategoryAllowed(category, context)
+    if category == "heroicStrike" and Warrior:IsExecuteRange(context) then
+        return false
+    end
+
+    return Warrior:IsNextSwingCategoryAllowed(category, context)
 end
 
 addon.SpecRegistry:Register(Arms)

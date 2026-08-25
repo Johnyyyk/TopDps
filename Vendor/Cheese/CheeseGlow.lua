@@ -9,6 +9,26 @@ local function IsAnimPlaying(self)
     return self.isPlaying
 end
 
+local function ApplyTextureColor(texture, color)
+    if not texture or not texture.SetVertexColor then
+        return
+    end
+
+    local red = color and tonumber(color.r) or 1
+    local green = color and tonumber(color.g) or 1
+    local blue = color and tonumber(color.b) or 1
+    texture:SetVertexColor(red, green, blue)
+end
+
+local function ApplyOverlayColor(overlay, color)
+    ApplyTextureColor(overlay.spark, color)
+    ApplyTextureColor(overlay.innerGlow, color)
+    ApplyTextureColor(overlay.innerGlowOver, color)
+    ApplyTextureColor(overlay.outerGlow, color)
+    ApplyTextureColor(overlay.outerGlowOver, color)
+    ApplyTextureColor(overlay.ants, color)
+end
+
 local function ApplySteadyGlow(overlay)
     local frameWidth, frameHeight = overlay:GetSize()
 
@@ -78,7 +98,7 @@ function CheeseHighlight:GetOverlay()
     return overlay
 end
 
-function CheeseHighlight:Show(button)
+function CheeseHighlight:Show(button, appearance)
     local overlay = button.topDpsCheeseOverlay
     if overlay then
         if overlay.animOut:IsPlaying() then
@@ -86,6 +106,7 @@ function CheeseHighlight:Show(button)
         end
 
         ApplySteadyGlow(overlay)
+        ApplyOverlayColor(overlay, appearance and appearance.color or nil)
         return overlay
     end
 
@@ -101,6 +122,7 @@ function CheeseHighlight:Show(button)
     overlay:SetPoint("TOPLEFT", button, "TOPLEFT", -frameWidth * 0.2, frameHeight * 0.2)
     overlay:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", frameWidth * 0.2, -frameHeight * 0.2)
     ApplySteadyGlow(overlay)
+    ApplyOverlayColor(overlay, appearance and appearance.color or nil)
 
     return overlay
 end

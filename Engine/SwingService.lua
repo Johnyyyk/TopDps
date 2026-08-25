@@ -189,6 +189,29 @@ function SwingService:IsActionQueued(action)
     return ok and IsApiTrue(current)
 end
 
+function SwingService:GetQueuedNextSwingCategory(provider, actionsByCategory)
+    local categories = provider and provider:GetNextSwingCategories() or nil
+    local categoryIndex
+
+    for categoryIndex = 1, #(categories or {}) do
+        local category = categories[categoryIndex]
+        local entries = actionsByCategory and actionsByCategory[category] or nil
+        local entryIndex
+
+        for entryIndex = 1, #(entries or {}) do
+            if self:IsActionQueued(entries[entryIndex].action) then
+                return category
+            end
+        end
+    end
+
+    return nil
+end
+
+function SwingService:IsNextSwingQueued(provider, actionsByCategory)
+    return self:GetQueuedNextSwingCategory(provider, actionsByCategory) ~= nil
+end
+
 function SwingService:GetState()
     local now = GetTime()
     local mainHandSpeed, offHandSpeed = self:GetAttackSpeeds()

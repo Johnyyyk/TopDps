@@ -41,6 +41,9 @@ jobs:
       - name: Проверить core primitives
         run: lua5.1 tools/test_core_primitives.lua
 
+      - name: Проверить next-swing канал
+        run: lua5.1 tools/test_next_swing.lua
+
       - name: Проверить action bars
         run: lua5.1 tools/test_action_bar_service.lua
 
