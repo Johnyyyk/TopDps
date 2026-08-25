@@ -21,6 +21,7 @@ if GetLocale() == "ruRU" then
     L.ABILITY_WHIRLWIND = "Вихрь"
 
     L.WARRIOR_MAINTAIN_SUNDER_ARMOR = "Поддерживать 5 стаков Раскола брони"
+    L.WARRIOR_FURY_USE_REND_WEAVING = "Использовать Кровопускание в свободные окна"
     L.WARRIOR_CURRENT_SHOUT = "Текущий крик"
     L.WARRIOR_BATTLE_STANCE_STATE = "Боевая стойка"
     L.WARRIOR_BERSERKER_STANCE_STATE = "Стойка берсерка"
@@ -45,6 +46,7 @@ else
     L.ABILITY_WHIRLWIND = "Whirlwind"
 
     L.WARRIOR_MAINTAIN_SUNDER_ARMOR = "Maintain 5 stacks of Sunder Armor"
+    L.WARRIOR_FURY_USE_REND_WEAVING = "Use Rend during safe free windows"
     L.WARRIOR_CURRENT_SHOUT = "Current Shout"
     L.WARRIOR_BATTLE_STANCE_STATE = "Battle Stance"
     L.WARRIOR_BERSERKER_STANCE_STATE = "Berserker Stance"
