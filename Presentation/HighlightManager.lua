@@ -108,13 +108,6 @@ function HighlightManager:Refresh()
 end
 
 function HighlightManager:SetEntries(channel, entries)
-    -- Сохраняем старую форму вызова SetEntries(entries) для внутренней
-    -- совместимости: она означает основной канал.
-    if type(channel) ~= "string" then
-        entries = channel
-        channel = addon.HIGHLIGHT_CHANNEL_PRIMARY
-    end
-
     if entries and #entries > 0 then
         self.channels[channel] = entries
     else
@@ -122,9 +115,4 @@ function HighlightManager:SetEntries(channel, entries)
     end
 
     self:Refresh()
-end
-
-function HighlightManager:Clear()
-    self.channels = {}
-    self:StopAll()
 end
