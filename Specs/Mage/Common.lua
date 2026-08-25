@@ -38,6 +38,10 @@ Mage.SPELL_IDS = {
     fingersOfFrost = 44544,
     brainFreeze = 57761,
 
+    frostArmor = 168,
+    iceArmor = 7302,
+    mageArmor = 6117,
+    moltenArmor = 30482,
     mirrorImage = 55342,
     evocation = 12051,
     iceBlock = 45438,

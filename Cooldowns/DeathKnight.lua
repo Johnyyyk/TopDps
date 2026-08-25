@@ -28,6 +28,22 @@ local function RegisterCommonEntries(talentTab)
         talentTab = talentTab,
         entries = {
             {
+                id = "currentPresence",
+                type = "aura",
+                auraSpellIds = {
+                    DeathKnight.SPELL_IDS.bloodPresence,
+                    DeathKnight.SPELL_IDS.frostPresence,
+                    DeathKnight.SPELL_IDS.unholyPresence,
+                },
+                displaySpellId = DeathKnight.SPELL_IDS.bloodPresence,
+                name = addon.L.DEATHKNIGHT_CURRENT_PRESENCE,
+                showDuration = false,
+                group = addon.COOLDOWN_GROUP_STATES,
+                panelCategory = addon.PANEL_CATEGORY_BUFFS,
+                panelBehavior = addon.PANEL_BEHAVIOR_SELECTABLE_BUFF,
+                order = 10,
+            },
+            {
                 id = "hornOfWinter",
                 type = "aura",
                 auraSpellIds = { 57330, 57623 },
@@ -37,7 +53,7 @@ local function RegisterCommonEntries(talentTab)
                 group = addon.COOLDOWN_GROUP_STATES,
                 panelCategory = addon.PANEL_CATEGORY_BUFFS,
                 panelBehavior = addon.PANEL_BEHAVIOR_SELECTABLE_BUFF,
-                order = 10,
+                order = 20,
             },
             {
                 id = "empowerRuneWeapon",
@@ -162,6 +178,18 @@ addon.CooldownRegistry:Register({
     classToken = DeathKnight.CLASS_TOKEN,
     talentTab = DeathKnight.TALENT_TABS.UNHOLY,
     entries = {
+        {
+            id = "ghoulAlive",
+            type = "state",
+            displaySpellId = DeathKnight.SPELL_IDS.raiseDead,
+            name = addon.L.DEATHKNIGHT_GHOUL_STATE,
+            requiredTalentSpellIds = { DeathKnight.SPELL_IDS.masterOfGhouls },
+            requiredTalentTab = DeathKnight.TALENT_TABS.UNHOLY,
+            getState = function()
+                return DeathKnight:GetPermanentGhoulState()
+            end,
+            order = 30,
+        },
         {
             id = "summonGargoyle",
             type = "spell",

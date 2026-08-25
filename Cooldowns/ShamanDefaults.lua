@@ -20,6 +20,7 @@ end
 SetDefaults(Shaman.TALENT_TABS.ELEMENTAL, {
     "weaponImbue",
     "waterShield",
+    "fireTotem",
     "elementalMastery",
     "thunderstorm",
     "windShear",
@@ -29,6 +30,7 @@ SetDefaults(Shaman.TALENT_TABS.ENHANCEMENT, {
     "mainHandWindfury",
     "offHandFlametongue",
     "lightningShield",
+    "fireTotem",
     "feralSpirit",
     "shamanisticRage",
     "maelstromWeapon",

@@ -8,6 +8,7 @@ if GetLocale() == "ruRU" then
     L.MAGE_FIRE_FILLER_MODE = "Основной заклинатель Огня"
     L.MAGE_FIRE_FILLER_FIREBALL = "Огненный шар"
     L.MAGE_FIRE_FILLER_FROSTFIRE = "Стрела ледяного огня"
+    L.MAGE_CURRENT_ARMOR = "Текущий доспех"
 else
     L.SPEC_MAGE_ARCANE = "Mage — Arcane"
     L.SPEC_MAGE_FIRE = "Mage — Fire"
@@ -15,4 +16,5 @@ else
     L.MAGE_FIRE_FILLER_MODE = "Fire filler"
     L.MAGE_FIRE_FILLER_FIREBALL = "Fireball"
     L.MAGE_FIRE_FILLER_FROSTFIRE = "Frostfire Bolt"
+    L.MAGE_CURRENT_ARMOR = "Current Armor"
 end

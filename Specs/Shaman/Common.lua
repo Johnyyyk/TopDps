@@ -74,6 +74,16 @@ function Shaman:GetAuraStacks(spellIds)
     return aura and math.max(0, tonumber(aura.stacks) or 0) or 0
 end
 
+function Shaman:GetMaelstromReadyState()
+    local stacks = self:GetAuraStacks({ self.SPELL_IDS.maelstromWeapon })
+    return {
+        active = stacks >= 5,
+        spellId = self.SPELL_IDS.maelstromWeapon,
+        stacks = stacks,
+        showStacks = true,
+    }
+end
+
 function Shaman:GetEnemyCount(context)
     return tonumber(context and (context.activeEnemyCount or context.enemyCount)) or 0
 end

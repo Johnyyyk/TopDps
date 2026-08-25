@@ -45,5 +45,9 @@ SetDefaults(Warrior.TALENT_TABS.PROTECTION, {
     "spellReflection",
     "enragedRegeneration",
     "vigilance",
-    "pummel",
+    "shieldBash",
+    "taunt",
+    "shieldSlam",
+    "shockwave",
+    "swordAndBoard",
 })

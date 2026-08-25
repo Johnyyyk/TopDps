@@ -26,12 +26,17 @@ DeathKnight.SPELL_IDS = {
     frostFever = 55095,
     bloodPlague = 55078,
 
+    bloodPresence = 48266,
+    frostPresence = 48263,
+    unholyPresence = 48265,
     hornOfWinter = 57330,
     antiMagicShell = 48707,
     iceboundFortitude = 48792,
     mindFreeze = 47528,
     empowerRuneWeapon = 47568,
     armyOfTheDead = 42650,
+    raiseDead = 46584,
+    masterOfGhouls = 52143,
 
     dancingRuneWeapon = 49028,
     hysteria = 49016,
@@ -71,4 +76,12 @@ end
 
 function DeathKnight:GetEnemyCount(context)
     return tonumber(context and (context.activeEnemyCount or context.enemyCount)) or 0
+end
+
+function DeathKnight:GetPermanentGhoulState()
+    local alive = UnitExists and UnitExists("pet") and not (UnitIsDead and UnitIsDead("pet")) or false
+    return {
+        active = alive == true or alive == 1,
+        spellId = self.SPELL_IDS.raiseDead,
+    }
 end

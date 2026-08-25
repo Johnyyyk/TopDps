@@ -83,7 +83,7 @@ end
 
 function Enhancement:IsCategoryAllowed(category, context)
     if category == "maelstrom" then
-        return Shaman:GetAuraStacks({ Shaman.SPELL_IDS.maelstromWeapon }) >= 5
+        return Shaman:GetMaelstromReadyState().active
     end
 
     if category == "earthShock" then

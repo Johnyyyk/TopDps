@@ -13,10 +13,10 @@ end
 local function SetDefaults(talentTab, extra)
     local ids = {
         "petAlive",
+        "currentAspect",
         "rapidFire",
         "killCommand",
         "deterrence",
-        "disengage",
         "feignDeath",
         "misdirection",
     }
@@ -31,13 +31,6 @@ local function SetDefaults(talentTab, extra)
     end
 end
 
-SetDefaults(Hunter.TALENT_TABS.BEAST_MASTERY, {
-    "bestialWrath",
-})
-SetDefaults(Hunter.TALENT_TABS.MARKSMANSHIP, {
-    "readiness",
-    "silencingShot",
-})
-SetDefaults(Hunter.TALENT_TABS.SURVIVAL, {
-    "lockAndLoad",
-})
+SetDefaults(Hunter.TALENT_TABS.BEAST_MASTERY, { "bestialWrath" })
+SetDefaults(Hunter.TALENT_TABS.MARKSMANSHIP, { "readiness", "silencingShot" })
+SetDefaults(Hunter.TALENT_TABS.SURVIVAL, { "lockAndLoad" })

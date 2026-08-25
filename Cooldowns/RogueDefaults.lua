@@ -18,7 +18,6 @@ local function SetDefaults(talentTab, extra)
         "vanish",
         "cloakOfShadows",
         "evasion",
-        "sprint",
     }
     local index
     for index = 1, #extra do
@@ -26,7 +25,9 @@ local function SetDefaults(talentTab, extra)
     end
 
     local profile = addon.CooldownRegistry:GetProfile(Rogue.CLASS_TOKEN, talentTab)
-    if profile then profile.defaultElementEnabled = Allowlist(ids) end
+    if profile then
+        profile.defaultElementEnabled = Allowlist(ids)
+    end
 end
 
 SetDefaults(Rogue.TALENT_TABS.ASSASSINATION, { "coldBlood" })

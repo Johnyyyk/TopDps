@@ -12,6 +12,7 @@ end
 
 local function SetDefaults(talentTab, extra)
     local ids = {
+        "currentArmor",
         "mirrorImage",
         "evocation",
         "iceBlock",
