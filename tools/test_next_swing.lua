@@ -378,20 +378,20 @@ local function TestRotationEngineChannels()
     }
     TopDps.SpecManager = { GetActive = function() return provider end }
 
-    local primaryEntry = { action = 1, button = {} }
-    local primaryEntry2 = { action = 4, button = {} }
-    local nextEntryA = { action = 2, button = {} }
-    local nextEntryB = { action = 3, button = {} }
-    local actions = {
+    local primaryEntry = { spellId = 1, spellName = "Primary" }
+    local primaryEntry2 = { spellId = 4, spellName = "Primary 2" }
+    local nextEntryA = { spellId = 2, spellName = "Next A" }
+    local nextEntryB = { spellId = 3, spellName = "Next B" }
+    local abilities = {
         primary = { primaryEntry },
         primary2 = { primaryEntry2 },
         nextA = { nextEntryA },
         nextB = { nextEntryB },
     }
 
-    TopDps.ActionBarService = {
-        CollectVisibleActions = function() return actions end,
-        BuildActionSummary = function() return "actions" end,
+    TopDps.AbilityService = {
+        GetAbilities = function() return abilities end,
+        BuildAbilitySummary = function() return "abilities" end,
     }
     TopDps.ContextBuilder = {
         Build = function()
@@ -479,12 +479,12 @@ local function TestRotationEngineChannels()
     TopDps.RotationEngine:UpdateRecommendation()
     AssertEqual(calls.nextSwing, "set:nextB", "disabled next-swing category falls through to the next candidate")
 
-    actions.nextA = nil
-    actions.nextB = nil
+    abilities.nextA = nil
+    abilities.nextB = nil
     disabledCategories.nextA = nil
     calls.nextSwing = nil
     TopDps.RotationEngine:UpdateRecommendation()
-    AssertEqual(calls.nextSwing, "clear", "next-swing requires an action-bar entry")
+    AssertEqual(calls.nextSwing, "clear", "next-swing requires a learned ability")
 
     rotationEnabled = false
     calls.globalClear = false
