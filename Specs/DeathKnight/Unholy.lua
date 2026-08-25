@@ -18,9 +18,7 @@ local Unholy = addon.SpecProvider:Create({
     },
 
     abilities = {
-        deathAndDecay = {
-            spellIds = { DeathKnight.SPELL_IDS.deathAndDecay },
-        },
+        deathAndDecay = { spellIds = { DeathKnight.SPELL_IDS.deathAndDecay } },
         icyTouch = {
             spellIds = { DeathKnight.SPELL_IDS.icyTouch },
             refresh = {
@@ -28,7 +26,7 @@ local Unholy = addon.SpecProvider:Create({
                 unit = "target",
                 filter = "HARMFUL",
                 ownOnly = true,
-                lead = 3,
+                lead = 0,
             },
         },
         plagueStrike = {
@@ -38,24 +36,14 @@ local Unholy = addon.SpecProvider:Create({
                 unit = "target",
                 filter = "HARMFUL",
                 ownOnly = true,
-                lead = 3,
+                lead = 0,
             },
         },
-        scourgeStrike = {
-            spellIds = { DeathKnight.SPELL_IDS.scourgeStrike },
-        },
-        bloodStrike = {
-            spellIds = { DeathKnight.SPELL_IDS.bloodStrike },
-        },
-        deathCoil = {
-            spellIds = { DeathKnight.SPELL_IDS.deathCoil },
-        },
-        pestilence = {
-            spellIds = { DeathKnight.SPELL_IDS.pestilence },
-        },
-        bloodBoil = {
-            spellIds = { DeathKnight.SPELL_IDS.bloodBoil },
-        },
+        scourgeStrike = { spellIds = { DeathKnight.SPELL_IDS.scourgeStrike } },
+        bloodStrike = { spellIds = { DeathKnight.SPELL_IDS.bloodStrike } },
+        deathCoil = { spellIds = { DeathKnight.SPELL_IDS.deathCoil } },
+        pestilence = { spellIds = { DeathKnight.SPELL_IDS.pestilence } },
+        bloodBoil = { spellIds = { DeathKnight.SPELL_IDS.bloodBoil } },
     },
 })
 
@@ -79,8 +67,17 @@ local PRIORITY_AOE = {
     "bloodStrike",
 }
 
+local function UsesScourgeStrike(context)
+    local entries = context and context.actionsByCategory and context.actionsByCategory.scourgeStrike or nil
+    return type(entries) == "table" and #entries > 0
+end
+
 function Unholy:IsCategoryAllowed(category, context)
     local enemyCount = DeathKnight:GetEnemyCount(context)
+
+    if category == "deathAndDecay" then
+        return enemyCount >= 2 or not UsesScourgeStrike(context)
+    end
 
     if category == "pestilence" then
         return enemyCount >= 2 and DeathKnight:HasBothDiseases()

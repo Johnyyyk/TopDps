@@ -75,7 +75,6 @@ local PRIORITY_SINGLE = {
 }
 
 local PRIORITY_MOVING = {
-    "scorch",
     "livingBomb",
     "pyroblast",
     "fireBlast",
@@ -87,6 +86,10 @@ local PRIORITY_AOE = {
 }
 
 function Fire:IsCategoryAllowed(category, context)
+    if category == "scorch" then
+        return not Mage:IsMoving(context)
+    end
+
     if category == "pyroblast" then
         return Mage:HasPlayerAura({ Mage.SPELL_IDS.hotStreak })
     end

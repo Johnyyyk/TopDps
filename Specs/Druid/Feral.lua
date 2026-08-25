@@ -35,7 +35,10 @@ local Feral = addon.SpecProvider:Create({
                 unit = "target",
                 filter = "HARMFUL",
                 ownOnly = true,
-                lead = 2,
+                lead = 0,
+                isRefreshDue = function(_, aura)
+                    return aura == nil
+                end,
             },
         },
         rake = {
@@ -45,28 +48,25 @@ local Feral = addon.SpecProvider:Create({
                 unit = "target",
                 filter = "HARMFUL",
                 ownOnly = true,
-                lead = 1,
+                lead = 0,
+                isRefreshDue = function(_, aura)
+                    return aura == nil
+                end,
             },
         },
         mangleCat = {
             spellIds = { Druid.SPELL_IDS.mangleCat },
             refresh = {
-                auraSpellIds = { Druid.SPELL_IDS.mangleCat },
+                auraSpellIds = { Druid.SPELL_IDS.mangleCat, Druid.SPELL_IDS.trauma },
                 unit = "target",
                 filter = "HARMFUL",
                 ownOnly = false,
                 lead = 5,
             },
         },
-        ferociousBite = {
-            spellIds = { Druid.SPELL_IDS.ferociousBite },
-        },
-        shred = {
-            spellIds = { Druid.SPELL_IDS.shred },
-        },
-        swipeCat = {
-            spellIds = { Druid.SPELL_IDS.swipeCat },
-        },
+        ferociousBite = { spellIds = { Druid.SPELL_IDS.ferociousBite } },
+        shred = { spellIds = { Druid.SPELL_IDS.shred } },
+        swipeCat = { spellIds = { Druid.SPELL_IDS.swipeCat } },
     },
 })
 

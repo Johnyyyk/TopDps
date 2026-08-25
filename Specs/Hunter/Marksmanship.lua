@@ -80,6 +80,10 @@ function Marksmanship:IsCategoryAllowed(category, context)
         return Hunter:IsExecute(context)
     end
 
+    if category == "arcaneShot" then
+        return Hunter:IsMoving(context) or Hunter:ShouldUseArcaneShot()
+    end
+
     if category == "steadyShot" or category == "multiShot" or category == "volley" then
         return not Hunter:IsMoving(context)
     end

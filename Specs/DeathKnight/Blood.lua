@@ -9,8 +9,8 @@ local Blood = addon.SpecProvider:Create({
     categories = {
         "icyTouch",
         "plagueStrike",
-        "deathStrike",
         "heartStrike",
+        "deathStrike",
         "deathCoil",
         "deathAndDecay",
         "pestilence",
@@ -25,7 +25,7 @@ local Blood = addon.SpecProvider:Create({
                 unit = "target",
                 filter = "HARMFUL",
                 ownOnly = true,
-                lead = 3,
+                lead = 0,
             },
         },
         plagueStrike = {
@@ -35,54 +35,60 @@ local Blood = addon.SpecProvider:Create({
                 unit = "target",
                 filter = "HARMFUL",
                 ownOnly = true,
-                lead = 3,
+                lead = 0,
             },
         },
-        deathStrike = {
-            spellIds = { DeathKnight.SPELL_IDS.deathStrike },
-        },
-        heartStrike = {
-            spellIds = { DeathKnight.SPELL_IDS.heartStrike },
-        },
-        deathCoil = {
-            spellIds = { DeathKnight.SPELL_IDS.deathCoil },
-        },
-        deathAndDecay = {
-            spellIds = { DeathKnight.SPELL_IDS.deathAndDecay },
-        },
-        pestilence = {
-            spellIds = { DeathKnight.SPELL_IDS.pestilence },
-        },
-        bloodBoil = {
-            spellIds = { DeathKnight.SPELL_IDS.bloodBoil },
-        },
+        heartStrike = { spellIds = { DeathKnight.SPELL_IDS.heartStrike } },
+        deathStrike = { spellIds = { DeathKnight.SPELL_IDS.deathStrike } },
+        deathCoil = { spellIds = { DeathKnight.SPELL_IDS.deathCoil } },
+        deathAndDecay = { spellIds = { DeathKnight.SPELL_IDS.deathAndDecay } },
+        pestilence = { spellIds = { DeathKnight.SPELL_IDS.pestilence } },
+        bloodBoil = { spellIds = { DeathKnight.SPELL_IDS.bloodBoil } },
     },
 })
 
 local PRIORITY_SINGLE_TARGET = {
     "icyTouch",
     "plagueStrike",
-    "deathStrike",
     "heartStrike",
+    "deathStrike",
+    "deathCoil",
+}
+
+local PRIORITY_CLEAVE = {
+    "icyTouch",
+    "plagueStrike",
+    "pestilence",
+    "heartStrike",
+    "deathStrike",
     "deathCoil",
 }
 
 local PRIORITY_AOE = {
+    "icyTouch",
+    "plagueStrike",
+    "pestilence",
+    "bloodBoil",
+    "deathStrike",
+    "deathCoil",
+    "heartStrike",
+}
+
+local PRIORITY_MASS_AOE = {
     "deathAndDecay",
     "icyTouch",
     "plagueStrike",
     "pestilence",
     "bloodBoil",
-    "deathCoil",
     "deathStrike",
-    "heartStrike",
+    "deathCoil",
 }
 
 function Blood:IsCategoryAllowed(category, context)
     local enemyCount = DeathKnight:GetEnemyCount(context)
 
     if category == "deathAndDecay" then
-        return enemyCount >= 3
+        return enemyCount >= 8
     end
 
     if category == "pestilence" then
@@ -90,15 +96,24 @@ function Blood:IsCategoryAllowed(category, context)
     end
 
     if category == "bloodBoil" then
-        return enemyCount >= 2
+        return enemyCount >= 5
     end
 
     return true
 end
 
 function Blood:GetPriority(context)
-    if DeathKnight:GetEnemyCount(context) >= 2 then
+    local enemyCount = DeathKnight:GetEnemyCount(context)
+    if enemyCount >= 8 then
+        return PRIORITY_MASS_AOE
+    end
+
+    if enemyCount >= 5 then
         return PRIORITY_AOE
+    end
+
+    if enemyCount >= 2 then
+        return PRIORITY_CLEAVE
     end
 
     return PRIORITY_SINGLE_TARGET

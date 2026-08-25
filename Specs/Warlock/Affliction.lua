@@ -26,9 +26,7 @@ local Affliction = addon.SpecProvider:Create({
     },
 
     abilities = {
-        lifeTap = {
-            spellIds = { Warlock.SPELL_IDS.lifeTap },
-        },
+        lifeTap = { spellIds = { Warlock.SPELL_IDS.lifeTap } },
         curse = {
             spellIds = {
                 Warlock.SPELL_IDS.curseElements,
@@ -36,9 +34,7 @@ local Affliction = addon.SpecProvider:Create({
                 Warlock.SPELL_IDS.curseAgony,
             },
         },
-        corruption = {
-            spellIds = { Warlock.SPELL_IDS.corruption },
-        },
+        corruption = { spellIds = { Warlock.SPELL_IDS.corruption } },
         unstableAffliction = {
             spellIds = { SPELL_IDS.unstableAffliction },
             refresh = {
@@ -59,15 +55,9 @@ local Affliction = addon.SpecProvider:Create({
                 lead = addon.REFRESH_LEAD_CAST_TIME,
             },
         },
-        shadowBolt = {
-            spellIds = { Warlock.SPELL_IDS.shadowBolt },
-        },
-        drainSoul = {
-            spellIds = { SPELL_IDS.drainSoul },
-        },
-        seedOfCorruption = {
-            spellIds = { SPELL_IDS.seedOfCorruption },
-        },
+        shadowBolt = { spellIds = { Warlock.SPELL_IDS.shadowBolt } },
+        drainSoul = { spellIds = { SPELL_IDS.drainSoul } },
+        seedOfCorruption = { spellIds = { SPELL_IDS.seedOfCorruption } },
     },
 
     settings = {
@@ -81,7 +71,7 @@ local Affliction = addon.SpecProvider:Create({
         {
             type = "checkbox",
             key = "useTargetTimeToDie",
-            labelKey = "WARLOCK_USE_TARGET_TIME_TO_DIE_FOR_CURSE",
+            labelKey = "WARLOCK_AFFLICTION_USE_TARGET_TIME_TO_DIE",
             default = false,
             experimental = true,
             experimentalFeature = addon.EXPERIMENTAL_FEATURE_TARGET_TIME_TO_DIE,
@@ -89,41 +79,50 @@ local Affliction = addon.SpecProvider:Create({
     },
 })
 
-local PRIORITY_NORMAL = {
+local PRIORITY_NEEDS_ELEMENTS = {
     "lifeTap",
     "curse",
-    "corruption",
-    "unstableAffliction",
-    "haunt",
     "shadowBolt",
+    "haunt",
+    "unstableAffliction",
+    "corruption",
 }
 
 local PRIORITY_NEEDS_CRIT_DEBUFF = {
     "lifeTap",
+    "shadowBolt",
+    "haunt",
+    "unstableAffliction",
+    "corruption",
+    "curse",
+}
+
+local PRIORITY_NORMAL = {
+    "lifeTap",
+    "haunt",
+    "unstableAffliction",
+    "corruption",
     "curse",
     "shadowBolt",
-    "corruption",
-    "unstableAffliction",
-    "haunt",
 }
 
 local PRIORITY_EXECUTE = {
     "lifeTap",
-    "curse",
-    "corruption",
-    "unstableAffliction",
     "haunt",
+    "unstableAffliction",
+    "corruption",
+    "curse",
     "drainSoul",
     "shadowBolt",
 }
 
 local PRIORITY_EXECUTE_NEEDS_CRIT_DEBUFF = {
     "lifeTap",
-    "curse",
     "shadowBolt",
-    "corruption",
-    "unstableAffliction",
     "haunt",
+    "unstableAffliction",
+    "corruption",
+    "curse",
     "drainSoul",
 }
 
@@ -163,15 +162,43 @@ local function HasShadowTrance()
     return Warlock:HasPlayerAura({ SPELL_IDS.shadowTrance })
 end
 
+local function IsAutoAgonyMode(provider)
+    return provider:GetSetting("curseMode") == Warlock.CURSE_MODE_AUTO
+        and Warlock:HasExternalMagicVulnerability()
+end
+
+local function GetAfflictionCurseReadyEntries(provider, readiness, entries, category, context)
+    if not IsAutoAgonyMode(provider) then
+        return Warlock:GetCurseReadyEntries(provider, readiness, entries, category, context)
+    end
+
+    local wantedName = GetSpellInfo(Warlock.SPELL_IDS.curseAgony)
+    local filtered = {}
+    local index
+    for index = 1, #entries do
+        local entry = entries[index]
+        if entry.spellId == Warlock.SPELL_IDS.curseAgony
+            or (wantedName and entry.spellName == wantedName) then
+            filtered[#filtered + 1] = entry
+        end
+    end
+
+    return readiness:GetDefaultReadyEntries(filtered, category, provider, context)
+end
+
 function Affliction:GetReadyEntries(readiness, entries, category, context)
     if category == "curse" then
-        return Warlock:GetCurseReadyEntries(self, readiness, entries, category, context)
+        return GetAfflictionCurseReadyEntries(self, readiness, entries, category, context)
     end
 
     return readiness:GetDefaultReadyEntries(entries, category, self, context)
 end
 
 function Affliction:IsCategoryAllowed(category, context)
+    if category == "curse" and IsAutoAgonyMode(self) then
+        return not Warlock:HasOwnTargetAura({ Warlock.SPELL_IDS.curseAgony })
+    end
+
     local commonAllowed = Warlock:GetCommonCategoryAllowed(self, category, context)
     if commonAllowed ~= nil then
         return commonAllowed
@@ -221,6 +248,10 @@ function Affliction:GetPriority(context)
 
     if IsMovementPriorityActive(self, context) then
         return PRIORITY_MOVING
+    end
+
+    if not Warlock:HasExternalMagicVulnerability() then
+        return PRIORITY_NEEDS_ELEMENTS
     end
 
     if IsExecute(context) then

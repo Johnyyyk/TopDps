@@ -32,7 +32,7 @@ local Combat = addon.SpecProvider:Create({
                 unit = "target",
                 filter = "HARMFUL",
                 ownOnly = true,
-                lead = 2,
+                lead = 0,
             },
         },
         eviscerate = { spellIds = { Rogue.SPELL_IDS.eviscerate } },
@@ -49,6 +49,7 @@ local PRIORITY_SINGLE = {
 }
 
 local PRIORITY_AOE = {
+    "sliceAndDice",
     "fanOfKnives",
 }
 
@@ -68,14 +69,14 @@ function Combat:IsCategoryAllowed(category, context)
     end
 
     if category == "fanOfKnives" then
-        return Rogue:GetEnemyCount(context) >= 4
+        return Rogue:GetEnemyCount(context) >= 3
     end
 
     return true
 end
 
 function Combat:GetPriority(context)
-    if Rogue:GetEnemyCount(context) >= 4 then
+    if Rogue:GetEnemyCount(context) >= 3 then
         return PRIORITY_AOE
     end
 

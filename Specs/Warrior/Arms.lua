@@ -106,6 +106,15 @@ function Arms:IsCategoryAllowed(category, context)
         return Warrior:HasPlayerAura({ Warrior.SPELL_IDS.tasteForBlood })
     end
 
+    if category == "bladestorm" then
+        if Warrior:HasPlayerAura({ Warrior.SPELL_IDS.suddenDeath, Warrior.SPELL_IDS.tasteForBlood }) then
+            return false
+        end
+
+        local rend = Warrior:FindTargetAura({ Warrior.SPELL_IDS.rend }, true)
+        return Warrior:GetAuraRemaining(rend, context) >= 7
+    end
+
     if category == "sweepingStrikes" or category == "thunderClap" then
         return Warrior:GetEnemyCount(context) >= 2
     end

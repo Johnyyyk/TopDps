@@ -21,6 +21,15 @@ Hunter.SPELL_IDS = {
     blackArrow = 3674,
     volley = 1510,
 
+    aspectHawk = 13165,
+    aspectDragonhawk = 61846,
+    aspectViper = 34074,
+    aspectMonkey = 13163,
+    aspectCheetah = 5118,
+    aspectPack = 13159,
+    aspectWild = 20043,
+    aspectBeast = 13161,
+
     rapidFire = 3045,
     killCommand = 34026,
     bestialWrath = 19574,
@@ -35,8 +44,14 @@ Hunter.SPELL_IDS = {
     callPet = 883,
 }
 
+local ARCANE_SHOT_DROP_ARMOR_PENETRATION_RATING = 430
+
 function Hunter:FindPlayerAura(spellIds)
     return addon.AuraService:FindAura("player", spellIds, "HELPFUL", false)
+end
+
+function Hunter:FindOwnTargetAura(spellIds)
+    return addon.AuraService:FindAura("target", spellIds, "HARMFUL", true)
 end
 
 function Hunter:HasPlayerAura(spellIds)
@@ -62,4 +77,27 @@ end
 
 function Hunter:IsPetAlive()
     return UnitExists("pet") and not UnitIsDead("pet") or false
+end
+
+function Hunter:GetArmorPenetrationRating()
+    if not GetCombatRating or type(CR_ARMOR_PENETRATION) ~= "number" then
+        return nil
+    end
+
+    local ok, rating = pcall(GetCombatRating, CR_ARMOR_PENETRATION)
+    if not ok then
+        return nil
+    end
+
+    rating = tonumber(rating)
+    if not rating or rating < 0 then
+        return nil
+    end
+
+    return rating
+end
+
+function Hunter:ShouldUseArcaneShot()
+    local rating = self:GetArmorPenetrationRating()
+    return rating == nil or rating < ARCANE_SHOT_DROP_ARMOR_PENETRATION_RATING
 end

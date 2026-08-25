@@ -44,7 +44,7 @@ local Subtlety = addon.SpecProvider:Create({
                 unit = "target",
                 filter = "HARMFUL",
                 ownOnly = true,
-                lead = 2,
+                lead = 0,
             },
         },
         hemorrhage = {
@@ -82,6 +82,7 @@ local PRIORITY_SINGLE = {
 }
 
 local PRIORITY_AOE = {
+    "sliceAndDice",
     "fanOfKnives",
 }
 
@@ -105,14 +106,14 @@ function Subtlety:IsCategoryAllowed(category, context)
     end
 
     if category == "fanOfKnives" then
-        return Rogue:GetEnemyCount(context) >= 5
+        return Rogue:GetEnemyCount(context) >= 6
     end
 
     return true
 end
 
 function Subtlety:GetPriority(context)
-    if Rogue:GetEnemyCount(context) >= 5 then
+    if Rogue:GetEnemyCount(context) >= 6 then
         return PRIORITY_AOE
     end
 

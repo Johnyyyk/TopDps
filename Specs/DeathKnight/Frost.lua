@@ -27,7 +27,7 @@ local Frost = addon.SpecProvider:Create({
                 unit = "target",
                 filter = "HARMFUL",
                 ownOnly = true,
-                lead = 3,
+                lead = 0,
             },
         },
         plagueStrike = {
@@ -37,30 +37,16 @@ local Frost = addon.SpecProvider:Create({
                 unit = "target",
                 filter = "HARMFUL",
                 ownOnly = true,
-                lead = 3,
+                lead = 0,
             },
         },
-        obliterate = {
-            spellIds = { DeathKnight.SPELL_IDS.obliterate },
-        },
-        frostStrike = {
-            spellIds = { DeathKnight.SPELL_IDS.frostStrike },
-        },
-        howlingBlast = {
-            spellIds = { DeathKnight.SPELL_IDS.howlingBlast },
-        },
-        bloodStrike = {
-            spellIds = { DeathKnight.SPELL_IDS.bloodStrike },
-        },
-        deathAndDecay = {
-            spellIds = { DeathKnight.SPELL_IDS.deathAndDecay },
-        },
-        pestilence = {
-            spellIds = { DeathKnight.SPELL_IDS.pestilence },
-        },
-        bloodBoil = {
-            spellIds = { DeathKnight.SPELL_IDS.bloodBoil },
-        },
+        obliterate = { spellIds = { DeathKnight.SPELL_IDS.obliterate } },
+        frostStrike = { spellIds = { DeathKnight.SPELL_IDS.frostStrike } },
+        howlingBlast = { spellIds = { DeathKnight.SPELL_IDS.howlingBlast } },
+        bloodStrike = { spellIds = { DeathKnight.SPELL_IDS.bloodStrike } },
+        deathAndDecay = { spellIds = { DeathKnight.SPELL_IDS.deathAndDecay } },
+        pestilence = { spellIds = { DeathKnight.SPELL_IDS.pestilence } },
+        bloodBoil = { spellIds = { DeathKnight.SPELL_IDS.bloodBoil } },
     },
 })
 

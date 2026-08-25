@@ -35,7 +35,7 @@ local Shadow = addon.SpecProvider:Create({
                 unit = "target",
                 filter = "HARMFUL",
                 ownOnly = true,
-                lead = 1,
+                lead = 0,
             },
         },
         shadowWordPain = {

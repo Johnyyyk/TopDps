@@ -43,9 +43,13 @@ Warrior.SPELL_IDS = {
     shieldBlock = 2565,
     spellReflection = 23920,
     pummel = 6552,
+    shieldBash = 72,
+    taunt = 355,
     intervene = 3411,
     challengingShout = 1161,
     shieldSlam = 23922,
+    shockwave = 46968,
+    swordAndBoard = 50227,
     vigilance = 50720,
 }
 
@@ -53,8 +57,8 @@ function Warrior:FindPlayerAura(spellIds)
     return addon.AuraService:FindAura("player", spellIds, "HELPFUL", false)
 end
 
-function Warrior:FindTargetAura(spellIds)
-    return addon.AuraService:FindAura("target", spellIds, "HARMFUL", false)
+function Warrior:FindTargetAura(spellIds, ownOnly)
+    return addon.AuraService:FindAura("target", spellIds, "HARMFUL", ownOnly == true)
 end
 
 function Warrior:HasPlayerAura(spellIds)
@@ -90,6 +94,20 @@ function Warrior:IsCategoryQueued(context, category)
     return false
 end
 
+function Warrior:GetAuraRemaining(aura, context)
+    if not aura then
+        return 0
+    end
+
+    local expirationTime = tonumber(aura.expirationTime) or 0
+    if expirationTime <= 0 then
+        return math.huge
+    end
+
+    local now = context and tonumber(context.now) or GetTime()
+    return math.max(0, expirationTime - now)
+end
+
 function Warrior:ShouldMaintainSunder(context)
     local expose = self:FindTargetAura({ 8647, 11197, 11198, 26866, 48669 })
     if expose then
@@ -105,13 +123,7 @@ function Warrior:ShouldMaintainSunder(context)
         return true
     end
 
-    local expirationTime = tonumber(sunder.expirationTime) or 0
-    if expirationTime > 0 then
-        local now = context and tonumber(context.now) or GetTime()
-        return expirationTime - now <= 5
-    end
-
-    return false
+    return self:GetAuraRemaining(sunder, context) <= 5
 end
 
 function Warrior:GetRequiredStanceState(spellId)

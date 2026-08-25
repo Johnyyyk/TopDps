@@ -38,7 +38,7 @@ local Survival = addon.SpecProvider:Create({
                 unit = "target",
                 filter = "HARMFUL",
                 ownOnly = true,
-                lead = 1,
+                lead = 0,
             },
         },
         blackArrow = {
@@ -86,6 +86,10 @@ local PRIORITY_AOE = {
 function Survival:IsCategoryAllowed(category, context)
     if category == "killShot" then
         return Hunter:IsExecute(context)
+    end
+
+    if category == "explosiveShot" then
+        return Hunter:FindOwnTargetAura({ Hunter.SPELL_IDS.explosiveShot }) == nil
     end
 
     if category == "steadyShot" or category == "multiShot" or category == "volley" then

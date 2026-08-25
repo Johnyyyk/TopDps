@@ -35,7 +35,7 @@ local BeastMastery = addon.SpecProvider:Create({
                 unit = "target",
                 filter = "HARMFUL",
                 ownOnly = true,
-                lead = 1,
+                lead = 0,
             },
         },
         arcaneShot = { spellIds = { Hunter.SPELL_IDS.arcaneShot } },
@@ -76,11 +76,7 @@ function BeastMastery:IsCategoryAllowed(category, context)
         return not Hunter:IsMoving(context) and Hunter:GetEnemyCount(context) >= 4
     end
 
-    if category == "multiShot" then
-        return not Hunter:IsMoving(context)
-    end
-
-    if category == "steadyShot" then
+    if category == "multiShot" or category == "steadyShot" then
         return not Hunter:IsMoving(context)
     end
 

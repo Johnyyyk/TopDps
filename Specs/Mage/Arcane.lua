@@ -51,7 +51,7 @@ function Arcane:IsCategoryAllowed(category, context)
     local stacks = Mage:GetArcaneBlastStacks()
 
     if category == "arcaneMissiles" then
-        return stacks >= 4 or (stacks > 0 and Mage:GetManaFraction(context) <= 0.20)
+        return stacks >= 4
     end
 
     if category == "arcaneBarrage" or category == "fireBlast" then
