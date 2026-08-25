@@ -3,6 +3,8 @@ local SpecProvider = addon:CreateModule("SpecProvider")
 
 SpecProvider.__index = SpecProvider
 
+local EMPTY_PRIORITY = {}
+
 local VALID_SWING_RESETS = {
     MAIN_HAND = true,
     OFF_HAND = true,
@@ -40,6 +42,38 @@ local function ValidateSwingReset(category, swingReset)
     end
 end
 
+local function ValidateNextSwingCategories(definition)
+    local nextSwingCategories = definition.nextSwingCategories
+    if nextSwingCategories == nil then
+        return
+    end
+
+    if type(nextSwingCategories) ~= "table" then
+        error("TopDps: nextSwingCategories must be a table")
+    end
+
+    local categorySet = {}
+    local categories = definition.categories or {}
+    local index
+    for index = 1, #categories do
+        categorySet[categories[index]] = true
+    end
+
+    local seen = {}
+    for index = 1, #nextSwingCategories do
+        local category = nextSwingCategories[index]
+        if not categorySet[category] or not (definition.abilities and definition.abilities[category]) then
+            error("TopDps: next-swing category " .. tostring(category) .. " is not a provider ability category")
+        end
+
+        if seen[category] then
+            error("TopDps: duplicate next-swing category " .. tostring(category))
+        end
+
+        seen[category] = true
+    end
+end
+
 local function ValidateExperimentalSetting(setting)
     if not setting or setting.experimentalFeature == nil then
         return
@@ -68,6 +102,8 @@ function SpecProvider:Create(definition)
         ValidateRefreshDefinition(category, ability and ability.refresh or nil)
         ValidateSwingReset(category, ability and ability.swingReset or nil)
     end
+
+    ValidateNextSwingCategories(definition)
 
     local settings = definition.settings or {}
     local settingIndex
@@ -338,6 +374,18 @@ end
 
 function SpecProvider:IsCategoryAllowed()
     return true
+end
+
+function SpecProvider:GetNextSwingCategories()
+    return self.nextSwingCategories or EMPTY_PRIORITY
+end
+
+function SpecProvider:GetNextSwingPriority()
+    return EMPTY_PRIORITY
+end
+
+function SpecProvider:IsNextSwingCategoryAllowed(category, context)
+    return self:IsCategoryAllowed(category, context)
 end
 
 function SpecProvider:CanTreatUnusableAsUsable()

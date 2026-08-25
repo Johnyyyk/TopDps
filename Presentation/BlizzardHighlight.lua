@@ -23,12 +23,18 @@ function BlizzardHighlight:GetShine(button)
     return shine
 end
 
-function BlizzardHighlight:Show(button)
+function BlizzardHighlight:Show(button, appearance)
     local shine = self:GetShine(button)
     shine:Show()
 
     if AutoCastShine_AutoCastStart then
-        AutoCastShine_AutoCastStart(shine)
+        local color = appearance and appearance.color or nil
+        if color then
+            AutoCastShine_AutoCastStart(shine, color.r, color.g, color.b)
+        else
+            -- Без RGB клиент использует штатный AUTOCAST_SHINE_* цвет.
+            AutoCastShine_AutoCastStart(shine)
+        end
     end
 end
 
