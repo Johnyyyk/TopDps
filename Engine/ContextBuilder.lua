@@ -17,7 +17,6 @@ function ContextBuilder:Build(provider, abilitiesByCategory)
 
     return {
         provider = provider,
-        actionBar = addon.ActionBarService,
         readiness = addon.ReadinessService,
         unitState = addon.UnitStateService,
         castService = addon.CastService,

@@ -1,23 +1,16 @@
-local function Fail(message)
-    error(message, 2)
-end
-
 local function AssertEqual(actual, expected, message)
     if actual ~= expected then
-        Fail((message or "values differ") .. ": expected=" .. tostring(expected) .. ", actual=" .. tostring(actual))
-    end
-end
-
-local function AssertTrue(value, message)
-    if value ~= true then
-        Fail((message or "expected true") .. ": actual=" .. tostring(value))
+        error(
+            (message or "values differ")
+                .. ": expected=" .. tostring(expected)
+                .. ", actual=" .. tostring(actual),
+            2
+        )
     end
 end
 
 local function NewAddon()
-    local addon = {
-        Modules = {},
-    }
+    local addon = { Modules = {} }
 
     function addon:CreateModule(name)
         local module = self.Modules[name]
@@ -38,41 +31,19 @@ local function TestSpellbookCatalogUsesLearnedRank()
     TopDps = NewAddon()
     BOOKTYPE_SPELL = "spell"
 
-    GetNumSpellTabs = function()
-        return 1
-    end
-
-    GetSpellTabInfo = function()
-        return "Warrior", nil, 0, 2
-    end
-
+    GetNumSpellTabs = function() return 1 end
+    GetSpellTabInfo = function() return "Warrior", nil, 0, 2 end
     GetSpellBookItemInfo = function(index)
-        if index == 1 then
-            return "SPELL", 47467
-        end
-
-        if index == 2 then
-            return "SPELL", 30335
-        end
-
+        if index == 1 then return "SPELL", 47467 end
+        if index == 2 then return "SPELL", 30335 end
         return nil
     end
-
     GetSpellInfo = function(spellId)
-        if spellId == 7386 or spellId == 47467 then
-            return "Sunder Armor"
-        end
-
-        if spellId == 23881 or spellId == 30335 then
-            return "Bloodthirst"
-        end
-
+        if spellId == 7386 or spellId == 47467 then return "Sunder Armor" end
+        if spellId == 23881 or spellId == 30335 then return "Bloodthirst" end
         return nil
     end
-
-    IsSpellKnown = function()
-        return false
-    end
+    IsSpellKnown = function() return false end
 
     dofile("Engine/AbilityService.lua")
 
@@ -85,14 +56,8 @@ local function TestSpellbookCatalogUsesLearnedRank()
     }
 
     function provider:GetSpellCategory(_, spellName)
-        if spellName == "Sunder Armor" then
-            return "sunderArmor"
-        end
-
-        if spellName == "Bloodthirst" then
-            return "bloodthirst"
-        end
-
+        if spellName == "Sunder Armor" then return "sunderArmor" end
+        if spellName == "Bloodthirst" then return "bloodthirst" end
         return nil
     end
 
@@ -107,76 +72,49 @@ local function TestSpellReadinessDoesNotNeedActionSlot()
     TopDps.DEFAULTS = { cooldownLookahead = 0.15 }
     TopDps.db = { rotation = { cooldownLookahead = 0.15 } }
 
-    GetTime = function()
-        return 100
-    end
-
-    IsUsableSpell = function(spell)
-        return spell == "Sunder Armor", false
-    end
-
+    GetTime = function() return 100 end
+    IsUsableSpell = function(spell) return spell == "Sunder Armor", false end
     IsSpellInRange = function(spell, unit)
-        if spell == "Sunder Armor" and unit == "target" then
-            return 1
-        end
-
+        if spell == "Sunder Armor" and unit == "target" then return 1 end
         return nil
     end
-
-    GetSpellCooldown = function()
-        return 0, 0, 1
-    end
+    GetSpellCooldown = function() return 0, 0, 1 end
 
     dofile("Engine/ReadinessService.lua")
 
-    local provider = {
-        CanTreatUnusableAsUsable = function()
-            return false
-        end,
-        IsEntryInRange = function(_, readiness, entry)
-            return readiness:IsSpellInRange(entry)
-        end,
-        GetReadyEntries = function(_, readiness, entries, category, context)
-            return readiness:GetDefaultReadyEntries(entries, category, provider, context)
-        end,
-    }
-
-    local entry = {
-        spellId = 47467,
-        spellName = "Sunder Armor",
-    }
-
-    local ready = TopDps.ReadinessService:GetReadyEntries({ entry }, "sunderArmor", provider, {})
-    AssertEqual(#ready, 1, "spell is ready without action field")
-
-    IsUsableSpell = function()
-        return false, false
+    local provider = {}
+    function provider:CanTreatUnusableAsUsable() return false end
+    function provider:IsEntryInRange(readiness, entry)
+        return readiness:IsSpellInRange(entry)
     end
 
-    ready = TopDps.ReadinessService:GetReadyEntries({ entry }, "sunderArmor", provider, {})
+    local entry = { spellId = 47467, spellName = "Sunder Armor" }
+    local ready = TopDps.ReadinessService:GetDefaultReadyEntries(
+        { entry },
+        "sunderArmor",
+        provider,
+        {}
+    )
+    AssertEqual(#ready, 1, "spell is ready without action field")
+
+    IsUsableSpell = function() return false, false end
+    ready = TopDps.ReadinessService:GetDefaultReadyEntries(
+        { entry },
+        "sunderArmor",
+        provider,
+        {}
+    )
     AssertEqual(#ready, 0, "stance-unusable spell stays unavailable")
 end
 
 local function TestPrioritySelectionIgnoresVisibleButtons()
     TopDps = NewAddon()
-    TopDps.RefreshService = {
-        IsCategoryRefreshDue = function()
-            return true
-        end,
-    }
-    TopDps.ReadinessService = {
-        GetReadyEntries = function(_, entries)
-            return entries
-        end,
-    }
+    TopDps.RefreshService = { IsCategoryRefreshDue = function() return true end }
+    TopDps.ReadinessService = { GetReadyEntries = function(_, entries) return entries end }
 
     dofile("Engine/RotationEngine.lua")
 
-    local provider = {
-        IsCategoryEnabled = function()
-            return true
-        end,
-    }
+    local provider = { IsCategoryEnabled = function() return true end }
     local abilities = {
         sunderArmor = { { spellId = 47467, spellName = "Sunder Armor" } },
         bloodthirst = { { spellId = 30335, spellName = "Bloodthirst" } },
@@ -187,11 +125,8 @@ local function TestPrioritySelectionIgnoresVisibleButtons()
         { "sunderArmor", "bloodthirst" },
         abilities,
         {},
-        function()
-            return true
-        end
+        function() return true end
     )
-
     AssertEqual(category, "sunderArmor", "missing button cannot lower priority")
 end
 
@@ -207,30 +142,19 @@ local function TestPresentationSeparatesRecommendationFromHighlight()
     local highlighted
     local centered
     TopDps.HighlightManager = {
-        SetEntries = function(_, _, entries)
-            highlighted = entries
-        end,
-        Refresh = function() end,
+        SetEntries = function(_, _, entries) highlighted = entries end,
     }
     TopDps.CenterIcons = {
-        Show = function(_, entries)
-            centered = entries
-        end,
+        Show = function(_, entries) centered = entries end,
         Hide = function() end,
     }
     TopDps.Logger = { Info = function() end }
-    TopDps.ActionBarService = {
-        FindVisibleActions = function()
-            return {}
-        end,
-    }
+    TopDps.ActionBarService = { FindVisibleActions = function() return {} end }
 
     dofile("Presentation/RecommendationPresenter.lua")
 
     local provider = {
-        GetRecommendationName = function(_, _, entries)
-            return entries[1].spellName
-        end,
+        GetRecommendationName = function(_, _, entries) return entries[1].spellName end,
     }
     local recommendation = { { spellId = 47467, spellName = "Sunder Armor" } }
 
@@ -249,29 +173,19 @@ end
 
 local function TestCenterIconUsesSpellTexture()
     TopDps = NewAddon()
-    TopDps.DEFAULTS = { centerIconsSize = 64 }
     TopDps.db = {
         rotation = {
-            centerIcons = {
-                enabled = true,
-                opacity = 0.8,
-            },
+            centerIcons = { enabled = true, opacity = 0.8 },
         },
     }
     TopDps.Settings = {
-        IsRotationEnabled = function()
-            return true
-        end,
-        IsModeActive = function()
-            return true
-        end,
+        IsRotationEnabled = function() return true end,
+        IsModeActive = function() return true end,
     }
-
     GetSpellInfo = function(spell)
         if spell == 47467 or spell == "Sunder Armor" then
             return "Sunder Armor", nil, "sunder-texture"
         end
-
         return nil
     end
 
@@ -280,11 +194,7 @@ local function TestCenterIconUsesSpellTexture()
     local textures = {}
     local function NewFrame(index)
         return {
-            icon = {
-                SetTexture = function(_, texture)
-                    textures[index] = texture
-                end,
-            },
+            icon = { SetTexture = function(_, texture) textures[index] = texture end },
             SetAlpha = function() end,
             Show = function() end,
             Hide = function() end,
@@ -302,39 +212,21 @@ local function TestHiddenNextSwingSlotStillTracksQueue()
     TopDps.ACTION_BUTTON_PREFIXES = {}
     TopDps.GameApi = {
         GetActionSpellData = function(_, action)
-            if action == 97 then
-                return 47450, "Heroic Strike"
-            end
-
+            if action == 97 then return 47450, "Heroic Strike" end
             return nil, nil
         end,
     }
 
-    local provider = {
-        GetSpellCategory = function(_, spellId, spellName)
-            if spellId == 47450 or spellName == "Heroic Strike" then
-                return "heroicStrike"
-            end
-
-            return nil
-        end,
-        GetNextSwingCategories = function()
-            return { "heroicStrike" }
-        end,
-    }
-
-    TopDps.SpecManager = {
-        GetActive = function()
-            return provider
-        end,
-    }
-
-    HasAction = function(action)
-        return action == 97
+    local provider = {}
+    function provider:GetSpellCategory(spellId, spellName)
+        if spellId == 47450 or spellName == "Heroic Strike" then return "heroicStrike" end
+        return nil
     end
-    IsCurrentAction = function(action)
-        return action == 97 and 1 or 0
-    end
+    function provider:GetNextSwingCategories() return { "heroicStrike" } end
+
+    TopDps.SpecManager = { GetActive = function() return provider end }
+    HasAction = function(action) return action == 97 end
+    IsCurrentAction = function(action) return action == 97 and 1 or 0 end
 
     dofile("Engine/ActionBarService.lua")
     dofile("Engine/SwingService.lua")
