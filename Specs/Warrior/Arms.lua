@@ -27,7 +27,7 @@ local Arms = addon.SpecProvider:Create({
         cleave = { spellIds = { Warrior.SPELL_IDS.cleave }, swingReset = "MAIN_HAND" },
     },
     settings = {
-        { type = "checkbox", key = "maintainSunderArmor", labelKey = "WARRIOR_MAINTAIN_SUNDER_ARMOR", default = false },
+        Warrior:CreateSunderArmorSetting(),
     },
 })
 
@@ -39,7 +39,7 @@ local NEXT_SWING_AOE = { "cleave" }
 
 function Arms:IsCategoryAllowed(category, context)
     if category == "sunderArmor" then
-        return self:GetSetting("maintainSunderArmor") == true and Warrior:ShouldMaintainSunder(context)
+        return Warrior:ShouldMaintainSunder(context, self:GetSetting("sunderArmorMode"))
     end
 
     if category == "execute" then

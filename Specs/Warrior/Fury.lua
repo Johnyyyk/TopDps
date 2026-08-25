@@ -40,12 +40,7 @@ local Fury = addon.SpecProvider:Create({
     },
 
     settings = {
-        {
-            type = "checkbox",
-            key = "maintainSunderArmor",
-            labelKey = "WARRIOR_MAINTAIN_SUNDER_ARMOR",
-            default = false,
-        },
+        Warrior:CreateSunderArmorSetting(),
     },
 })
 
@@ -76,7 +71,7 @@ local NEXT_SWING_AOE = {
 
 function Fury:IsCategoryAllowed(category, context)
     if category == "sunderArmor" then
-        return self:GetSetting("maintainSunderArmor") == true and Warrior:ShouldMaintainSunder(context)
+        return Warrior:ShouldMaintainSunder(context, self:GetSetting("sunderArmorMode"))
     end
 
     if category == "slam" then
