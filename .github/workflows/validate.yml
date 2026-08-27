@@ -47,6 +47,9 @@ jobs:
       - name: Проверить семантику бафов панели
         run: lua5.1 tools/test_panel_buff_semantics.lua
 
+      - name: Проверить refresh семантических эффектов
+        run: lua5.1 tools/test_refresh_effects.lua
+
       - name: Проверить next-swing канал
         run: lua5.1 tools/test_next_swing.lua
 

@@ -20,14 +20,14 @@ local Fire = addon.SpecProvider:Create({
         scorch = {
             spellIds = { Mage.SPELL_IDS.scorch },
             refresh = {
-                auraSpellIds = {
-                    Mage.SPELL_IDS.improvedScorch,
-                    Mage.SPELL_IDS.shadowMastery,
-                    Mage.SPELL_IDS.wintersChill,
-                },
+                auraSpellIds = addon.EffectService:GetSpellIds(
+                    addon.EFFECT_SPELL_CRIT_TAKEN,
+                    addon.EFFECT_QUALITY_FULL
+                ),
+                effectId = addon.EFFECT_SPELL_CRIT_TAKEN,
+                effectMinimumQuality = addon.EFFECT_QUALITY_FULL,
                 unit = "target",
                 filter = "HARMFUL",
-                ownOnly = false,
                 lead = 3,
             },
         },

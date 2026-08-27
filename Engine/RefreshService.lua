@@ -32,6 +32,24 @@ function RefreshService:GetLeadSeconds(definition, category, context)
     return math.max(0, tonumber(definition.lead) or 0)
 end
 
+function RefreshService:FindRefreshAura(definition, unit, filter)
+    if definition.effectId then
+        return addon.EffectService:FindAura(
+            definition.effectId,
+            unit,
+            filter,
+            { minimumQuality = definition.effectMinimumQuality }
+        )
+    end
+
+    return addon.AuraService:FindAura(
+        unit,
+        definition.auraSpellIds,
+        filter,
+        definition.ownOnly == true
+    )
+end
+
 function RefreshService:IsCategoryRefreshDue(provider, category, context)
     local definition = GetRefreshDefinition(provider, category)
     if not definition then
@@ -40,12 +58,7 @@ function RefreshService:IsCategoryRefreshDue(provider, category, context)
 
     local unit = definition.unit or "target"
     local filter = definition.filter or "HARMFUL"
-    local aura = addon.AuraService:FindAura(
-        unit,
-        definition.auraSpellIds,
-        filter,
-        definition.ownOnly == true
-    )
+    local aura = self:FindRefreshAura(definition, unit, filter)
     local now = context and tonumber(context.now) or GetTime()
     local expirationTime = aura and tonumber(aura.expirationTime) or 0
     local remaining
