@@ -178,18 +178,17 @@ local function TestBlizzardChannelColor()
     AssertNear(startCalls[2][3], 1.00, 0.0001, "Blizzard next-swing blue channel")
 end
 
-local function TestCheeseChannelColor()
+local function TestCheeseChannelTextures()
     TopDps = NewAddon()
+    TopDps.HIGHLIGHT_CHANNEL_NEXT_SWING = "NEXT_SWING"
     UIParent = {}
 
     local function NewTexture()
         return {
             SetAlpha = function() end,
             SetSize = function() end,
-            SetVertexColor = function(self, red, green, blue)
-                self.red = red
-                self.green = green
-                self.blue = blue
+            SetTexture = function(self, texture)
+                self.texture = texture
             end,
         }
     end
@@ -231,20 +230,24 @@ local function TestCheeseChannelColor()
         IsVisible = function() return true end,
     }
 
+    local baseTexture = "Interface\\AddOns\\TopDps\\Textures\\Cheese\\IconAlert"
+    local baseAntsTexture = "Interface\\AddOns\\TopDps\\Textures\\Cheese\\IconAlertAnts"
+    local nextSwingTexture = "Interface\\AddOns\\TopDps\\Textures\\Cheese\\IconAlertNextSwing"
+    local nextSwingAntsTexture = "Interface\\AddOns\\TopDps\\Textures\\Cheese\\IconAlertAntsNextSwing"
+
     dofile("Vendor/Cheese/CheeseGlow.lua")
 
-    TopDps.CheeseHighlight:Show(button, {
-        key = "NEXT_SWING",
-        color = { r = 0.35, g = 0.80, b = 1.00 },
-    })
-    AssertNear(overlay.outerGlow.red, 0.35, 0.0001, "Cheese next-swing red channel")
-    AssertNear(overlay.outerGlow.green, 0.80, 0.0001, "Cheese next-swing green channel")
-    AssertNear(overlay.outerGlow.blue, 1.00, 0.0001, "Cheese next-swing blue channel")
+    TopDps.CheeseHighlight:Show(button, { key = "NEXT_SWING" })
+    AssertEqual(overlay.spark.texture, nextSwingTexture, "Cheese next-swing uses dedicated spark texture")
+    AssertEqual(overlay.innerGlow.texture, nextSwingTexture, "Cheese next-swing uses dedicated inner glow texture")
+    AssertEqual(overlay.innerGlowOver.texture, nextSwingTexture, "Cheese next-swing uses dedicated inner glow over texture")
+    AssertEqual(overlay.outerGlow.texture, nextSwingTexture, "Cheese next-swing uses dedicated outer glow texture")
+    AssertEqual(overlay.outerGlowOver.texture, nextSwingTexture, "Cheese next-swing uses dedicated outer glow over texture")
+    AssertEqual(overlay.ants.texture, nextSwingAntsTexture, "Cheese next-swing uses dedicated ants texture")
 
     TopDps.CheeseHighlight:Show(button, { key = "PRIMARY" })
-    AssertNear(overlay.outerGlow.red, 1.00, 0.0001, "Cheese primary resets red channel")
-    AssertNear(overlay.outerGlow.green, 1.00, 0.0001, "Cheese primary resets green channel")
-    AssertNear(overlay.outerGlow.blue, 1.00, 0.0001, "Cheese primary resets blue channel")
+    AssertEqual(overlay.outerGlow.texture, baseTexture, "Cheese primary restores original glow texture")
+    AssertEqual(overlay.ants.texture, baseAntsTexture, "Cheese primary restores original ants texture")
 end
 
 local function TestRecommendationPresenterKeepsCenterIconsPrimaryOnly()
@@ -500,7 +503,7 @@ end
 TestSpecProviderContract()
 TestHighlightChannels()
 TestBlizzardChannelColor()
-TestCheeseChannelColor()
+TestCheeseChannelTextures()
 TestRecommendationPresenterKeepsCenterIconsPrimaryOnly()
 TestQueuedNextSwingDetection()
 TestRotationEngineChannels()
