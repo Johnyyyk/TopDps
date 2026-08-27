@@ -182,12 +182,19 @@ function Warrior:ShouldMaintainSunder(context, mode)
         return false
     end
 
-    local expose = self:FindTargetAura({ 8647, 11197, 11198, 26866, 48669 })
-    if expose then
+    if addon.EffectService:HasEffect(
+        addon.EFFECT_MAJOR_ARMOR_REDUCTION,
+        "target",
+        "HARMFUL",
+        {
+            excludeOwn = true,
+            minimumQuality = addon.EFFECT_QUALITY_FULL,
+        }
+    ) then
         return false
     end
 
-    local sunder = self:FindTargetAura({ 7386, 7405, 8380, 11596, 11597, 25225, 47467, 58567 })
+    local sunder = self:FindTargetAura({ self.SPELL_IDS.sunderArmor }, true)
     if not sunder then
         return true
     end

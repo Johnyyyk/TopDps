@@ -17,7 +17,7 @@ addon.CooldownRegistry:Register({
             showDuration = false,
             group = addon.COOLDOWN_GROUP_STATES,
             panelCategory = addon.PANEL_CATEGORY_BUFFS,
-            panelBehavior = addon.PANEL_BEHAVIOR_SELECTABLE_BUFF,
+            panelBehavior = addon.PANEL_BEHAVIOR_ACTIVE_ONLY,
             order = 10,
         },
         { id = "berserkerRage", type = "spell", spellIds = { Warrior.SPELL_IDS.berserkerRage }, group = addon.COOLDOWN_GROUP_DEFENSIVE, order = 40 },

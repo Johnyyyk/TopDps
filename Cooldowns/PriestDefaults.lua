@@ -13,13 +13,13 @@ local function SetDefaults(talentTab, ids)
 end
 
 SetDefaults(Priest.TALENT_TABS.DISCIPLINE, {
-    "innerFire", "powerInfusion", "painSuppression", "penance", "prayerOfMending",
+    "powerWordFortitude", "divineSpirit", "innerFire", "powerInfusion", "painSuppression", "penance", "prayerOfMending",
     "innerFocus", "shadowfiend", "hymnOfHope", "divineHymn",
 })
 SetDefaults(Priest.TALENT_TABS.HOLY, {
-    "innerFire", "guardianSpirit", "circleOfHealing", "prayerOfMending",
+    "powerWordFortitude", "divineSpirit", "innerFire", "guardianSpirit", "circleOfHealing", "prayerOfMending",
     "innerFocus", "shadowfiend", "hymnOfHope", "divineHymn",
 })
 SetDefaults(Priest.TALENT_TABS.SHADOW, {
-    "innerFire", "shadowform", "vampiricEmbrace", "shadowfiend",
+    "powerWordFortitude", "divineSpirit", "innerFire", "shadowform", "vampiricEmbrace", "shadowfiend",
 })

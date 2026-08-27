@@ -16,7 +16,14 @@ local function IndexOf(values, expected)
     return nil
 end
 
-TopDps = { Modules = {}, SpecProvider = {}, SpecRegistry = { providers = {} } }
+TopDps = {
+    Modules = {},
+    EffectService = {},
+    SpecProvider = {},
+    SpecRegistry = { providers = {} },
+    EFFECT_SPELL_CRIT_TAKEN = "SPELL_CRIT_TAKEN",
+    EFFECT_QUALITY_FULL = 2,
+}
 function TopDps:CreateModule(name)
     local module = self.Modules[name] or {}
     self.Modules[name] = module
@@ -32,6 +39,11 @@ function TopDps.SpecProvider:Create(definition)
 end
 function TopDps.SpecRegistry:Register(provider)
     self.providers[provider.id] = provider
+end
+function TopDps.EffectService:GetSpellIds(effectId, minimumQuality)
+    AssertEqual(effectId, TopDps.EFFECT_SPELL_CRIT_TAKEN, "fire mage uses spell crit semantic effect")
+    AssertEqual(minimumQuality, TopDps.EFFECT_QUALITY_FULL, "fire mage requires full spell crit effect")
+    return { 17800, 22959, 12579 }
 end
 
 TopDps.AuraService = { helpful = {}, harmful = {} }
@@ -79,6 +91,7 @@ AssertEqual(Fire:IsCategoryAllowed("pyroblast", Context()), true, "Hot Streak Py
 Fire.testSettings.fillerMode = "frostfire"
 AssertEqual(Fire:IsCategoryAllowed("fireball", Context()), false, "Fireball mode disabled")
 AssertEqual(Fire:IsCategoryAllowed("frostfireBolt", Context()), true, "Frostfire mode enabled")
+AssertEqual(Fire.abilities.scorch.refresh.effectId, TopDps.EFFECT_SPELL_CRIT_TAKEN, "Scorch refresh uses semantic effect")
 TopDps.AuraService.helpful = {}
 
 TopDps.AuraService.helpful[Mage.SPELL_IDS.fingersOfFrost] = { stacks = 2 }

@@ -23,9 +23,6 @@ Mage.SPELL_IDS = {
 
     livingBomb = 44457,
     scorch = 2948,
-    improvedScorch = 22959,
-    shadowMastery = 17800,
-    wintersChill = 12579,
     pyroblast = 11366,
     hotStreak = 48108,
     fireball = 133,

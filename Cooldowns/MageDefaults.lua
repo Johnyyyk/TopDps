@@ -8,7 +8,7 @@ local function Allowlist(ids)
     return result
 end
 local function SetDefaults(talentTab, extra)
-    local ids = { "currentArmor", "mirrorImage", "evocation" }
+    local ids = { "currentArmor", "arcaneIntellect", "mirrorImage", "evocation" }
     local index
     for index = 1, #extra do ids[#ids + 1] = extra[index] end
     local profile = addon.CooldownRegistry:GetProfile(Mage.CLASS_TOKEN, talentTab)

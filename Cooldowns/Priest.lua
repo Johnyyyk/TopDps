@@ -11,6 +11,34 @@ local function RegisterCommonEntries(talentTab)
         talentTab = talentTab,
         entries = {
             {
+                id = "powerWordFortitude",
+                type = "aura",
+                auraSpellIds = addon.EffectService:GetSpellIds(
+                    addon.EFFECT_STAMINA,
+                    addon.EFFECT_QUALITY_FULL
+                ),
+                displaySpellId = 1243,
+                requiredSpellIds = { 1243 },
+                group = addon.COOLDOWN_GROUP_STATES,
+                panelCategory = addon.PANEL_CATEGORY_BUFFS,
+                panelBehavior = addon.PANEL_BEHAVIOR_REQUIRED_BUFF,
+                order = 5,
+            },
+            {
+                id = "divineSpirit",
+                type = "aura",
+                auraSpellIds = addon.EffectService:GetSpellIds(
+                    addon.EFFECT_SPIRIT,
+                    addon.EFFECT_QUALITY_FULL
+                ),
+                displaySpellId = 14752,
+                requiredSpellIds = { 14752 },
+                group = addon.COOLDOWN_GROUP_STATES,
+                panelCategory = addon.PANEL_CATEGORY_BUFFS,
+                panelBehavior = addon.PANEL_BEHAVIOR_REQUIRED_BUFF,
+                order = 6,
+            },
+            {
                 id = "innerFire",
                 type = "aura",
                 auraSpellIds = { Priest.SPELL_IDS.innerFire },

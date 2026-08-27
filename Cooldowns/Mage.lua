@@ -27,6 +27,20 @@ local function RegisterCommonEntries(talentTab)
                 panelBehavior = addon.PANEL_BEHAVIOR_SELECTABLE_BUFF,
                 order = 10,
             },
+            {
+                id = "arcaneIntellect",
+                type = "aura",
+                auraSpellIds = addon.EffectService:GetSpellIds(
+                    addon.EFFECT_INTELLECT,
+                    addon.EFFECT_QUALITY_FULL
+                ),
+                displaySpellId = 1459,
+                requiredSpellIds = { 1459 },
+                group = addon.COOLDOWN_GROUP_STATES,
+                panelCategory = addon.PANEL_CATEGORY_BUFFS,
+                panelBehavior = addon.PANEL_BEHAVIOR_REQUIRED_BUFF,
+                order = 20,
+            },
             { id = "mirrorImage", type = "spell", spellIds = { Mage.SPELL_IDS.mirrorImage }, group = addon.COOLDOWN_GROUP_OFFENSIVE, order = 10 },
             { id = "evocation", type = "spell", spellIds = { Mage.SPELL_IDS.evocation }, group = addon.COOLDOWN_GROUP_RESOURCES, order = 10 },
             { id = "iceBlock", type = "spell", spellIds = { Mage.SPELL_IDS.iceBlock }, group = addon.COOLDOWN_GROUP_DEFENSIVE, order = 10 },
