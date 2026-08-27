@@ -14,6 +14,7 @@ local function SetDefaults(talentTab, ids)
 end
 
 SetDefaults(Druid.TALENT_TABS.BALANCE, {
+    "markOfTheWild",
     "moonkinForm",
     "starfall",
     "forceOfNature",
@@ -23,6 +24,7 @@ SetDefaults(Druid.TALENT_TABS.BALANCE, {
 })
 
 SetDefaults(Druid.TALENT_TABS.FERAL, {
+    "markOfTheWild",
     "currentFeralForm",
     "tigersFury",
     "berserk",
@@ -30,6 +32,7 @@ SetDefaults(Druid.TALENT_TABS.FERAL, {
 })
 
 SetDefaults(Druid.TALENT_TABS.RESTORATION, {
+    "markOfTheWild",
     "treeOfLife",
     "naturesSwiftness",
     "swiftmend",

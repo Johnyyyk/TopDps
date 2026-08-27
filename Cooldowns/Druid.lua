@@ -10,6 +10,20 @@ local function RegisterCommonEntries(talentTab)
         classToken = Druid.CLASS_TOKEN,
         talentTab = talentTab,
         entries = {
+            {
+                id = "markOfTheWild",
+                type = "aura",
+                auraSpellIds = addon.EffectService:GetSpellIds(
+                    addon.EFFECT_STATS_ARMOR_RESISTANCE,
+                    addon.EFFECT_QUALITY_FULL
+                ),
+                displaySpellId = 1126,
+                requiredSpellIds = { 1126 },
+                group = addon.COOLDOWN_GROUP_STATES,
+                panelCategory = addon.PANEL_CATEGORY_BUFFS,
+                panelBehavior = addon.PANEL_BEHAVIOR_REQUIRED_BUFF,
+                order = 5,
+            },
             { id = "barkskin", type = "spell", spellIds = { Druid.SPELL_IDS.barkskin }, group = addon.COOLDOWN_GROUP_DEFENSIVE, order = 10 },
             { id = "innervate", type = "spell", spellIds = { Druid.SPELL_IDS.innervate }, group = addon.COOLDOWN_GROUP_UTILITY, order = 10 },
             { id = "rebirth", type = "spell", spellIds = { Druid.SPELL_IDS.rebirth }, group = addon.COOLDOWN_GROUP_UTILITY, order = 20 },

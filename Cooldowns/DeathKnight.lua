@@ -20,10 +20,15 @@ local function RegisterCommonEntries(talentTab)
                 panelBehavior = addon.PANEL_BEHAVIOR_SELECTABLE_BUFF, order = 10,
             },
             {
-                id = "hornOfWinter", type = "aura", auraSpellIds = { 57330, 57623 }, displaySpellId = 57623,
+                id = "hornOfWinter", type = "aura",
+                auraSpellIds = addon.EffectService:GetSpellIds(
+                    addon.EFFECT_STRENGTH_AGILITY,
+                    addon.EFFECT_QUALITY_FULL
+                ),
+                displaySpellId = 57623,
                 requiredSpellIds = { DeathKnight.SPELL_IDS.hornOfWinter }, showDuration = true,
                 group = addon.COOLDOWN_GROUP_STATES, panelCategory = addon.PANEL_CATEGORY_BUFFS,
-                panelBehavior = addon.PANEL_BEHAVIOR_SELECTABLE_BUFF, order = 20,
+                panelBehavior = addon.PANEL_BEHAVIOR_REQUIRED_BUFF, order = 20,
             },
             { id = "empowerRuneWeapon", type = "spell", spellIds = { DeathKnight.SPELL_IDS.empowerRuneWeapon }, group = addon.COOLDOWN_GROUP_OFFENSIVE, order = 10 },
             { id = "armyOfTheDead", type = "spell", spellIds = { DeathKnight.SPELL_IDS.armyOfTheDead }, group = addon.COOLDOWN_GROUP_OFFENSIVE, order = 90 },

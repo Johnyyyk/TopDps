@@ -14,6 +14,7 @@ end
 
 SetDefaults(DeathKnight.TALENT_TABS.BLOOD, {
     "currentPresence",
+    "hornOfWinter",
     "empowerRuneWeapon",
     "dancingRuneWeapon",
     "hysteria",
@@ -21,6 +22,7 @@ SetDefaults(DeathKnight.TALENT_TABS.BLOOD, {
 })
 SetDefaults(DeathKnight.TALENT_TABS.FROST, {
     "currentPresence",
+    "hornOfWinter",
     "empowerRuneWeapon",
     "unbreakableArmor",
     "raiseDead",
@@ -29,6 +31,7 @@ SetDefaults(DeathKnight.TALENT_TABS.FROST, {
 })
 SetDefaults(DeathKnight.TALENT_TABS.UNHOLY, {
     "currentPresence",
+    "hornOfWinter",
     "empowerRuneWeapon",
     "ghoulAlive",
     "summonGargoyle",
