@@ -57,12 +57,6 @@ Warlock.SPELL_IDS = {
 
     grandSpellstone = 55194,
     grandFirestone = 55158,
-
-    earthAndMoon = 60433,
-    ebonPlague = 51735,
-    shadowMastery = 17800,
-    improvedScorch = 22959,
-    wintersChill = 12579,
 }
 
 Warlock.WEAPON_ENCHANT_SPELL_IDS = {
@@ -91,23 +85,6 @@ local PET_REQUIREMENT_GRACE_SECONDS = 0.5
 local CURSE_DOOM_MIN_TTD_SECONDS = 60
 
 Warlock.petRequirementContext = Warlock.petRequirementContext or {}
-
-local function IsAuraFromPlayer(aura)
-    if not aura or not aura.unitCaster then
-        return false
-    end
-
-    if aura.unitCaster == "player" then
-        return true
-    end
-
-    if UnitIsUnit then
-        local ok, sameUnit = pcall(UnitIsUnit, aura.unitCaster, "player")
-        return ok and sameUnit == true
-    end
-
-    return false
-end
 
 local function GetTargetTimeToDie(context)
     local target = context and context.target or nil
@@ -161,51 +138,24 @@ function Warlock:HasOwnTargetAura(spellIds)
 end
 
 function Warlock:HasExternalMagicVulnerability()
-    local aura = addon.AuraService:FindAura(
+    return addon.EffectService:HasEffect(
+        addon.EFFECT_MAGIC_DAMAGE_TAKEN,
         "target",
+        "HARMFUL",
         {
-            self.SPELL_IDS.earthAndMoon,
-            self.SPELL_IDS.ebonPlague,
-        },
-        "HARMFUL",
-        false
+            excludeOwn = true,
+            minimumQuality = addon.EFFECT_QUALITY_FULL,
+        }
     )
-    if aura then
-        return true
-    end
-
-    local curseOfElements = addon.AuraService:FindAura(
-        "target",
-        { self.SPELL_IDS.curseElements },
-        "HARMFUL",
-        false
-    )
-
-    return curseOfElements ~= nil and not IsAuraFromPlayer(curseOfElements)
 end
 
 function Warlock:HasSpellCritDebuff()
-    local aura = addon.AuraService:FindAura(
+    return addon.EffectService:HasEffect(
+        addon.EFFECT_SPELL_CRIT_TAKEN,
         "target",
-        {
-            self.SPELL_IDS.shadowMastery,
-            self.SPELL_IDS.improvedScorch,
-        },
         "HARMFUL",
-        false
+        { minimumQuality = addon.EFFECT_QUALITY_FULL }
     )
-    if aura then
-        return true
-    end
-
-    local wintersChill = addon.AuraService:FindAura(
-        "target",
-        { self.SPELL_IDS.wintersChill },
-        "HARMFUL",
-        false
-    )
-
-    return wintersChill ~= nil and (tonumber(wintersChill.stacks) or 0) >= 5
 end
 
 function Warlock:IsBossLikeTarget()

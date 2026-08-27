@@ -44,6 +44,9 @@ jobs:
       - name: Проверить эквивалентные эффекты
         run: lua5.1 tools/test_effect_service.lua
 
+      - name: Проверить семантику бафов панели
+        run: lua5.1 tools/test_panel_buff_semantics.lua
+
       - name: Проверить next-swing канал
         run: lua5.1 tools/test_next_swing.lua
 

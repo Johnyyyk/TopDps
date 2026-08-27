@@ -19,11 +19,17 @@ local function Contains(list, expected)
     return false
 end
 
+local sunderAura
+local exposeAura
+
 TopDps = {
     Modules = {},
     AuraService = {},
+    EffectService = {},
     SpecProvider = {},
     SpecRegistry = { providers = {} },
+    EFFECT_MAJOR_ARMOR_REDUCTION = "MAJOR_ARMOR_REDUCTION",
+    EFFECT_QUALITY_FULL = 2,
 }
 
 function TopDps:CreateModule(name)
@@ -45,15 +51,18 @@ function TopDps.SpecRegistry:Register(provider)
     self.providers[provider.id] = provider
 end
 
-local sunderAura
-local exposeAura
+function TopDps.EffectService:HasEffect(effectId, unit, filter, options)
+    AssertEqual(effectId, TopDps.EFFECT_MAJOR_ARMOR_REDUCTION, "warrior checks major armor reduction effect")
+    AssertEqual(unit, "target", "warrior checks target effect")
+    AssertEqual(filter, "HARMFUL", "warrior checks harmful effect")
+    AssertEqual(options.excludeOwn, true, "warrior excludes own armor reduction from equivalent check")
+    AssertEqual(options.minimumQuality, TopDps.EFFECT_QUALITY_FULL, "warrior requires full armor reduction")
+    return exposeAura ~= nil
+end
+
 TopDps.AuraService.FindAura = function(_, unit, spellIds)
     if unit ~= "target" or type(spellIds) ~= "table" then
         return nil
-    end
-
-    if spellIds[1] == 8647 then
-        return exposeAura
     end
 
     if spellIds[1] == 7386 then
@@ -111,7 +120,7 @@ sunderAura.expirationTime = 104
 AssertEqual(Arms:IsCategoryAllowed("sunderArmor", context), true, "five-stack Sunder is refreshed near expiration")
 
 exposeAura = { stacks = 5, expirationTime = 110 }
-AssertEqual(Arms:IsCategoryAllowed("sunderArmor", context), false, "Expose Armor suppresses Sunder maintenance")
+AssertEqual(Arms:IsCategoryAllowed("sunderArmor", context), false, "equivalent major armor reduction suppresses Sunder maintenance")
 exposeAura = nil
 sunderAura = nil
 
