@@ -133,6 +133,7 @@ function SpecManager:RefreshSpellData()
     local provider = self.activeProvider
     if provider then
         provider:RefreshSpellData()
+        addon.AbilityService:Refresh(provider)
     end
 end
 

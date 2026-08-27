@@ -17,6 +17,9 @@ jobs:
       - name: Проверить список специализаций в TOC
         run: python3 tools/generate_toc.py --check
 
+      - name: Проверить покрытие классов и специализаций
+        run: python3 tools/check_class_coverage.py
+
       - name: Проверить версии проекта
         run: python3 tools/check_version.py
 
@@ -34,6 +37,75 @@ jobs:
             -name '*.lua' \
             -not -path './.git/*' \
             -print0 | xargs -0 -n1 luac5.1 -p
+
+      - name: Проверить core primitives
+        run: lua5.1 tools/test_core_primitives.lua
+
+      - name: Проверить эквивалентные эффекты
+        run: lua5.1 tools/test_effect_service.lua
+
+      - name: Проверить семантику бафов панели
+        run: lua5.1 tools/test_panel_buff_semantics.lua
+
+      - name: Проверить refresh семантических эффектов
+        run: lua5.1 tools/test_refresh_effects.lua
+
+      - name: Проверить next-swing канал
+        run: lua5.1 tools/test_next_swing.lua
+
+      - name: Проверить восстановление next-swing после очереди
+        run: lua5.1 tools/test_next_swing_recovery.lua
+
+      - name: Проверить action bars
+        run: lua5.1 tools/test_action_bar_service.lua
+
+      - name: Проверить независимость ротации от action bar
+        run: lua5.1 tools/test_actionbar_independent_rotation.lua
+
+      - name: Проверить CombatTracker
+        run: lua5.1 tools/test_combat_tracker.lua
+
+      - name: Проверить движение и movement priority
+        run: lua5.1 tools/test_movement_priority.lua
+
+      - name: Проверить Backlash на движении
+        run: lua5.1 tools/test_movement_backlash.lua
+
+      - name: Проверить экспериментальные функции
+        run: lua5.1 tools/test_experimental_features.lua
+
+      - name: Проверить time-to-die
+        run: lua5.1 tools/test_time_to_die.lua
+
+      - name: Проверить TTD-выбор проклятия чернокнижника
+        run: lua5.1 tools/test_warlock_ttd_curse.lua
+
+      - name: Проверить Affliction Warlock
+        run: lua5.1 tools/test_warlock_affliction.lua
+
+      - name: Проверить Death Knight
+        run: lua5.1 tools/test_death_knight.lua
+
+      - name: Проверить Druid
+        run: lua5.1 tools/test_druid.lua
+
+      - name: Проверить Hunter
+        run: lua5.1 tools/test_hunter.lua
+
+      - name: Проверить Mage
+        run: lua5.1 tools/test_mage.lua
+
+      - name: Проверить Priest
+        run: lua5.1 tools/test_priest.lua
+
+      - name: Проверить Rogue
+        run: lua5.1 tools/test_rogue.lua
+
+      - name: Проверить Shaman
+        run: lua5.1 tools/test_shaman.lua
+
+      - name: Проверить Warrior
+        run: lua5.1 tools/test_warrior.lua
 
       - name: Проверить XML
         shell: bash

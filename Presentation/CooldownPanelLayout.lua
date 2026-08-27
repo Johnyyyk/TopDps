@@ -1,8 +1,17 @@
 local addon = TopDps
 local CooldownPanel = addon.CooldownPanel
 
+local function IsRequiredBehavior(behavior)
+    return behavior == addon.PANEL_BEHAVIOR_REQUIRED_BUFF
+        or behavior == addon.PANEL_BEHAVIOR_REQUIRED_STATE
+end
+
 function CooldownPanel:IsEntryVisible(entry, state, previewUnlocked)
     if not state then
+        return false
+    end
+
+    if addon.CooldownRegistry and not addon.CooldownRegistry:IsEntryApplicable(entry) then
         return false
     end
 
@@ -19,7 +28,7 @@ function CooldownPanel:IsEntryVisible(entry, state, previewUnlocked)
         return self:IsActiveState(state)
     end
 
-    if behavior == addon.PANEL_BEHAVIOR_REQUIRED_BUFF then
+    if IsRequiredBehavior(behavior) then
         return not self:IsActiveState(state)
     end
 
@@ -29,7 +38,7 @@ end
 function CooldownPanel:ResolveVisualGroup(entry, state, previewUnlocked)
     local category, behavior = self:GetPresentation(entry)
 
-    if behavior == addon.PANEL_BEHAVIOR_REQUIRED_BUFF then
+    if IsRequiredBehavior(behavior) then
         if previewUnlocked and self:IsActiveState(state) then
             return addon.PANEL_CATEGORY_BUFFS
         end

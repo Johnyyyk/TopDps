@@ -187,10 +187,6 @@ local PRIORITY = {
     },
 }
 
-function Retribution:OnSpellCatalogBuilt()
-    self.artOfWarAuraName = GetSpellInfo(SPELL_IDS.artOfWarAura)
-end
-
 function Retribution:OnEquipmentChanged()
     local t9Count = 0
     local t10Count = 0
@@ -243,7 +239,7 @@ function Retribution:GetReadyEntries(readiness, entries, category, context)
     local index
 
     for index = 1, #entries do
-        if readiness:IsActionReady(entries[index], category, self, context) then
+        if readiness:IsEntryReady(entries[index], category, self, context) then
             anyReady = true
             break
         end
@@ -256,7 +252,7 @@ function Retribution:GetReadyEntries(readiness, entries, category, context)
     for index = 1, #entries do
         local entry = entries[index]
         if readiness:IsEntryInRange(entry, category, self, context)
-            and readiness:IsActionCooldownReady(entry.action) then
+            and readiness:IsSpellCooldownReady(entry) then
             table.insert(readyEntries, entry)
         end
     end
@@ -265,41 +261,20 @@ function Retribution:GetReadyEntries(readiness, entries, category, context)
 end
 
 function Retribution:HasArtOfWarAura()
-    local index
-    for index = 1, 40 do
-        local name, _, _, _, _, _, _, _, _, _, spellId = UnitBuff("player", index)
-        if not name then
-            break
-        end
+    local aura = addon.AuraService:FindAura(
+        "player",
+        { SPELL_IDS.artOfWarAura },
+        "HELPFUL",
+        false
+    )
 
-        if spellId == SPELL_IDS.artOfWarAura
-            or (self.artOfWarAuraName and name == self.artOfWarAuraName) then
-            return true
-        end
-    end
-
-    return false
+    return aura ~= nil
 end
 
 function Retribution:IsTargetInMelee(context)
-    local crusaderActions = context.actionsByCategory.crusaderStrike
     local sawDefiniteOutOfRange = false
-
-    if crusaderActions then
-        local index
-        for index = 1, #crusaderActions do
-            local range = IsActionInRange(crusaderActions[index].action)
-            if range == 1 then
-                return true
-            end
-
-            if range == 0 then
-                sawDefiniteOutOfRange = true
-            end
-        end
-    end
-
     local crusaderName = self.spellNameByCategory.crusaderStrike
+
     if crusaderName and IsSpellInRange then
         local range = IsSpellInRange(crusaderName, "target")
         if range == 1 then
@@ -331,7 +306,7 @@ function Retribution:IsEntryInRange(readiness, entry, category, context)
         return true
     end
 
-    return readiness:IsActionInRange(entry.action)
+    return readiness:IsSpellInRange(entry)
 end
 
 function Retribution:IsUndeadOrDemon()

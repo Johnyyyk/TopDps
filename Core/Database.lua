@@ -1,7 +1,7 @@
 local addon = TopDps
 local Database = addon:CreateModule("Database")
 
-local SCHEMA_VERSION = 4
+local SCHEMA_VERSION = 5
 
 local function IsValueInList(value, list)
     local index
@@ -42,12 +42,30 @@ local function EnsureTable(parent, key)
     return value
 end
 
+local function GetDefaultCooldownPanelVisibility(context)
+    local defaults = addon.DEFAULTS.cooldownPanelVisibility or {}
+    local mode = defaults[context]
+    if IsValueInList(mode, addon.PANEL_VISIBILITY_ORDER) then
+        return mode
+    end
+
+    return addon.PANEL_VISIBILITY_COMBAT_ONLY
+end
+
 local function NormalizeCooldownSpecSettings(settings, template)
-    if type(settings.combatOnly) ~= "boolean" then
-        if type(template.combatOnly) == "boolean" then
-            settings.combatOnly = template.combatOnly
-        else
-            settings.combatOnly = addon.DEFAULTS.cooldownPanelCombatOnly
+    local visibility = EnsureTable(settings, "visibility")
+    local templateVisibility = type(template.visibility) == "table" and template.visibility or {}
+    local index
+
+    for index = 1, #addon.PANEL_VISIBILITY_CONTEXT_ORDER do
+        local context = addon.PANEL_VISIBILITY_CONTEXT_ORDER[index]
+        if not IsValueInList(visibility[context], addon.PANEL_VISIBILITY_ORDER) then
+            local templateMode = templateVisibility[context]
+            if IsValueInList(templateMode, addon.PANEL_VISIBILITY_ORDER) then
+                visibility[context] = templateMode
+            else
+                visibility[context] = GetDefaultCooldownPanelVisibility(context)
+            end
         end
     end
 

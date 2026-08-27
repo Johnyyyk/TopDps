@@ -20,6 +20,22 @@ addon.HIGHLIGHT_STYLE_ORDER = {
     addon.HIGHLIGHT_CHEESE,
 }
 
+addon.HIGHLIGHT_CHANNEL_PRIMARY = "PRIMARY"
+addon.HIGHLIGHT_CHANNEL_NEXT_SWING = "NEXT_SWING"
+addon.HIGHLIGHT_CHANNEL_ORDER = {
+    addon.HIGHLIGHT_CHANNEL_PRIMARY,
+    addon.HIGHLIGHT_CHANNEL_NEXT_SWING,
+}
+addon.HIGHLIGHT_CHANNEL_APPEARANCE = {
+    [addon.HIGHLIGHT_CHANNEL_PRIMARY] = {
+        key = addon.HIGHLIGHT_CHANNEL_PRIMARY,
+    },
+    [addon.HIGHLIGHT_CHANNEL_NEXT_SWING] = {
+        key = addon.HIGHLIGHT_CHANNEL_NEXT_SWING,
+        color = { r = 0.06, g = 0.50, b = 1.00 },
+    },
+}
+
 addon.PANEL_CATEGORY_BUFFS = "BUFFS"
 addon.PANEL_CATEGORY_PROCS = "PROCS"
 addon.PANEL_CATEGORY_ABILITIES = "ABILITIES"
@@ -45,13 +61,30 @@ addon.PANEL_BUFF_SIDE_ORDER = {
     addon.PANEL_BUFF_SIDE_RIGHT,
 }
 
+addon.PANEL_VISIBILITY_ALWAYS = "ALWAYS"
+addon.PANEL_VISIBILITY_COMBAT_ONLY = "COMBAT_ONLY"
+addon.PANEL_VISIBILITY_ORDER = {
+    addon.PANEL_VISIBILITY_ALWAYS,
+    addon.PANEL_VISIBILITY_COMBAT_ONLY,
+}
+
+addon.PANEL_VISIBILITY_CONTEXT_WORLD = "world"
+addon.PANEL_VISIBILITY_CONTEXT_PVE_INSTANCE = "pveInstance"
+addon.PANEL_VISIBILITY_CONTEXT_ORDER = {
+    addon.PANEL_VISIBILITY_CONTEXT_WORLD,
+    addon.PANEL_VISIBILITY_CONTEXT_PVE_INSTANCE,
+}
+
 addon.PANEL_BEHAVIOR_ALWAYS = "ALWAYS"
 addon.PANEL_BEHAVIOR_ACTIVE_ONLY = "ACTIVE_ONLY"
 addon.PANEL_BEHAVIOR_REQUIRED_BUFF = "REQUIRED_BUFF"
 addon.PANEL_BEHAVIOR_SELECTABLE_BUFF = "SELECTABLE_BUFF"
+addon.PANEL_BEHAVIOR_REQUIRED_STATE = "REQUIRED_STATE"
+
+addon.REFRESH_LEAD_CAST_TIME = "CAST_TIME"
 
 addon.COOLDOWN_LOOKAHEAD_MIN = 0
-addon.COOLDOWN_LOOKAHEAD_MAX = 0.5
+addon.COOLDOWN_LOOKAHEAD_MAX = 0.75
 addon.COOLDOWN_LOOKAHEAD_STEP = 0.05
 
 addon.COOLDOWN_PANEL_ICON_SIZE_MIN = 28
@@ -76,18 +109,21 @@ addon.DEFAULTS = {
     minimapAngle = 135,
     mode = addon.MODE_EVERYWHERE,
     highlightStyle = addon.HIGHLIGHT_BLIZZARD,
-    cooldownLookahead = 0.15,
+    cooldownLookahead = 0.5,
     showCenterIcons = false,
     centerIconsOpacity = 0.85,
     centerIconsSize = 58,
     showCooldownPanel = true,
     cooldownProcSoundsEnabled = true,
     cooldownPanelShowTimers = true,
-    cooldownPanelCombatOnly = true,
+    cooldownPanelVisibility = {
+        [addon.PANEL_VISIBILITY_CONTEXT_WORLD] = addon.PANEL_VISIBILITY_COMBAT_ONLY,
+        [addon.PANEL_VISIBILITY_CONTEXT_PVE_INSTANCE] = addon.PANEL_VISIBILITY_ALWAYS,
+    },
     cooldownPanelLocked = true,
     cooldownPanelX = 0,
     cooldownPanelY = -166,
-    cooldownPanelIconSize = 44,
+    cooldownPanelIconSize = 36,
     cooldownPanelOpacity = 0.90,
     cooldownPanelIconGap = 3,
     cooldownPanelGroupGap = 12,
@@ -119,6 +155,7 @@ addon.CENTER_ICON_SIZE_MAX = 96
 
 addon.ACTION_BUTTON_PREFIXES = {
     "ActionButton",
+    "BonusActionButton",
     "MultiBarBottomLeftButton",
     "MultiBarBottomRightButton",
     "MultiBarRightButton",

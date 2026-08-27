@@ -3,7 +3,7 @@ TopDps = TopDps or {}
 local addon = TopDps
 
 addon.NAME = "TopDps"
-addon.VERSION = "2.0.0"
+addon.VERSION = "2.1.0"
 
 -- Установите false, чтобы полностью скрыть страницу отладки из настроек интерфейса.
 addon.SHOW_DEBUG_OPTIONS = true

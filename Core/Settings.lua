@@ -12,6 +12,16 @@ local function IsValueInList(value, list)
     return false
 end
 
+local function GetDefaultCooldownPanelVisibility(context)
+    local defaults = addon.DEFAULTS.cooldownPanelVisibility or {}
+    local mode = defaults[context]
+    if IsValueInList(mode, addon.PANEL_VISIBILITY_ORDER) then
+        return mode
+    end
+
+    return addon.PANEL_VISIBILITY_COMBAT_ONLY
+end
+
 function Settings:IsModeActive()
     if not addon.db then
         return false
@@ -211,6 +221,14 @@ function Settings:IsCooldownProcSoundEnabled(settingId, defaultEnabled, classTok
         return false
     end
 
+    local definition = addon.CooldownRegistry
+        and addon.CooldownRegistry.entriesBySettingId
+        and addon.CooldownRegistry.entriesBySettingId[settingId]
+        or nil
+    if definition and definition.defaultProcSoundEnabled ~= nil then
+        defaultEnabled = definition.defaultProcSoundEnabled == true
+    end
+
     local specSettings = self:GetCooldownPanelSpecSettings(classToken, talentTab)
     if not specSettings then
         return defaultEnabled ~= false
@@ -343,26 +361,60 @@ function Settings:SetCenterIconsSize(size)
     end
 end
 
-function Settings:IsCooldownPanelCombatOnly(classToken, talentTab)
-    local specSettings = self:GetCooldownPanelSpecSettings(classToken, talentTab)
-    if not specSettings then
-        return addon.DEFAULTS.cooldownPanelCombatOnly
+function Settings:ResolveCooldownPanelVisibilityContext()
+    local inInstance, instanceType = IsInInstance()
+    if inInstance and (instanceType == "party" or instanceType == "raid") then
+        return addon.PANEL_VISIBILITY_CONTEXT_PVE_INSTANCE
     end
 
-    return specSettings.combatOnly == true
+    return addon.PANEL_VISIBILITY_CONTEXT_WORLD
 end
 
-function Settings:SetCooldownPanelCombatOnly(combatOnly, classToken, talentTab)
+function Settings:GetCooldownPanelVisibilityMode(context, classToken, talentTab)
+    context = context or self:ResolveCooldownPanelVisibilityContext()
+    if not IsValueInList(context, addon.PANEL_VISIBILITY_CONTEXT_ORDER) then
+        context = addon.PANEL_VISIBILITY_CONTEXT_WORLD
+    end
+
+    local defaultMode = GetDefaultCooldownPanelVisibility(context)
+    local specSettings = self:GetCooldownPanelSpecSettings(classToken, talentTab)
+    if not specSettings or type(specSettings.visibility) ~= "table" then
+        return defaultMode
+    end
+
+    local mode = specSettings.visibility[context]
+    if not IsValueInList(mode, addon.PANEL_VISIBILITY_ORDER) then
+        return defaultMode
+    end
+
+    return mode
+end
+
+function Settings:SetCooldownPanelVisibilityMode(context, mode, classToken, talentTab)
+    if not IsValueInList(context, addon.PANEL_VISIBILITY_CONTEXT_ORDER)
+        or not IsValueInList(mode, addon.PANEL_VISIBILITY_ORDER) then
+        return
+    end
+
     local specSettings = self:GetCooldownPanelSpecSettings(classToken, talentTab)
     if not specSettings then
         return
     end
 
-    specSettings.combatOnly = combatOnly and true or false
+    if type(specSettings.visibility) ~= "table" then
+        specSettings.visibility = {}
+    end
+
+    specSettings.visibility[context] = mode
 
     if addon.OptionsController then
         addon.OptionsController:Refresh()
     end
+end
+
+function Settings:IsCooldownPanelCombatOnly(classToken, talentTab)
+    return self:GetCooldownPanelVisibilityMode(nil, classToken, talentTab)
+        == addon.PANEL_VISIBILITY_COMBAT_ONLY
 end
 
 function Settings:ResetCooldownPanelSpecSettings(classToken, talentTab)
@@ -372,7 +424,14 @@ function Settings:ResetCooldownPanelSpecSettings(classToken, talentTab)
         return
     end
 
-    specSettings.combatOnly = addon.DEFAULTS.cooldownPanelCombatOnly
+    specSettings.visibility = {
+        [addon.PANEL_VISIBILITY_CONTEXT_WORLD] = GetDefaultCooldownPanelVisibility(
+            addon.PANEL_VISIBILITY_CONTEXT_WORLD
+        ),
+        [addon.PANEL_VISIBILITY_CONTEXT_PVE_INSTANCE] = GetDefaultCooldownPanelVisibility(
+            addon.PANEL_VISIBILITY_CONTEXT_PVE_INSTANCE
+        ),
+    }
     specSettings.elementEnabled = {}
     specSettings.elementOrder = {}
     specSettings.procSoundEnabled = {}

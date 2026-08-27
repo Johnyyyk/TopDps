@@ -1,6 +1,14 @@
 local addon = TopDps
 local RotationEngine = addon:CreateModule("RotationEngine")
 
+local function IsPrimaryCategoryAllowed(provider, category, context)
+    return provider:IsCategoryAllowed(category, context)
+end
+
+local function IsNextSwingCategoryAllowed(provider, category, context)
+    return provider:IsNextSwingCategoryAllowed(category, context)
+end
+
 function RotationEngine:GetAvailability(provider)
     if not addon.Settings:IsRotationEnabled() then
         return false, "rotation_disabled"
@@ -42,6 +50,27 @@ function RotationEngine:GetAvailability(provider)
     return true, "active"
 end
 
+function RotationEngine:GetReadyRecommendation(provider, priority, abilitiesByCategory, context, isCategoryAllowed)
+    local index
+
+    for index = 1, #(priority or {}) do
+        local category = priority[index]
+        local entries = abilitiesByCategory[category]
+
+        if entries
+            and provider:IsCategoryEnabled(category)
+            and addon.RefreshService:IsCategoryRefreshDue(provider, category, context)
+            and isCategoryAllowed(provider, category, context) then
+            local readyEntries = addon.ReadinessService:GetReadyEntries(entries, category, provider, context)
+            if #readyEntries > 0 then
+                return category, readyEntries
+            end
+        end
+    end
+
+    return nil, nil
+end
+
 function RotationEngine:UpdateRecommendation()
     local provider = addon.SpecManager:GetActive()
     local canRun, blockReason = self:GetAvailability(provider)
@@ -52,34 +81,58 @@ function RotationEngine:UpdateRecommendation()
         return
     end
 
-    local actionsByCategory = addon.ActionBarService:CollectVisibleActions(provider)
-    local context = addon.ContextBuilder:Build(provider, actionsByCategory)
-    local priority = provider:GetPriority(context)
-    local actionSummary = addon.ActionBarService:BuildActionSummary(provider, actionsByCategory)
-    local index
+    local abilitiesByCategory = addon.AbilityService:GetAbilities(provider)
+    local context = addon.ContextBuilder:Build(provider, abilitiesByCategory)
+    local abilitySummary = addon.AbilityService:BuildAbilitySummary(provider, abilitiesByCategory)
 
-    for index = 1, #priority do
-        local category = priority[index]
-        local entries = actionsByCategory[category]
+    local primaryCategory, primaryEntries = self:GetReadyRecommendation(
+        provider,
+        provider:GetPriority(context),
+        abilitiesByCategory,
+        context,
+        IsPrimaryCategoryAllowed
+    )
 
-        if entries
-            and provider:IsCategoryEnabled(category)
-            and provider:IsCategoryAllowed(category, context) then
-            local readyEntries = addon.ReadinessService:GetReadyEntries(entries, category, provider, context)
-            if #readyEntries > 0 then
-                addon.Logger:SetRotationState(
-                    "recommend:" .. category
-                        .. "; enemies=" .. tostring(context.enemyCount)
-                        .. "; " .. actionSummary
-                )
-                addon.RecommendationPresenter:Set(provider, category, readyEntries)
-                return
-            end
-        end
+    local queuedNextSwingCategory = addon.SwingService:GetQueuedNextSwingCategory(provider)
+    local nextSwingCategory
+    local nextSwingEntries
+
+    if not queuedNextSwingCategory then
+        nextSwingCategory, nextSwingEntries = self:GetReadyRecommendation(
+            provider,
+            provider:GetNextSwingPriority(context),
+            abilitiesByCategory,
+            context,
+            IsNextSwingCategoryAllowed
+        )
+    end
+
+    if primaryEntries then
+        addon.RecommendationPresenter:Set(provider, primaryCategory, primaryEntries)
+    else
+        addon.RecommendationPresenter:ClearPrimary()
+    end
+
+    if nextSwingEntries then
+        addon.RecommendationPresenter:SetNextSwing(provider, nextSwingCategory, nextSwingEntries)
+    else
+        addon.RecommendationPresenter:ClearNextSwing()
+    end
+
+    local primaryState = primaryCategory and ("recommend:" .. primaryCategory) or "no_ready_action"
+    local nextSwingState
+    if queuedNextSwingCategory then
+        nextSwingState = "queued:" .. queuedNextSwingCategory
+    elseif nextSwingCategory then
+        nextSwingState = "recommend:" .. nextSwingCategory
+    else
+        nextSwingState = "no_ready_action"
     end
 
     addon.Logger:SetRotationState(
-        "no_ready_action; enemies=" .. tostring(context.enemyCount) .. "; " .. actionSummary
+        "primary=" .. primaryState
+            .. "; next_swing=" .. nextSwingState
+            .. "; enemies=" .. tostring(context.enemyCount)
+            .. "; abilities=" .. abilitySummary
     )
-    addon.RecommendationPresenter:Clear()
 end

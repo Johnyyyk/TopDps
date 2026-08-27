@@ -5,6 +5,8 @@ CooldownRegistry.definitions = CooldownRegistry.definitions or {}
 CooldownRegistry.profiles = CooldownRegistry.profiles or {}
 CooldownRegistry.profilesByKey = CooldownRegistry.profilesByKey or {}
 CooldownRegistry.entriesBySettingId = CooldownRegistry.entriesBySettingId or {}
+CooldownRegistry.applicabilityErrors = CooldownRegistry.applicabilityErrors or {}
+CooldownRegistry.applicabilityStates = CooldownRegistry.applicabilityStates or {}
 
 addon.COOLDOWN_GROUP_OFFENSIVE = "OFFENSIVE"
 addon.COOLDOWN_GROUP_DEFENSIVE = "DEFENSIVE"
@@ -30,6 +32,7 @@ local SUPPORTED_TYPES = {
     spell = true,
     aura = true,
     counter = true,
+    state = true,
 }
 
 local SUPPORTED_PANEL_CATEGORIES = {
@@ -44,6 +47,7 @@ local SUPPORTED_PANEL_BEHAVIORS = {
     [addon.PANEL_BEHAVIOR_ACTIVE_ONLY] = true,
     [addon.PANEL_BEHAVIOR_REQUIRED_BUFF] = true,
     [addon.PANEL_BEHAVIOR_SELECTABLE_BUFF] = true,
+    [addon.PANEL_BEHAVIOR_REQUIRED_STATE] = true,
 }
 
 local DEFAULT_PRESENTATION_BY_GROUP = {
@@ -107,12 +111,33 @@ local function ValidateCounterEntry(entry)
     end
 end
 
+local function ValidateStateEntry(entry)
+    if type(entry.getState) ~= "function" then
+        error("TopDps: state panel entry requires getState")
+    end
+end
+
 local function ResolveDefaultPresentation(group)
     return DEFAULT_PRESENTATION_BY_GROUP[group]
         or {
             category = addon.PANEL_CATEGORY_ABILITIES,
             behavior = addon.PANEL_BEHAVIOR_ALWAYS,
         }
+end
+
+local function ResolveEntryDefaults(entry)
+    if entry.type == "state" then
+        entry.group = entry.group or addon.COOLDOWN_GROUP_STATES
+        entry.panelCategory = entry.panelCategory or addon.PANEL_CATEGORY_BUFFS
+        entry.panelBehavior = entry.panelBehavior or addon.PANEL_BEHAVIOR_REQUIRED_STATE
+        return
+    end
+
+    entry.group = entry.group or addon.COOLDOWN_GROUP_UTILITY
+
+    local defaultPresentation = ResolveDefaultPresentation(entry.group)
+    entry.panelCategory = entry.panelCategory or defaultPresentation.category
+    entry.panelBehavior = entry.panelBehavior or defaultPresentation.behavior
 end
 
 local function ValidateEntry(definition, entry)
@@ -128,24 +153,34 @@ local function ValidateEntry(definition, entry)
         error("TopDps: unsupported panel entry type: " .. tostring(entry.type))
     end
 
+    if entry.isApplicable ~= nil and type(entry.isApplicable) ~= "function" then
+        error("TopDps: panel entry isApplicable must be a function")
+    end
+
+    if entry.applicabilityGrace ~= nil then
+        entry.applicabilityGrace = tonumber(entry.applicabilityGrace)
+        if not entry.applicabilityGrace or entry.applicabilityGrace < 0 then
+            error("TopDps: panel entry applicabilityGrace must be a non-negative number")
+        end
+    end
+
     if entry.type == "spell" then
         ValidateSpellEntry(entry)
     elseif entry.type == "aura" then
         ValidateAuraEntry(entry)
     elseif entry.type == "counter" then
         ValidateCounterEntry(entry)
+    elseif entry.type == "state" then
+        ValidateStateEntry(entry)
     end
 
     entry.classToken = definition.classToken
     entry.talentTab = definition.talentTab
-    entry.group = entry.group or addon.COOLDOWN_GROUP_UTILITY
     entry.order = tonumber(entry.order) or 100
     entry.defaultEnabled = entry.defaultEnabled ~= false
     entry.settingId = definition.classToken .. ":" .. (definition.talentTab or "ALL") .. ":" .. entry.id
 
-    local defaultPresentation = ResolveDefaultPresentation(entry.group)
-    entry.panelCategory = entry.panelCategory or defaultPresentation.category
-    entry.panelBehavior = entry.panelBehavior or defaultPresentation.behavior
+    ResolveEntryDefaults(entry)
 
     if not SUPPORTED_PANEL_CATEGORIES[entry.panelCategory] then
         error("TopDps: unsupported panel category: " .. tostring(entry.panelCategory))
@@ -261,6 +296,61 @@ function CooldownRegistry:GetPanelPresentation(entry)
 
     local defaultPresentation = ResolveDefaultPresentation(entry.group)
     return defaultPresentation.category, defaultPresentation.behavior
+end
+
+function CooldownRegistry:IsEntryApplicable(entry)
+    if not entry or not entry.settingId then
+        return true
+    end
+
+    local definition = self.entriesBySettingId[entry.settingId]
+    if not definition or not definition.isApplicable then
+        self.applicabilityErrors[entry.settingId] = nil
+        self.applicabilityStates[entry.settingId] = nil
+        return true
+    end
+
+    local ok, rawApplicable = pcall(definition.isApplicable, definition)
+    if not ok or type(rawApplicable) ~= "boolean" then
+        local message = ok and "isApplicable must return boolean" or tostring(rawApplicable)
+        if self.applicabilityErrors[entry.settingId] ~= message then
+            self.applicabilityErrors[entry.settingId] = message
+            addon.Logger:Error("Panel applicability %s: %s", tostring(entry.settingId), message)
+        end
+
+        self.applicabilityStates[entry.settingId] = nil
+        return false
+    end
+
+    self.applicabilityErrors[entry.settingId] = nil
+
+    local state = self.applicabilityStates[entry.settingId]
+    if not state then
+        self.applicabilityStates[entry.settingId] = {
+            rawApplicable = rawApplicable,
+        }
+        return rawApplicable
+    end
+
+    if state.rawApplicable ~= rawApplicable then
+        state.rawApplicable = rawApplicable
+        state.applicableSince = rawApplicable and GetTime() or nil
+    end
+
+    if not rawApplicable then
+        return false
+    end
+
+    local grace = definition.applicabilityGrace or 0
+    if grace > 0 and state.applicableSince then
+        if GetTime() - state.applicableSince < grace then
+            return false
+        end
+
+        state.applicableSince = nil
+    end
+
+    return true
 end
 
 function CooldownRegistry:GetEntries(classToken, talentTab)

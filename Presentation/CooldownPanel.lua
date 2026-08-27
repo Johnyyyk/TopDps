@@ -160,8 +160,14 @@ function CooldownPanel:CreateIcon(index)
             end
         end
 
-        if self.isMissingBuff then
-            GameTooltip:AddLine(addon.L.COOLDOWN_REQUIRED_BUFF_MISSING, 1, 0.25, 0.15)
+        if self.isMissingRequirement then
+            local _, behavior = CooldownPanel:GetPresentation(entry)
+            local message = addon.L.COOLDOWN_REQUIRED_BUFF_MISSING
+            if behavior == addon.PANEL_BEHAVIOR_REQUIRED_STATE then
+                message = addon.L.COOLDOWN_REQUIRED_STATE_MISSING
+            end
+
+            GameTooltip:AddLine(message, 1, 0.25, 0.15)
         end
 
         GameTooltip:Show()
@@ -213,7 +219,7 @@ function CooldownPanel:SetEntries(entries)
         icon.frame.stateSpellId = nil
         icon.frame.stateUnitName = nil
         icon.frame.stateBlockerSpellId = nil
-        icon.frame.isMissingBuff = false
+        icon.frame.isMissingRequirement = false
         icon.texture:SetTexture(entry.icon or "Interface\\Icons\\INV_Misc_QuestionMark")
         self:ResetIconVisualCache(icon)
         icon.frame:Show()
@@ -226,7 +232,7 @@ function CooldownPanel:SetEntries(entries)
         icon.frame.stateSpellId = nil
         icon.frame.stateUnitName = nil
         icon.frame.stateBlockerSpellId = nil
-        icon.frame.isMissingBuff = false
+        icon.frame.isMissingRequirement = false
         icon.accent:Hide()
         self:ResetIconVisualCache(icon)
     end
@@ -276,10 +282,6 @@ function CooldownPanel:Show()
 end
 
 function CooldownPanel:Hide()
-    if addon.ProcSoundAlerts then
-        addon.ProcSoundAlerts:Reset()
-    end
-
     if self.frame and self.frame:IsShown() then
         self.frame:Hide()
     end

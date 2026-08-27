@@ -4,6 +4,11 @@ local L = addon.L
 if GetLocale() == "ruRU" then
     L.COOLDOWN_DESCRIPTION = "Компактная боевая панель: обязательные бафы, активные проки, защитные и вспомогательные способности, трини и дополнительные КД."
     L.COOLDOWN_PANEL_SPEC_VISUALS = "Отображение выбранной специализации"
+    L.COOLDOWN_PANEL_VISIBILITY = "Видимость панели"
+    L.COOLDOWN_PANEL_VISIBILITY_WORLD = "В открытом мире"
+    L.COOLDOWN_PANEL_VISIBILITY_PVE_INSTANCE = "В подземельях и рейдах"
+    L.COOLDOWN_PANEL_VISIBILITY_ALWAYS = "Всегда"
+    L.COOLDOWN_PANEL_VISIBILITY_COMBAT_ONLY = "Только в бою"
     L.COOLDOWN_PANEL_SHOW_TIMERS = "Показывать таймеры"
     L.COOLDOWN_PANEL_ICON_SIZE = "Базовый размер иконок: %d"
     L.COOLDOWN_PANEL_ICON_GAP = "Расстояние между иконками: %d"
@@ -18,9 +23,15 @@ if GetLocale() == "ruRU" then
     L.PANEL_CATEGORY_ABILITIES = "Защита и утилити"
     L.PANEL_CATEGORY_COOLDOWNS = "Трини и дополнительные КД"
     L.COOLDOWN_REQUIRED_BUFF_MISSING = "Обязательный баф отсутствует"
+    L.COOLDOWN_REQUIRED_STATE_MISSING = "Требуемое состояние не выполнено"
 else
     L.COOLDOWN_DESCRIPTION = "A compact combat panel for required buffs, active procs, defensive and utility abilities, trinkets, and additional cooldowns."
     L.COOLDOWN_PANEL_SPEC_VISUALS = "Selected specialization display"
+    L.COOLDOWN_PANEL_VISIBILITY = "Panel visibility"
+    L.COOLDOWN_PANEL_VISIBILITY_WORLD = "Open world"
+    L.COOLDOWN_PANEL_VISIBILITY_PVE_INSTANCE = "Dungeons and raids"
+    L.COOLDOWN_PANEL_VISIBILITY_ALWAYS = "Always"
+    L.COOLDOWN_PANEL_VISIBILITY_COMBAT_ONLY = "Combat only"
     L.COOLDOWN_PANEL_SHOW_TIMERS = "Show timers"
     L.COOLDOWN_PANEL_ICON_SIZE = "Base icon size: %d"
     L.COOLDOWN_PANEL_ICON_GAP = "Icon spacing: %d"
@@ -35,4 +46,5 @@ else
     L.PANEL_CATEGORY_ABILITIES = "Defense and utility"
     L.PANEL_CATEGORY_COOLDOWNS = "Trinkets and additional cooldowns"
     L.COOLDOWN_REQUIRED_BUFF_MISSING = "Required buff is missing"
+    L.COOLDOWN_REQUIRED_STATE_MISSING = "Required state is not satisfied"
 end

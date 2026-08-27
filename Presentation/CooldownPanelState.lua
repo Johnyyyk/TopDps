@@ -18,9 +18,10 @@ local function FormatRemaining(remaining)
     return string.format("%.1f", remaining)
 end
 
-function CooldownPanel:IsMissingBuff(entry, state)
+function CooldownPanel:IsMissingRequirement(entry, state)
     local _, behavior = self:GetPresentation(entry)
     if behavior ~= addon.PANEL_BEHAVIOR_REQUIRED_BUFF
+        and behavior ~= addon.PANEL_BEHAVIOR_REQUIRED_STATE
         and behavior ~= addon.PANEL_BEHAVIOR_SELECTABLE_BUFF then
         return false
     end
@@ -29,11 +30,11 @@ function CooldownPanel:IsMissingBuff(entry, state)
 end
 
 function CooldownPanel:UpdateAccent(icon, entry, state)
-    local missingBuff = self:IsMissingBuff(entry, state)
+    local missingRequirement = self:IsMissingRequirement(entry, state)
     local visualGroup = self:ResolveVisualGroup(entry, state, addon.db.panel.locked == false)
-    icon.frame.isMissingBuff = missingBuff
+    icon.frame.isMissingRequirement = missingRequirement
 
-    if missingBuff then
+    if missingRequirement then
         local pulse = 0.55 + 0.35 * math.abs(math.sin(GetTime() * 4))
         icon.accent:SetVertexColor(1, 0.15, 0.08)
         icon.accent:SetAlpha(pulse)
@@ -65,8 +66,8 @@ function CooldownPanel:UpdateIcon(icon, state)
     local isActive = state.state == "ACTIVE"
     local isInactive = state.state == "INACTIVE"
     local isBlocked = state.state == "BLOCKED"
-    local missingBuff = self:IsMissingBuff(entry, state)
-    local desaturated = (isCooldown or isInactive or isBlocked) and not missingBuff
+    local missingRequirement = self:IsMissingRequirement(entry, state)
+    local desaturated = (isCooldown or isInactive or isBlocked) and not missingRequirement
     local texture = state.icon
         or entry.icon
         or "Interface\\Icons\\INV_Misc_QuestionMark"
@@ -125,7 +126,7 @@ function CooldownPanel:UpdateIcon(icon, state)
         end
     end
 
-    if missingBuff and stackText == "" then
+    if missingRequirement and stackText == "" then
         stackText = "!"
     end
 

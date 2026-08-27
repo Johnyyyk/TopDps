@@ -5,8 +5,26 @@ CheeseHighlight.unused = CheeseHighlight.unused or {}
 CheeseHighlight.active = CheeseHighlight.active or {}
 CheeseHighlight.count = CheeseHighlight.count or 0
 
+local ICON_ALERT_TEXTURE = "Interface\\AddOns\\TopDps\\Textures\\Cheese\\IconAlert"
+local ICON_ALERT_ANTS_TEXTURE = "Interface\\AddOns\\TopDps\\Textures\\Cheese\\IconAlertAnts"
+local ICON_ALERT_NEXT_SWING_TEXTURE = "Interface\\AddOns\\TopDps\\Textures\\Cheese\\IconAlertNextSwing"
+local ICON_ALERT_ANTS_NEXT_SWING_TEXTURE = "Interface\\AddOns\\TopDps\\Textures\\Cheese\\IconAlertAntsNextSwing"
+
 local function IsAnimPlaying(self)
     return self.isPlaying
+end
+
+local function ApplyOverlayTextures(overlay, appearance)
+    local isNextSwing = appearance and appearance.key == addon.HIGHLIGHT_CHANNEL_NEXT_SWING
+    local iconAlertTexture = isNextSwing and ICON_ALERT_NEXT_SWING_TEXTURE or ICON_ALERT_TEXTURE
+    local antsTexture = isNextSwing and ICON_ALERT_ANTS_NEXT_SWING_TEXTURE or ICON_ALERT_ANTS_TEXTURE
+
+    overlay.spark:SetTexture(iconAlertTexture)
+    overlay.innerGlow:SetTexture(iconAlertTexture)
+    overlay.innerGlowOver:SetTexture(iconAlertTexture)
+    overlay.outerGlow:SetTexture(iconAlertTexture)
+    overlay.outerGlowOver:SetTexture(iconAlertTexture)
+    overlay.ants:SetTexture(antsTexture)
 end
 
 local function ApplySteadyGlow(overlay)
@@ -78,13 +96,14 @@ function CheeseHighlight:GetOverlay()
     return overlay
 end
 
-function CheeseHighlight:Show(button)
+function CheeseHighlight:Show(button, appearance)
     local overlay = button.topDpsCheeseOverlay
     if overlay then
         if overlay.animOut:IsPlaying() then
             overlay.animOut:Stop()
         end
 
+        ApplyOverlayTextures(overlay, appearance)
         ApplySteadyGlow(overlay)
         return overlay
     end
@@ -100,6 +119,7 @@ function CheeseHighlight:Show(button)
     overlay:SetSize(frameWidth * 1.4, frameHeight * 1.4)
     overlay:SetPoint("TOPLEFT", button, "TOPLEFT", -frameWidth * 0.2, frameHeight * 0.2)
     overlay:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", frameWidth * 0.2, -frameHeight * 0.2)
+    ApplyOverlayTextures(overlay, appearance)
     ApplySteadyGlow(overlay)
 
     return overlay

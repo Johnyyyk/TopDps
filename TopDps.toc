@@ -3,7 +3,7 @@
 ## Notes: Расширяемый помощник приоритетов для WoW 3.3.5a
 ## Notes-ruRU: Расширяемый помощник приоритетов для WoW 3.3.5a
 ## Author: Johnyyyk
-## Version: 2.0.0
+## Version: 2.1.0
 ## SavedVariables: TopDpsDB
 ## SavedVariablesPerCharacter: TopDpsCharDB
 
@@ -14,9 +14,20 @@ Localization.lua
 LocalizationPanel.lua
 LocalizationPanelExtra.lua
 LocalizationFeatureSettings.lua
+LocalizationDeathKnight.lua
+LocalizationDruid.lua
+LocalizationHunter.lua
+LocalizationMage.lua
+LocalizationPriest.lua
+LocalizationRogue.lua
+LocalizationShaman.lua
+LocalizationWarlock.lua
+LocalizationWarlockAffliction.lua
+LocalizationWarrior.lua
 Core\GameApi.lua
 Core\Logger.lua
 Core\Settings.lua
+Core\ExperimentalFeatures.lua
 Core\PanelSettings.lua
 Core\PanelSettingsRows.lua
 
@@ -24,9 +35,19 @@ Cooldowns\CooldownRegistry.lua
 Cooldowns\TrinketDatabase.lua
 Cooldowns\EquipmentProcDatabase.lua
 
+Engine\AuraService.lua
+Engine\EffectService.lua
+Engine\UnitStateService.lua
+Engine\CastService.lua
+Engine\SwingService.lua
+Engine\EquipmentSetService.lua
+Engine\EquipmentService.lua
+Engine\RefreshService.lua
 Engine\ActionBarService.lua
+Engine\AbilityService.lua
 Engine\ReadinessService.lua
 Engine\CombatTracker.lua
+Engine\TimeToDieService.lua
 Engine\ContextBuilder.lua
 Engine\RotationEngine.lua
 Engine\CooldownTracker.lua
@@ -50,12 +71,63 @@ Presentation\CooldownPanelState.lua
 Presentation\ProcSoundAlerts.lua
 
 # TopDps-Specs-Start
+Specs\DeathKnight\Common.lua
+Specs\DeathKnight\Blood.lua
+Specs\DeathKnight\Frost.lua
+Specs\DeathKnight\Unholy.lua
+Specs\Druid\Common.lua
+Specs\Druid\Balance.lua
+Specs\Druid\Feral.lua
+Specs\Hunter\Common.lua
+Specs\Hunter\BeastMastery.lua
+Specs\Hunter\Marksmanship.lua
+Specs\Hunter\Survival.lua
+Specs\Mage\Common.lua
+Specs\Mage\Arcane.lua
+Specs\Mage\Fire.lua
+Specs\Mage\Frost.lua
 Specs\Paladin\Common.lua
 Specs\Paladin\Retribution.lua
+Specs\Priest\Common.lua
+Specs\Priest\Shadow.lua
+Specs\Rogue\Common.lua
+Specs\Rogue\Assassination.lua
+Specs\Rogue\Combat.lua
+Specs\Rogue\Subtlety.lua
+Specs\Shaman\Common.lua
+Specs\Shaman\Elemental.lua
+Specs\Shaman\Enhancement.lua
+Specs\Warlock\Common.lua
+Specs\Warlock\Affliction.lua
+Specs\Warlock\Demonology.lua
+Specs\Warlock\Destruction.lua
+Specs\Warrior\Common.lua
+Specs\Warrior\Arms.lua
+Specs\Warrior\Fury.lua
 # TopDps-Specs-End
 
+Cooldowns\DeathKnight.lua
+Cooldowns\DeathKnightDefaults.lua
+Cooldowns\Druid.lua
+Cooldowns\DruidDefaults.lua
+Cooldowns\Hunter.lua
+Cooldowns\HunterDefaults.lua
+Cooldowns\Mage.lua
+Cooldowns\MageDefaults.lua
 Cooldowns\Paladin.lua
 Cooldowns\PaladinDefaults.lua
+Cooldowns\Priest.lua
+Cooldowns\PriestDefaults.lua
+Cooldowns\Rogue.lua
+Cooldowns\RogueDefaults.lua
+Cooldowns\Shaman.lua
+Cooldowns\ShamanDefaults.lua
+Cooldowns\Warlock.lua
+Cooldowns\WarlockAffliction.lua
+Cooldowns\WarlockDefaults.lua
+Cooldowns\WarlockAfflictionDefaults.lua
+Cooldowns\Warrior.lua
+Cooldowns\WarriorDefaults.lua
 
 UI\OptionsWidgets.lua
 UI\OptionsLayout.lua

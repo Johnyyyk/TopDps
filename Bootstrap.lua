@@ -72,6 +72,14 @@ function Bootstrap:RetrySpecializationDetection()
     self:HandleSpecializationChanged(reason, true)
 end
 
+function Bootstrap:UpdateCooldownPanel()
+    if addon.ProcSoundAlerts then
+        addon.ProcSoundAlerts:UpdateWhilePanelHidden()
+    end
+
+    addon.CooldownTracker:Update()
+end
+
 function Bootstrap:Initialize()
     if self.initialized then
         return
@@ -115,6 +123,10 @@ function Bootstrap:HandleEvent(event, ...)
     end
 
     if event == "PLAYER_EQUIPMENT_CHANGED" then
+        if addon.EquipmentService then
+            addon.EquipmentService:ScheduleTemporaryEnchantRefresh()
+        end
+
         addon.SpecManager:RefreshEquipment()
         addon.CooldownTracker:RefreshConfiguration()
 
@@ -125,11 +137,21 @@ function Bootstrap:HandleEvent(event, ...)
             tostring(provider and provider.id or "none"),
             providerState and ("; " .. tostring(providerState)) or ""
         )
+    elseif event == "UNIT_INVENTORY_CHANGED" then
+        local unit = ...
+        if addon.EquipmentService then
+            addon.EquipmentService:HandleUnitInventoryChanged(unit)
+        end
     elseif event == "PLAYER_REGEN_ENABLED" then
         addon.CombatTracker:Clear()
+        addon.SwingService:Clear()
         addon.RecommendationPresenter:Clear()
     elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
         addon.CombatTracker:RecordCombatEvent(...)
+        addon.SwingService:RecordCombatEvent(...)
+    elseif event == "UNIT_ATTACK_SPEED" then
+        local unit = ...
+        addon.SwingService:HandleAttackSpeedChanged(unit)
     elseif event == "UNIT_AURA" then
         local unit = ...
         addon.CooldownTracker:HandleUnitAura(unit)
@@ -175,6 +197,8 @@ local EVENTS = {
     "UPDATE_SHAPESHIFT_FORM",
     "UNIT_AURA",
     "UNIT_FLAGS",
+    "UNIT_INVENTORY_CHANGED",
+    "UNIT_ATTACK_SPEED",
     "PARTY_MEMBERS_CHANGED",
     "RAID_ROSTER_UPDATE",
     "PLAYER_REGEN_ENABLED",
@@ -220,10 +244,10 @@ eventFrame:SetScript("OnUpdate", function(_, elapsed)
             addon.RotationEngine:UpdateRecommendation()
         end)
         addon.Logger:SafeCall("UpdateCooldownPanel", function()
-            addon.CooldownTracker:Update()
+            Bootstrap:UpdateCooldownPanel()
         end)
     else
         addon.RotationEngine:UpdateRecommendation()
-        addon.CooldownTracker:Update()
+        Bootstrap:UpdateCooldownPanel()
     end
 end)

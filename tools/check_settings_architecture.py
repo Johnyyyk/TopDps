@@ -35,6 +35,8 @@ FORBIDDEN_PATTERNS = {
     r"\baddon\.db\.debugChatRecommendations\b": "используйте addon.db.debug.chatRecommendations",
     r"\baddon\.db\.debugLogging\b": "используйте addon.db.debug.logging",
     r"\baddon\.db\.debugLog\b": "используйте addon.db.debug.log",
+    r"\.combatOnly\b": "legacy combatOnly удалён; используйте panel.visibility",
+    r"\bcooldownPanelCombatOnly\b": "legacy cooldownPanelCombatOnly удалён; используйте cooldownPanelVisibility",
     r"\bRpalTopDpsDB\b": "legacy SavedVariables больше не поддерживается",
     r"\bCreateDbCompatibilityProxy\b": "compatibility proxy удалён",
     r"\bMigrate(?:GlobalSettings|SpecSettings|CooldownSettings)\b": "миграции старой БД удалены",
