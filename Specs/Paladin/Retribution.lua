@@ -239,7 +239,7 @@ function Retribution:GetReadyEntries(readiness, entries, category, context)
     local index
 
     for index = 1, #entries do
-        if readiness:IsActionReady(entries[index], category, self, context) then
+        if readiness:IsEntryReady(entries[index], category, self, context) then
             anyReady = true
             break
         end
@@ -252,7 +252,7 @@ function Retribution:GetReadyEntries(readiness, entries, category, context)
     for index = 1, #entries do
         local entry = entries[index]
         if readiness:IsEntryInRange(entry, category, self, context)
-            and readiness:IsActionCooldownReady(entry.action) then
+            and readiness:IsSpellCooldownReady(entry) then
             table.insert(readyEntries, entry)
         end
     end
@@ -272,24 +272,9 @@ function Retribution:HasArtOfWarAura()
 end
 
 function Retribution:IsTargetInMelee(context)
-    local crusaderActions = context.actionsByCategory.crusaderStrike
     local sawDefiniteOutOfRange = false
-
-    if crusaderActions then
-        local index
-        for index = 1, #crusaderActions do
-            local range = IsActionInRange(crusaderActions[index].action)
-            if range == 1 then
-                return true
-            end
-
-            if range == 0 then
-                sawDefiniteOutOfRange = true
-            end
-        end
-    end
-
     local crusaderName = self.spellNameByCategory.crusaderStrike
+
     if crusaderName and IsSpellInRange then
         local range = IsSpellInRange(crusaderName, "target")
         if range == 1 then
@@ -321,7 +306,7 @@ function Retribution:IsEntryInRange(readiness, entry, category, context)
         return true
     end
 
-    return readiness:IsActionInRange(entry.action)
+    return readiness:IsSpellInRange(entry)
 end
 
 function Retribution:IsUndeadOrDemon()

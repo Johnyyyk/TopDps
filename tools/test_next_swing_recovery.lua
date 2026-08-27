@@ -43,14 +43,14 @@ TopDps.SpecManager = {
     GetActive = function() return provider end,
 }
 
-local heroicStrikeEntry = { action = 11, button = {} }
-local actions = {
+local heroicStrikeEntry = { spellId = 47450, spellName = "Heroic Strike" }
+local abilities = {
     heroicStrike = { heroicStrikeEntry },
 }
 
-TopDps.ActionBarService = {
-    CollectVisibleActions = function() return actions end,
-    BuildActionSummary = function() return "heroicStrike=1" end,
+TopDps.AbilityService = {
+    GetAbilities = function() return abilities end,
+    BuildAbilitySummary = function() return "heroicStrike=1" end,
 }
 
 TopDps.ContextBuilder = {

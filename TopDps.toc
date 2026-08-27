@@ -43,6 +43,7 @@ Engine\EquipmentSetService.lua
 Engine\EquipmentService.lua
 Engine\RefreshService.lua
 Engine\ActionBarService.lua
+Engine\AbilityService.lua
 Engine\ReadinessService.lua
 Engine\CombatTracker.lua
 Engine\TimeToDieService.lua

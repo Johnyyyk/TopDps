@@ -178,18 +178,17 @@ local function TestBlizzardChannelColor()
     AssertNear(startCalls[2][3], 1.00, 0.0001, "Blizzard next-swing blue channel")
 end
 
-local function TestCheeseChannelColor()
+local function TestCheeseChannelTextures()
     TopDps = NewAddon()
+    TopDps.HIGHLIGHT_CHANNEL_NEXT_SWING = "NEXT_SWING"
     UIParent = {}
 
     local function NewTexture()
         return {
             SetAlpha = function() end,
             SetSize = function() end,
-            SetVertexColor = function(self, red, green, blue)
-                self.red = red
-                self.green = green
-                self.blue = blue
+            SetTexture = function(self, texture)
+                self.texture = texture
             end,
         }
     end
@@ -231,20 +230,24 @@ local function TestCheeseChannelColor()
         IsVisible = function() return true end,
     }
 
+    local baseTexture = "Interface\\AddOns\\TopDps\\Textures\\Cheese\\IconAlert"
+    local baseAntsTexture = "Interface\\AddOns\\TopDps\\Textures\\Cheese\\IconAlertAnts"
+    local nextSwingTexture = "Interface\\AddOns\\TopDps\\Textures\\Cheese\\IconAlertNextSwing"
+    local nextSwingAntsTexture = "Interface\\AddOns\\TopDps\\Textures\\Cheese\\IconAlertAntsNextSwing"
+
     dofile("Vendor/Cheese/CheeseGlow.lua")
 
-    TopDps.CheeseHighlight:Show(button, {
-        key = "NEXT_SWING",
-        color = { r = 0.35, g = 0.80, b = 1.00 },
-    })
-    AssertNear(overlay.outerGlow.red, 0.35, 0.0001, "Cheese next-swing red channel")
-    AssertNear(overlay.outerGlow.green, 0.80, 0.0001, "Cheese next-swing green channel")
-    AssertNear(overlay.outerGlow.blue, 1.00, 0.0001, "Cheese next-swing blue channel")
+    TopDps.CheeseHighlight:Show(button, { key = "NEXT_SWING" })
+    AssertEqual(overlay.spark.texture, nextSwingTexture, "Cheese next-swing uses dedicated spark texture")
+    AssertEqual(overlay.innerGlow.texture, nextSwingTexture, "Cheese next-swing uses dedicated inner glow texture")
+    AssertEqual(overlay.innerGlowOver.texture, nextSwingTexture, "Cheese next-swing uses dedicated inner glow over texture")
+    AssertEqual(overlay.outerGlow.texture, nextSwingTexture, "Cheese next-swing uses dedicated outer glow texture")
+    AssertEqual(overlay.outerGlowOver.texture, nextSwingTexture, "Cheese next-swing uses dedicated outer glow over texture")
+    AssertEqual(overlay.ants.texture, nextSwingAntsTexture, "Cheese next-swing uses dedicated ants texture")
 
     TopDps.CheeseHighlight:Show(button, { key = "PRIMARY" })
-    AssertNear(overlay.outerGlow.red, 1.00, 0.0001, "Cheese primary resets red channel")
-    AssertNear(overlay.outerGlow.green, 1.00, 0.0001, "Cheese primary resets green channel")
-    AssertNear(overlay.outerGlow.blue, 1.00, 0.0001, "Cheese primary resets blue channel")
+    AssertEqual(overlay.outerGlow.texture, baseTexture, "Cheese primary restores original glow texture")
+    AssertEqual(overlay.ants.texture, baseAntsTexture, "Cheese primary restores original ants texture")
 end
 
 local function TestRecommendationPresenterKeepsCenterIconsPrimaryOnly()
@@ -257,6 +260,11 @@ local function TestRecommendationPresenterKeepsCenterIconsPrimaryOnly()
             table.insert(highlightCalls, { channel = channel, entries = entries })
         end,
         Refresh = function() end,
+    }
+    TopDps.ActionBarService = {
+        FindVisibleActions = function(_, _, _, entries)
+            return entries
+        end,
     }
 
     local centerShows = 0
@@ -378,20 +386,20 @@ local function TestRotationEngineChannels()
     }
     TopDps.SpecManager = { GetActive = function() return provider end }
 
-    local primaryEntry = { action = 1, button = {} }
-    local primaryEntry2 = { action = 4, button = {} }
-    local nextEntryA = { action = 2, button = {} }
-    local nextEntryB = { action = 3, button = {} }
-    local actions = {
+    local primaryEntry = { spellId = 1, spellName = "Primary" }
+    local primaryEntry2 = { spellId = 4, spellName = "Primary 2" }
+    local nextEntryA = { spellId = 2, spellName = "Next A" }
+    local nextEntryB = { spellId = 3, spellName = "Next B" }
+    local abilities = {
         primary = { primaryEntry },
         primary2 = { primaryEntry2 },
         nextA = { nextEntryA },
         nextB = { nextEntryB },
     }
 
-    TopDps.ActionBarService = {
-        CollectVisibleActions = function() return actions end,
-        BuildActionSummary = function() return "actions" end,
+    TopDps.AbilityService = {
+        GetAbilities = function() return abilities end,
+        BuildAbilitySummary = function() return "abilities" end,
     }
     TopDps.ContextBuilder = {
         Build = function()
@@ -479,12 +487,12 @@ local function TestRotationEngineChannels()
     TopDps.RotationEngine:UpdateRecommendation()
     AssertEqual(calls.nextSwing, "set:nextB", "disabled next-swing category falls through to the next candidate")
 
-    actions.nextA = nil
-    actions.nextB = nil
+    abilities.nextA = nil
+    abilities.nextB = nil
     disabledCategories.nextA = nil
     calls.nextSwing = nil
     TopDps.RotationEngine:UpdateRecommendation()
-    AssertEqual(calls.nextSwing, "clear", "next-swing requires an action-bar entry")
+    AssertEqual(calls.nextSwing, "clear", "next-swing requires a learned ability")
 
     rotationEnabled = false
     calls.globalClear = false
@@ -495,7 +503,7 @@ end
 TestSpecProviderContract()
 TestHighlightChannels()
 TestBlizzardChannelColor()
-TestCheeseChannelColor()
+TestCheeseChannelTextures()
 TestRecommendationPresenterKeepsCenterIconsPrimaryOnly()
 TestQueuedNextSwingDetection()
 TestRotationEngineChannels()

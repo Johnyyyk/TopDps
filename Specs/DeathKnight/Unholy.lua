@@ -69,7 +69,7 @@ local PRIORITY_AOE = {
 }
 
 local function UsesScourgeStrike(context)
-    local entries = context and context.actionsByCategory and context.actionsByCategory.scourgeStrike or nil
+    local entries = context and context.abilitiesByCategory and context.abilitiesByCategory.scourgeStrike or nil
     return type(entries) == "table" and #entries > 0
 end
 

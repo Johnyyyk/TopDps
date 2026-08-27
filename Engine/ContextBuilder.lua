@@ -1,7 +1,7 @@
 local addon = TopDps
 local ContextBuilder = addon:CreateModule("ContextBuilder")
 
-function ContextBuilder:Build(provider, actionsByCategory)
+function ContextBuilder:Build(provider, abilitiesByCategory)
     local activeEnemyCount = addon.CombatTracker:GetActiveEnemyCount()
     local target = addon.UnitStateService:GetTargetSnapshot()
 
@@ -17,12 +17,11 @@ function ContextBuilder:Build(provider, actionsByCategory)
 
     return {
         provider = provider,
-        actionBar = addon.ActionBarService,
         readiness = addon.ReadinessService,
         unitState = addon.UnitStateService,
         castService = addon.CastService,
         swingService = addon.SwingService,
-        actionsByCategory = actionsByCategory,
+        abilitiesByCategory = abilitiesByCategory,
         activeEnemyCount = activeEnemyCount,
         enemyCount = activeEnemyCount,
         player = addon.UnitStateService:GetPlayerSnapshot(),

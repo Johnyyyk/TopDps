@@ -190,6 +190,10 @@ function SwingService:IsActionQueued(action)
 end
 
 function SwingService:GetQueuedNextSwingCategory(provider, actionsByCategory)
+    if not actionsByCategory and addon.ActionBarService then
+        actionsByCategory = addon.ActionBarService:GetActionSlots(provider)
+    end
+
     local categories = provider and provider:GetNextSwingCategories() or nil
     local categoryIndex
 

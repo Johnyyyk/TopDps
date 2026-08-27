@@ -1,12 +1,19 @@
 local addon = TopDps
 local RecommendationPresenter = addon:CreateModule("RecommendationPresenter")
 
+local function GetHighlightEntries(provider, category, entries)
+    return addon.ActionBarService:FindVisibleActions(provider, category, entries)
+end
+
 function RecommendationPresenter:Set(provider, category, entries)
     self.provider = provider
     self.category = category
     self.entries = entries
 
-    addon.HighlightManager:SetEntries(addon.HIGHLIGHT_CHANNEL_PRIMARY, entries)
+    addon.HighlightManager:SetEntries(
+        addon.HIGHLIGHT_CHANNEL_PRIMARY,
+        GetHighlightEntries(provider, category, entries)
+    )
     addon.CenterIcons:Show(entries)
 
     local recommendationName = provider:GetRecommendationName(category, entries)
@@ -30,7 +37,10 @@ function RecommendationPresenter:SetNextSwing(provider, category, entries)
     self.nextSwingCategory = category
     self.nextSwingEntries = entries
 
-    addon.HighlightManager:SetEntries(addon.HIGHLIGHT_CHANNEL_NEXT_SWING, entries)
+    addon.HighlightManager:SetEntries(
+        addon.HIGHLIGHT_CHANNEL_NEXT_SWING,
+        GetHighlightEntries(provider, category, entries)
+    )
 
     local recommendationName = provider:GetRecommendationName(category, entries)
     local signature = recommendationName or "NONE"
@@ -79,7 +89,19 @@ function RecommendationPresenter:Clear()
 end
 
 function RecommendationPresenter:RefreshHighlights()
-    addon.HighlightManager:Refresh()
+    if self.provider and self.entries then
+        addon.HighlightManager:SetEntries(
+            addon.HIGHLIGHT_CHANNEL_PRIMARY,
+            GetHighlightEntries(self.provider, self.category, self.entries)
+        )
+    end
+
+    if self.nextSwingProvider and self.nextSwingEntries then
+        addon.HighlightManager:SetEntries(
+            addon.HIGHLIGHT_CHANNEL_NEXT_SWING,
+            GetHighlightEntries(self.nextSwingProvider, self.nextSwingCategory, self.nextSwingEntries)
+        )
+    end
 end
 
 function RecommendationPresenter:ResetChatSignature()

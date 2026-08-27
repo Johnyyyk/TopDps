@@ -5,28 +5,26 @@ CheeseHighlight.unused = CheeseHighlight.unused or {}
 CheeseHighlight.active = CheeseHighlight.active or {}
 CheeseHighlight.count = CheeseHighlight.count or 0
 
+local ICON_ALERT_TEXTURE = "Interface\\AddOns\\TopDps\\Textures\\Cheese\\IconAlert"
+local ICON_ALERT_ANTS_TEXTURE = "Interface\\AddOns\\TopDps\\Textures\\Cheese\\IconAlertAnts"
+local ICON_ALERT_NEXT_SWING_TEXTURE = "Interface\\AddOns\\TopDps\\Textures\\Cheese\\IconAlertNextSwing"
+local ICON_ALERT_ANTS_NEXT_SWING_TEXTURE = "Interface\\AddOns\\TopDps\\Textures\\Cheese\\IconAlertAntsNextSwing"
+
 local function IsAnimPlaying(self)
     return self.isPlaying
 end
 
-local function ApplyTextureColor(texture, color)
-    if not texture or not texture.SetVertexColor then
-        return
-    end
+local function ApplyOverlayTextures(overlay, appearance)
+    local isNextSwing = appearance and appearance.key == addon.HIGHLIGHT_CHANNEL_NEXT_SWING
+    local iconAlertTexture = isNextSwing and ICON_ALERT_NEXT_SWING_TEXTURE or ICON_ALERT_TEXTURE
+    local antsTexture = isNextSwing and ICON_ALERT_ANTS_NEXT_SWING_TEXTURE or ICON_ALERT_ANTS_TEXTURE
 
-    local red = color and tonumber(color.r) or 1
-    local green = color and tonumber(color.g) or 1
-    local blue = color and tonumber(color.b) or 1
-    texture:SetVertexColor(red, green, blue)
-end
-
-local function ApplyOverlayColor(overlay, color)
-    ApplyTextureColor(overlay.spark, color)
-    ApplyTextureColor(overlay.innerGlow, color)
-    ApplyTextureColor(overlay.innerGlowOver, color)
-    ApplyTextureColor(overlay.outerGlow, color)
-    ApplyTextureColor(overlay.outerGlowOver, color)
-    ApplyTextureColor(overlay.ants, color)
+    overlay.spark:SetTexture(iconAlertTexture)
+    overlay.innerGlow:SetTexture(iconAlertTexture)
+    overlay.innerGlowOver:SetTexture(iconAlertTexture)
+    overlay.outerGlow:SetTexture(iconAlertTexture)
+    overlay.outerGlowOver:SetTexture(iconAlertTexture)
+    overlay.ants:SetTexture(antsTexture)
 end
 
 local function ApplySteadyGlow(overlay)
@@ -105,8 +103,8 @@ function CheeseHighlight:Show(button, appearance)
             overlay.animOut:Stop()
         end
 
+        ApplyOverlayTextures(overlay, appearance)
         ApplySteadyGlow(overlay)
-        ApplyOverlayColor(overlay, appearance and appearance.color or nil)
         return overlay
     end
 
@@ -121,8 +119,8 @@ function CheeseHighlight:Show(button, appearance)
     overlay:SetSize(frameWidth * 1.4, frameHeight * 1.4)
     overlay:SetPoint("TOPLEFT", button, "TOPLEFT", -frameWidth * 0.2, frameHeight * 0.2)
     overlay:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", frameWidth * 0.2, -frameHeight * 0.2)
+    ApplyOverlayTextures(overlay, appearance)
     ApplySteadyGlow(overlay)
-    ApplyOverlayColor(overlay, appearance and appearance.color or nil)
 
     return overlay
 end

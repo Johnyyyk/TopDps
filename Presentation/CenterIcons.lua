@@ -1,6 +1,20 @@
 local addon = TopDps
 local CenterIcons = addon:CreateModule("CenterIcons")
 
+local function GetEntryTexture(entry)
+    if not entry or not GetSpellInfo then
+        return nil
+    end
+
+    local spell = entry.spellName or entry.spellId
+    if not spell then
+        return nil
+    end
+
+    local _, _, texture = GetSpellInfo(spell)
+    return texture
+end
+
 local function CreateIconFrame(name)
     local frame = CreateFrame("Frame", name, UIParent)
     frame:SetFrameStrata("HIGH")
@@ -94,7 +108,7 @@ function CenterIcons:Show(entries)
         return
     end
 
-    local texture = GetActionTexture(entries[1].action)
+    local texture = GetEntryTexture(entries[1])
     if not texture then
         self:Hide()
         return
