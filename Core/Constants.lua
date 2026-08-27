@@ -32,7 +32,7 @@ addon.HIGHLIGHT_CHANNEL_APPEARANCE = {
     },
     [addon.HIGHLIGHT_CHANNEL_NEXT_SWING] = {
         key = addon.HIGHLIGHT_CHANNEL_NEXT_SWING,
-        color = { r = 0.35, g = 0.80, b = 1.00 },
+        color = { r = 0.06, g = 0.50, b = 1.00 },
     },
 }
 
