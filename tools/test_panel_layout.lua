@@ -327,6 +327,20 @@ local function TestHorizontalPacking()
         AssertEqual(warning.x, frameX, "required buff warning is centered without hidden warning slots")
         AssertEqual(warning.width > seal.width, true, "required buff warning remains enlarged")
     end
+
+    local originalScale = settings.GetCooldownPanelCategoryScale
+    local originalSize = addon.db.panel.iconSize
+    settings.GetCooldownPanelCategoryScale = function() return addon.COOLDOWN_PANEL_GROUP_SCALE_MIN end
+    SetEntries({ entries[1] })
+    panel.states = { { state = "READY" } }
+    local minimumSize = addon.COOLDOWN_PANEL_ICON_SIZE_MIN
+    for _, size in ipairs({ minimumSize, minimumSize + addon.COOLDOWN_PANEL_ICON_SIZE_STEP, minimumSize }) do
+        settings:SetCooldownPanelIconSize(size)
+        AssertEqual(Bounds(panel.icons[1].frame).x, Bounds(panel.frame).x,
+            "minimum icon remains centered when the base size changes")
+    end
+    settings.GetCooldownPanelCategoryScale = originalScale
+    settings:SetCooldownPanelIconSize(originalSize)
 end
 
 TestHorizontalPacking()

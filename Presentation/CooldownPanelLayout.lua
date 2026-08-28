@@ -137,6 +137,7 @@ function CooldownPanel:BuildLayoutSections(states)
     local groupOrder = addon.Settings:GetCooldownPanelGroupOrder()
     local signatureParts = {
         previewUnlocked and "preview" or "locked",
+        tostring(addon.db.panel.iconSize or addon.DEFAULTS.cooldownPanelIconSize),
         tostring(iconGap),
         tostring(groupGap),
         tostring(buffSide),
