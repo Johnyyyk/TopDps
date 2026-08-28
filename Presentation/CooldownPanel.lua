@@ -15,6 +15,7 @@ CooldownPanel.entries = {}
 CooldownPanel.icons = {}
 CooldownPanel.states = {}
 CooldownPanel.layoutSignature = nil
+CooldownPanel.isDragging = false
 
 function CooldownPanel:IsActiveState(state)
     return state and state.state == "ACTIVE"
@@ -39,8 +40,23 @@ function CooldownPanel:GetCategoryOrder(category)
     return 100
 end
 
-function CooldownPanel:SavePosition()
-    if not self.frame or not addon.db or addon.db.panel.locked then
+function CooldownPanel:StartDragging()
+    if not self.frame or not addon.db or addon.db.panel.locked or self.isDragging then
+        return
+    end
+
+    self.isDragging = true
+    self.frame:StartMoving()
+end
+
+function CooldownPanel:StopDragging()
+    if not self.frame or not self.isDragging then
+        return
+    end
+
+    self.frame:StopMovingOrSizing()
+    self.isDragging = false
+    if not addon.db then
         return
     end
 
@@ -77,15 +93,16 @@ function CooldownPanel:Initialize()
     title:SetPoint("BOTTOM", frame, "TOP", 0, 2)
     title:SetText(addon.L.COOLDOWN_PANEL_DRAG_HINT)
 
-    frame:SetScript("OnDragStart", function(self)
-        if not addon.db.panel.locked then
-            self:StartMoving()
-        end
+    frame:SetScript("OnDragStart", function()
+        CooldownPanel:StartDragging()
     end)
 
-    frame:SetScript("OnDragStop", function(self)
-        self:StopMovingOrSizing()
-        CooldownPanel:SavePosition()
+    frame:SetScript("OnDragStop", function()
+        CooldownPanel:StopDragging()
+    end)
+
+    frame:SetScript("OnHide", function()
+        CooldownPanel:StopDragging()
     end)
 
     self.frame = frame
@@ -101,13 +118,10 @@ function CooldownPanel:CreateIcon(index)
     iconFrame:EnableMouse(not (addon.db and addon.db.panel.locked))
     iconFrame:RegisterForDrag("LeftButton")
     iconFrame:SetScript("OnDragStart", function()
-        if not addon.db.panel.locked then
-            CooldownPanel.frame:StartMoving()
-        end
+        CooldownPanel:StartDragging()
     end)
     iconFrame:SetScript("OnDragStop", function()
-        CooldownPanel.frame:StopMovingOrSizing()
-        CooldownPanel:SavePosition()
+        CooldownPanel:StopDragging()
     end)
 
     local texture = iconFrame:CreateTexture(nil, "BACKGROUND")
@@ -248,6 +262,9 @@ function CooldownPanel:ApplyLockState()
     end
 
     local locked = addon.db.panel.locked == true
+    if locked then
+        self:StopDragging()
+    end
     self.frame:EnableMouse(not locked)
 
     local index

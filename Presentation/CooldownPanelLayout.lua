@@ -105,10 +105,12 @@ function CooldownPanel:BuildBlock(items, visualGroup, iconGap)
         while itemIndex <= #items and count < maximumIcons do
             local item = items[itemIndex]
             row.items[#row.items + 1] = item
-            if count > 0 then
-                row.width = row.width + iconGap
+            if item.visible then
+                if row.width > 0 then
+                    row.width = row.width + iconGap
+                end
+                row.width = row.width + item.size
             end
-            row.width = row.width + item.size
             row.height = math.max(row.height, item.size)
 
             itemIndex = itemIndex + 1
@@ -135,6 +137,7 @@ function CooldownPanel:BuildLayoutSections(states)
     local groupOrder = addon.Settings:GetCooldownPanelGroupOrder()
     local signatureParts = {
         previewUnlocked and "preview" or "locked",
+        tostring(addon.db.panel.iconSize or addon.DEFAULTS.cooldownPanelIconSize),
         tostring(iconGap),
         tostring(groupGap),
         tostring(buffSide),
@@ -146,25 +149,43 @@ function CooldownPanel:BuildLayoutSections(states)
     for index = 1, #self.entries do
         local entry = self.entries[index]
         local state = states and states[index] or nil
-        if self:IsEntryVisible(entry, state, previewUnlocked) then
-            local category = self:GetPresentation(entry)
+        local visible = self:IsEntryVisible(entry, state, previewUnlocked)
+        if visible or self:IsEntryVisible(entry, state or {}, true) then
+            local category, behavior = self:GetPresentation(entry)
             local visualGroup = self:ResolveVisualGroup(entry, state, previewUnlocked)
-            local size = self:GetIconSize(entry, visualGroup)
-            local item = {
-                index = index,
-                entry = entry,
-                state = state,
-                category = category,
-                visualGroup = visualGroup,
-                size = size,
-            }
+            local layoutGroups = { category }
 
-            if not buckets[visualGroup] then
-                buckets[visualGroup] = {}
+            -- Резервируем высоту строк; по горизонтали учитываем только видимые иконки.
+            if IsRequiredBehavior(behavior) or behavior == addon.PANEL_BEHAVIOR_SELECTABLE_BUFF then
+                layoutGroups = { self.WARNING_GROUP, addon.PANEL_CATEGORY_BUFFS }
             end
-            buckets[visualGroup][#buckets[visualGroup] + 1] = item
-            signatureParts[#signatureParts + 1] = table.concat({ index, visualGroup, size }, ":")
-            visibleCount = visibleCount + 1
+
+            local layoutGroupIndex
+            for layoutGroupIndex = 1, #layoutGroups do
+                local layoutGroup = layoutGroups[layoutGroupIndex]
+                local size = self:GetIconSize(entry, layoutGroup)
+                local item = {
+                    index = index,
+                    entry = entry,
+                    state = state,
+                    category = category,
+                    visualGroup = layoutGroup,
+                    size = size,
+                    visible = visible and visualGroup == layoutGroup,
+                }
+
+                if not buckets[layoutGroup] then
+                    buckets[layoutGroup] = {}
+                end
+                buckets[layoutGroup][#buckets[layoutGroup] + 1] = item
+                signatureParts[#signatureParts + 1] = table.concat({
+                    index, layoutGroup, size, item.visible and 1 or 0,
+                }, ":")
+            end
+
+            if visible then
+                visibleCount = visibleCount + 1
+            end
         end
     end
 
@@ -194,10 +215,10 @@ function CooldownPanel:BuildLayoutSections(states)
                 addon.PANEL_CATEGORY_BUFFS,
                 iconGap
             )
-            local hasAbilities = #abilitiesBlock.rows > 0
-            local hasBuffs = #buffsBlock.rows > 0
+            local hasAbilities = abilitiesBlock.width > 0
+            local hasBuffs = buffsBlock.width > 0
 
-            if hasAbilities or hasBuffs then
+            if #abilitiesBlock.rows > 0 or #buffsBlock.rows > 0 then
                 local width = abilitiesBlock.width + buffsBlock.width
                 if hasAbilities and hasBuffs then
                     width = width + groupGap
@@ -244,20 +265,22 @@ function CooldownPanel:PlaceBlock(block, startX, topY, iconGap)
         local itemIndex
         for itemIndex = 1, #row.items do
             local item = row.items[itemIndex]
-            local icon = self.icons[item.index] or self:CreateIcon(item.index)
-            local y = currentY - (row.height - item.size) / 2
+            if item.visible then
+                local icon = self.icons[item.index] or self:CreateIcon(item.index)
+                local y = currentY - (row.height - item.size) / 2
 
-            icon.frame:ClearAllPoints()
-            icon.frame:SetPoint("TOPLEFT", self.frame, "TOPLEFT", x, y)
-            icon.frame:SetWidth(item.size)
-            icon.frame:SetHeight(item.size)
-            icon.frame:Show()
+                icon.frame:ClearAllPoints()
+                icon.frame:SetPoint("TOPLEFT", self.frame, "TOPLEFT", x, y)
+                icon.frame:SetWidth(item.size)
+                icon.frame:SetHeight(item.size)
+                icon.frame:Show()
 
-            local accentSize = math.floor(item.size * 1.45 + 0.5)
-            icon.accent:SetWidth(accentSize)
-            icon.accent:SetHeight(accentSize)
+                local accentSize = math.floor(item.size * 1.45 + 0.5)
+                icon.accent:SetWidth(accentSize)
+                icon.accent:SetHeight(accentSize)
 
-            x = x + item.size + iconGap
+                x = x + item.size + iconGap
+            end
         end
 
         currentY = currentY - row.height
@@ -271,6 +294,10 @@ function CooldownPanel:ApplyLayout(states)
 
     states = states or self.states or {}
     local sections, visibleCount, signature = self:BuildLayoutSections(states)
+    if self.isDragging then
+        return visibleCount
+    end
+
     local iconGap = addon.Settings:GetCooldownPanelIconGap()
     local groupGap = addon.Settings:GetCooldownPanelGroupGap()
     local maximumWidth = 0
@@ -297,13 +324,13 @@ function CooldownPanel:ApplyLayout(states)
         for sectionIndex = 1, #sections do
             local section = sections[sectionIndex]
             currentY = currentY - section.gapBefore
-            local sectionX = self.PADDING + (maximumWidth - section.width) / 2
+            local sectionX = (width - section.width) / 2
 
             if section.kind == "abilityWithBuffs" then
                 local abilities = section.abilities
                 local buffs = section.buffs
-                local hasAbilities = #abilities.rows > 0
-                local hasBuffs = #buffs.rows > 0
+                local hasAbilities = abilities.width > 0
+                local hasBuffs = buffs.width > 0
                 local abilitiesY = currentY - (section.height - abilities.height) / 2
                 local buffsY = currentY - (section.height - buffs.height) / 2
 
