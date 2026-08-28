@@ -122,7 +122,7 @@ addon.DEFAULTS = {
     },
     cooldownPanelLocked = true,
     cooldownPanelX = 0,
-    cooldownPanelY = -166,
+    cooldownPanelY = -100,
     cooldownPanelIconSize = 36,
     cooldownPanelOpacity = 0.90,
     cooldownPanelIconGap = 3,

@@ -105,10 +105,12 @@ function CooldownPanel:BuildBlock(items, visualGroup, iconGap)
         while itemIndex <= #items and count < maximumIcons do
             local item = items[itemIndex]
             row.items[#row.items + 1] = item
-            if count > 0 then
-                row.width = row.width + iconGap
+            if item.visible then
+                if row.width > 0 then
+                    row.width = row.width + iconGap
+                end
+                row.width = row.width + item.size
             end
-            row.width = row.width + item.size
             row.height = math.max(row.height, item.size)
 
             itemIndex = itemIndex + 1
@@ -152,7 +154,7 @@ function CooldownPanel:BuildLayoutSections(states)
             local visualGroup = self:ResolveVisualGroup(entry, state, previewUnlocked)
             local layoutGroups = { category }
 
-            -- Резервируем скрытые места и оба положения бафа: предупреждение и обычную группу.
+            -- Резервируем высоту строк; по горизонтали учитываем только видимые иконки.
             if IsRequiredBehavior(behavior) or behavior == addon.PANEL_BEHAVIOR_SELECTABLE_BUFF then
                 layoutGroups = { self.WARNING_GROUP, addon.PANEL_CATEGORY_BUFFS }
             end
@@ -212,10 +214,10 @@ function CooldownPanel:BuildLayoutSections(states)
                 addon.PANEL_CATEGORY_BUFFS,
                 iconGap
             )
-            local hasAbilities = #abilitiesBlock.rows > 0
-            local hasBuffs = #buffsBlock.rows > 0
+            local hasAbilities = abilitiesBlock.width > 0
+            local hasBuffs = buffsBlock.width > 0
 
-            if hasAbilities or hasBuffs then
+            if #abilitiesBlock.rows > 0 or #buffsBlock.rows > 0 then
                 local width = abilitiesBlock.width + buffsBlock.width
                 if hasAbilities and hasBuffs then
                     width = width + groupGap
@@ -275,9 +277,9 @@ function CooldownPanel:PlaceBlock(block, startX, topY, iconGap)
                 local accentSize = math.floor(item.size * 1.45 + 0.5)
                 icon.accent:SetWidth(accentSize)
                 icon.accent:SetHeight(accentSize)
-            end
 
-            x = x + item.size + iconGap
+                x = x + item.size + iconGap
+            end
         end
 
         currentY = currentY - row.height
@@ -291,6 +293,10 @@ function CooldownPanel:ApplyLayout(states)
 
     states = states or self.states or {}
     local sections, visibleCount, signature = self:BuildLayoutSections(states)
+    if self.isDragging then
+        return visibleCount
+    end
+
     local iconGap = addon.Settings:GetCooldownPanelIconGap()
     local groupGap = addon.Settings:GetCooldownPanelGroupGap()
     local maximumWidth = 0
@@ -317,13 +323,13 @@ function CooldownPanel:ApplyLayout(states)
         for sectionIndex = 1, #sections do
             local section = sections[sectionIndex]
             currentY = currentY - section.gapBefore
-            local sectionX = self.PADDING + (maximumWidth - section.width) / 2
+            local sectionX = (width - section.width) / 2
 
             if section.kind == "abilityWithBuffs" then
                 local abilities = section.abilities
                 local buffs = section.buffs
-                local hasAbilities = #abilities.rows > 0
-                local hasBuffs = #buffs.rows > 0
+                local hasAbilities = abilities.width > 0
+                local hasBuffs = buffs.width > 0
                 local abilitiesY = currentY - (section.height - abilities.height) / 2
                 local buffsY = currentY - (section.height - buffs.height) / 2
 

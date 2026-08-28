@@ -8,18 +8,41 @@ local Frame = {}
 Frame.__index = Frame
 
 local function NewFrame(width, height)
-    return setmetatable({ width = width or 0, height = height or 0, shown = false }, Frame)
+    return setmetatable({ width = width or 0, height = height or 0, shown = false, scripts = {} }, Frame)
 end
 
 function Frame:SetWidth(width) self.width = width end
 function Frame:SetHeight(height) self.height = height end
 function Frame:SetAlpha(alpha) self.alpha = alpha end
 function Frame:Show() self.shown = true end
-function Frame:Hide() self.shown = false end
-function Frame:EnableMouse() end
-function Frame:SetBackdropColor() end
-function Frame:SetBackdropBorderColor() end
+function Frame:IsShown() return self.shown end
+function Frame:SetScript(event, callback) self.scripts[event] = callback end
+function Frame:StartMoving() self.moving = true end
+function Frame:StopMovingOrSizing() self.moving = false end
+function Frame:GetFrameLevel() return 1 end
+function Frame:CreateTexture() return NewFrame() end
+function Frame:CreateFontString() return NewFrame() end
 function Frame:ClearAllPoints() self.point = nil end
+
+function Frame:Hide()
+    local wasShown = self.shown
+    self.shown = false
+    if wasShown and self.scripts.OnHide then
+        self.scripts.OnHide(self)
+    end
+end
+
+for _, method in ipairs({
+    "EnableMouse", "SetBackdropColor", "SetBackdropBorderColor", "SetClampedToScreen",
+    "SetMovable", "RegisterForDrag", "SetFrameStrata", "SetBackdrop", "SetText", "SetFrameLevel",
+    "SetAllPoints", "SetTexture", "SetBlendMode", "SetJustifyH", "SetVertexColor",
+    "SetDesaturated", "SetReverse", "SetCooldown",
+}) do
+    Frame[method] = function() end
+end
+
+CreateFrame = function() return NewFrame() end
+GetTime = function() return 100 end
 
 function Frame:SetPoint(point, relativeTo, relativePoint, x, y)
     self.point = { point, relativeTo, relativePoint, x, y }
@@ -54,12 +77,19 @@ local function AssertBounds(frame, expected, message)
     end
 end
 
+local function AssertVerticalBounds(frame, expected, message)
+    local actual = Bounds(frame)
+    AssertEqual(actual.y, expected.y, message .. " y")
+    AssertEqual(actual.height, expected.height, message .. " height")
+end
+
 TopDps = {}
 dofile("Core/Namespace.lua")
 dofile("Core/Constants.lua")
 dofile("Core/Settings.lua")
 dofile("Presentation/CooldownPanel.lua")
 dofile("Presentation/CooldownPanelLayout.lua")
+dofile("Presentation/CooldownPanelState.lua")
 
 local addon = TopDps
 local panel = addon.CooldownPanel
@@ -70,6 +100,7 @@ local buffSide = addon.PANEL_BUFF_SIDE_LEFT
 local groupOrder = addon.DEFAULTS.cooldownPanelGroupOrder
 
 UIParent = NewFrame(1920, 1080)
+addon.L = { COOLDOWN_PANEL_DRAG_HINT = "Drag panel" }
 addon.db = {
     panel = {
         locked = true,
@@ -89,16 +120,19 @@ function settings:GetCooldownPanelIconGap() return addon.DEFAULTS.cooldownPanelI
 function settings:GetCooldownPanelGroupGap() return addon.DEFAULTS.cooldownPanelGroupGap end
 function settings:GetCooldownPanelBuffSide() return buffSide end
 function settings:GetCooldownPanelGroupOrder() return groupOrder end
+function settings:EnsureCooldownPanelUxDefaults() end
+function settings:AreCooldownPanelTimersShown() return false end
 
 local function SetEntries(entries)
-    panel.entries = entries
+    panel.entries = {}
     panel.icons = {}
-    panel.frame = NewFrame()
-    panel.title = NewFrame()
+    panel.states = {}
+    panel.frame = nil
+    panel.title = nil
+    panel.isDragging = false
     panel:InvalidateLayout()
-    for index = 1, #entries do
-        panel.icons[index] = { frame = NewFrame(), accent = NewFrame() }
-    end
+    panel:Initialize()
+    panel:SetEntries(entries)
 end
 
 local function Entry(category, behavior)
@@ -126,6 +160,68 @@ local function InitialStates()
     }
 end
 
+local function TestDragging()
+    addon.db.panel.locked = false
+    SetEntries(entries)
+    panel:Update(InitialStates())
+
+    for _, source in ipairs({ panel.frame, panel.icons[1].frame }) do
+        local savedX = addon.db.panel.position.x
+        local savedY = addon.db.panel.position.y
+        local movedX, movedY = savedX + 57, savedY + 31
+        source.scripts.OnDragStart(source)
+        AssertEqual(panel.frame.moving, true, "frame and icon both start dragging")
+        panel.frame:SetPoint("CENTER", UIParent, "CENTER", movedX, movedY)
+        local movedBounds = Bounds(panel.frame)
+
+        local changedStates = InitialStates()
+        changedStates[5] = inactive
+        changedStates[7] = inactive
+        panel:Update(changedStates)
+        AssertBounds(panel.frame, movedBounds, "updates do not reset geometry during dragging")
+        AssertEqual(addon.db.panel.position.x, savedX, "x is not saved before drag stops")
+        AssertEqual(addon.db.panel.position.y, savedY, "y is not saved before drag stops")
+
+        source.scripts.OnDragStop(source)
+        AssertEqual(panel.frame.moving, false, "drag stops")
+        AssertEqual(addon.db.panel.position.x, movedX, "drag saves x")
+        AssertEqual(addon.db.panel.position.y, movedY, "drag saves y")
+        local parentX, parentY = UIParent:GetCenter()
+        local x, y = panel.frame:GetCenter()
+        AssertEqual(x, parentX + movedX, "new x survives pending layout changes")
+        AssertEqual(y, parentY + movedY, "new y survives pending layout changes")
+    end
+
+    panel.frame.scripts.OnDragStart(panel.frame)
+    panel.frame:SetPoint("CENTER", UIParent, "CENTER", 137, -211)
+    settings:SetCooldownPanelLocked(true)
+    AssertEqual(panel.frame.moving, false, "locking stops an active drag")
+    AssertEqual(addon.db.panel.position.x, 137, "locking preserves the dragged x")
+    AssertEqual(addon.db.panel.position.y, -211, "locking preserves the dragged y")
+    panel.frame.scripts.OnDragStart(panel.frame)
+    panel.icons[1].frame.scripts.OnDragStart(panel.icons[1].frame)
+    AssertEqual(panel.frame.moving, false, "locked frame and icons cannot start dragging")
+
+    settings:SetCooldownPanelLocked(false)
+    panel.frame.scripts.OnDragStart(panel.frame)
+    panel.frame:SetPoint("CENTER", UIParent, "CENTER", 150, -190)
+    panel:Hide()
+    AssertEqual(panel.frame.moving, false, "hiding stops an active drag")
+    AssertEqual(panel.frame:IsShown(), false, "saving after hide does not show the panel")
+    AssertEqual(addon.db.panel.position.x, 150, "hiding preserves the dragged x")
+    AssertEqual(addon.db.panel.position.y, -190, "hiding preserves the dragged y")
+
+    local savedPosition = { x = addon.db.panel.position.x, y = addon.db.panel.position.y }
+    SetEntries(entries)
+    panel:Update(InitialStates())
+    local parentX, parentY = UIParent:GetCenter()
+    local x, y = panel.frame:GetCenter()
+    AssertEqual(x, parentX + savedPosition.x, "recreated panel restores saved x")
+    AssertEqual(y, parentY + savedPosition.y, "recreated panel restores saved y")
+end
+
+TestDragging()
+
 local function TestDynamicLayout()
     addon.db.panel.locked = true
     SetEntries(entries)
@@ -137,19 +233,21 @@ local function TestDynamicLayout()
 
     local function CheckStable(message)
         local count = panel:ApplyLayout()
-        AssertBounds(panel.frame, frameBounds, message .. " container")
-        AssertBounds(panel.icons[1].frame, abilityBounds, message .. " ability")
-        AssertBounds(panel.icons[9].frame, cooldownBounds, message .. " cooldown")
+        AssertVerticalBounds(panel.frame, frameBounds, message .. " container")
+        AssertEqual(Bounds(panel.frame).x, frameBounds.x, message .. " container center")
+        AssertVerticalBounds(panel.icons[1].frame, abilityBounds, message .. " ability")
+        AssertVerticalBounds(panel.icons[9].frame, cooldownBounds, message .. " cooldown")
         return count
     end
 
-    panel.states[3] = active
-    AssertEqual(CheckStable("first proc"), 4, "first proc becomes visible")
-    local procBounds = Bounds(panel.icons[3].frame)
-    panel.states[2] = active
     panel.states[4] = active
+    AssertEqual(CheckStable("first proc"), 4, "first proc becomes visible")
+    local procBounds = Bounds(panel.icons[4].frame)
+    AssertEqual(procBounds.x, frameBounds.x, "a single proc is centered without hidden horizontal slots")
+    panel.states[2] = active
+    panel.states[3] = active
     AssertEqual(CheckStable("several procs"), 6, "all active procs are counted")
-    AssertBounds(panel.icons[3].frame, procBounds, "other procs do not move an already visible proc")
+    AssertVerticalBounds(panel.icons[4].frame, procBounds, "other procs do not move a visible proc vertically")
 
     panel.states[5] = inactive
     panel.states[6] = inactive
@@ -191,6 +289,48 @@ local function TestDynamicLayout()
     end
 end
 
+local function TestHorizontalPacking()
+    iconsPerRow = 7
+    addon.db.panel.locked = true
+    for _, side in ipairs({ addon.PANEL_BUFF_SIDE_LEFT, addon.PANEL_BUFF_SIDE_RIGHT }) do
+        buffSide = side
+        SetEntries({ entries[1], entries[1], entries[7], entries[5] })
+        panel.states = { { state = "READY" }, { state = "READY" }, inactive, active }
+        panel:ApplyLayout()
+        local frameX = Bounds(panel.frame).x
+        local first = Bounds(panel.icons[1].frame)
+        local second = Bounds(panel.icons[2].frame)
+        AssertEqual((first.x + second.x) / 2, frameX, "abilities remain centered without a visible seal")
+        AssertEqual(Bounds(panel.icons[3].frame).x, frameX, "missing seal warning is centered")
+        local previousHeight = panel.frame.height
+
+        panel.states[3] = active
+        panel:ApplyLayout()
+        first = Bounds(panel.icons[1].frame)
+        second = Bounds(panel.icons[2].frame)
+        local seal = Bounds(panel.icons[3].frame)
+        local actualGap
+        if side == addon.PANEL_BUFF_SIDE_LEFT then
+            actualGap = first.x - first.width / 2 - (seal.x + seal.width / 2)
+        else
+            actualGap = seal.x - seal.width / 2 - (second.x + second.width / 2)
+        end
+        AssertEqual(actualGap, settings:GetCooldownPanelGroupGap(), "only the visible seal takes horizontal space")
+        local expectedWidth = first.width + second.width + settings:GetCooldownPanelIconGap()
+            + seal.width + settings:GetCooldownPanelGroupGap() + panel.PADDING * 2
+        AssertEqual(panel.frame.width, expectedWidth, "hidden required buffs do not widen the container")
+        AssertEqual(panel.frame.height, previousHeight, "horizontal packing preserves vertical geometry")
+
+        panel.states[4] = inactive
+        panel:ApplyLayout()
+        local warning = Bounds(panel.icons[4].frame)
+        AssertEqual(warning.x, frameX, "required buff warning is centered without hidden warning slots")
+        AssertEqual(warning.width > seal.width, true, "required buff warning remains enlarged")
+    end
+end
+
+TestHorizontalPacking()
+
 for _, columns in ipairs({ 1, 3, 7 }) do
     iconsPerRow = columns
     for _, side in ipairs({ addon.PANEL_BUFF_SIDE_LEFT, addon.PANEL_BUFF_SIDE_RIGHT }) do
@@ -210,6 +350,7 @@ SetEntries({ entries[1] })
 panel.states = { { state = "READY" } }
 panel:ApplyLayout()
 local singleAbilityBounds = Bounds(panel.frame)
+AssertEqual(Bounds(panel.icons[1].frame).x, singleAbilityBounds.x, "small icon is centered in the minimum container")
 local excludedProc = Entry(addon.PANEL_CATEGORY_PROCS, addon.PANEL_BEHAVIOR_ACTIVE_ONLY)
 SetEntries({ entries[1], excludedProc })
 panel.states = { { state = "READY" }, active }
@@ -221,24 +362,5 @@ for _, exclusion in ipairs({ "category", "applicability" }) do
     AssertEqual(panel.icons[2].frame.shown, false, "excluded proc is hidden")
 end
 disabledCategories[addon.PANEL_CATEGORY_PROCS] = nil
-
--- Сохраняется прежний контракт координат: центр панели относительно центра UIParent.
-SetEntries(entries)
-panel.states = InitialStates()
-addon.db.panel.locked = false
-panel:ApplyLayout()
-panel.frame:SetPoint("CENTER", UIParent, "CENTER", 137, -211)
-panel:SavePosition()
-AssertEqual(addon.db.panel.position.x, 137, "drag saves x")
-AssertEqual(addon.db.panel.position.y, -211, "drag saves y")
-local savedBounds = Bounds(panel.frame)
-panel.frame = NewFrame()
-panel:InvalidateLayout()
-panel:ApplyLayout()
-AssertBounds(panel.frame, savedBounds, "recreated container restores the saved position")
-addon.db.panel.locked = true
-panel:ApplyLockState()
-panel:SavePosition()
-AssertBounds(panel.frame, savedBounds, "locking and saving do not move the panel")
 
 print("panel layout regression tests passed")
