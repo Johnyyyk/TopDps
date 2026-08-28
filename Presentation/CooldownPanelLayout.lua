@@ -146,25 +146,43 @@ function CooldownPanel:BuildLayoutSections(states)
     for index = 1, #self.entries do
         local entry = self.entries[index]
         local state = states and states[index] or nil
-        if self:IsEntryVisible(entry, state, previewUnlocked) then
-            local category = self:GetPresentation(entry)
+        local visible = self:IsEntryVisible(entry, state, previewUnlocked)
+        if visible or self:IsEntryVisible(entry, state or {}, true) then
+            local category, behavior = self:GetPresentation(entry)
             local visualGroup = self:ResolveVisualGroup(entry, state, previewUnlocked)
-            local size = self:GetIconSize(entry, visualGroup)
-            local item = {
-                index = index,
-                entry = entry,
-                state = state,
-                category = category,
-                visualGroup = visualGroup,
-                size = size,
-            }
+            local layoutGroups = { category }
 
-            if not buckets[visualGroup] then
-                buckets[visualGroup] = {}
+            -- Резервируем скрытые места и оба положения бафа: предупреждение и обычную группу.
+            if IsRequiredBehavior(behavior) or behavior == addon.PANEL_BEHAVIOR_SELECTABLE_BUFF then
+                layoutGroups = { self.WARNING_GROUP, addon.PANEL_CATEGORY_BUFFS }
             end
-            buckets[visualGroup][#buckets[visualGroup] + 1] = item
-            signatureParts[#signatureParts + 1] = table.concat({ index, visualGroup, size }, ":")
-            visibleCount = visibleCount + 1
+
+            local layoutGroupIndex
+            for layoutGroupIndex = 1, #layoutGroups do
+                local layoutGroup = layoutGroups[layoutGroupIndex]
+                local size = self:GetIconSize(entry, layoutGroup)
+                local item = {
+                    index = index,
+                    entry = entry,
+                    state = state,
+                    category = category,
+                    visualGroup = layoutGroup,
+                    size = size,
+                    visible = visible and visualGroup == layoutGroup,
+                }
+
+                if not buckets[layoutGroup] then
+                    buckets[layoutGroup] = {}
+                end
+                buckets[layoutGroup][#buckets[layoutGroup] + 1] = item
+                signatureParts[#signatureParts + 1] = table.concat({
+                    index, layoutGroup, size, item.visible and 1 or 0,
+                }, ":")
+            end
+
+            if visible then
+                visibleCount = visibleCount + 1
+            end
         end
     end
 
@@ -244,18 +262,20 @@ function CooldownPanel:PlaceBlock(block, startX, topY, iconGap)
         local itemIndex
         for itemIndex = 1, #row.items do
             local item = row.items[itemIndex]
-            local icon = self.icons[item.index] or self:CreateIcon(item.index)
-            local y = currentY - (row.height - item.size) / 2
+            if item.visible then
+                local icon = self.icons[item.index] or self:CreateIcon(item.index)
+                local y = currentY - (row.height - item.size) / 2
 
-            icon.frame:ClearAllPoints()
-            icon.frame:SetPoint("TOPLEFT", self.frame, "TOPLEFT", x, y)
-            icon.frame:SetWidth(item.size)
-            icon.frame:SetHeight(item.size)
-            icon.frame:Show()
+                icon.frame:ClearAllPoints()
+                icon.frame:SetPoint("TOPLEFT", self.frame, "TOPLEFT", x, y)
+                icon.frame:SetWidth(item.size)
+                icon.frame:SetHeight(item.size)
+                icon.frame:Show()
 
-            local accentSize = math.floor(item.size * 1.45 + 0.5)
-            icon.accent:SetWidth(accentSize)
-            icon.accent:SetHeight(accentSize)
+                local accentSize = math.floor(item.size * 1.45 + 0.5)
+                icon.accent:SetWidth(accentSize)
+                icon.accent:SetHeight(accentSize)
+            end
 
             x = x + item.size + iconGap
         end
