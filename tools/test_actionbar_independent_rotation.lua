@@ -195,6 +195,7 @@ local function TestCenterIconUsesSpellTexture()
     local function NewFrame(index)
         return {
             icon = { SetTexture = function(_, texture) textures[index] = texture end },
+            overlay = { SetTexture = function() end },
             SetAlpha = function() end,
             Show = function() end,
             Hide = function() end,

@@ -1,6 +1,9 @@
 local addon = TopDps
 local CenterIcons = addon:CreateModule("CenterIcons")
 
+local PRIMARY_FRAME_TEXTURE = "Interface\\AddOns\\TopDps\\Textures\\CenterFrame"
+local NEXT_SWING_FRAME_TEXTURE = "Interface\\AddOns\\TopDps\\Textures\\CenterFrameNextSwing"
+
 local function GetEntryTexture(entry)
     if not entry or not GetSpellInfo then
         return nil
@@ -31,7 +34,7 @@ local function CreateIconFrame(name)
 
     local overlay = frame:CreateTexture(nil, "OVERLAY")
     overlay:SetAllPoints(frame)
-    overlay:SetTexture("Interface\\AddOns\\TopDps\\Textures\\CenterFrame")
+    overlay:SetTexture(PRIMARY_FRAME_TEXTURE)
     overlay:SetBlendMode("ADD")
     frame.overlay = overlay
 
@@ -96,49 +99,65 @@ function CenterIcons:SetOpacity(opacity)
     end
 end
 
-function CenterIcons:Show(entries)
-    self.currentEntries = entries
-
-    if not entries
-        or not entries[1]
-        or not addon.Settings:IsRotationEnabled()
-        or not addon.Settings:IsModeActive()
-        or not addon.db.rotation.centerIcons.enabled then
-        self:Hide()
-        return
-    end
-
-    local texture = GetEntryTexture(entries[1])
-    if not texture then
-        self:Hide()
+local function HideFrames(centerIcons)
+    if not centerIcons.frames then
         return
     end
 
     local index
-    for index = 1, #self.frames do
-        local frame = self.frames[index]
-        frame.icon:SetTexture(texture)
-        frame.elapsed = index == 1 and 0 or 0.65
-        frame:SetAlpha(addon.db.rotation.centerIcons.opacity)
-        frame:Show()
+    for index = 1, #centerIcons.frames do
+        centerIcons.frames[index]:Hide()
     end
 end
 
+local function ShowFrame(centerIcons, index, texture, frameTexture)
+    local frame = centerIcons.frames[index]
+    frame.icon:SetTexture(texture)
+    frame.overlay:SetTexture(frameTexture)
+    frame.elapsed = index == 1 and 0 or 0.65
+    frame:SetAlpha(addon.db.rotation.centerIcons.opacity)
+    frame:Show()
+end
+
+function CenterIcons:Show(primaryEntries, nextSwingEntries)
+    self.currentPrimaryEntries = primaryEntries
+    self.currentNextSwingEntries = nextSwingEntries
+    self:Refresh()
+end
+
 function CenterIcons:Hide()
+    self.currentPrimaryEntries = nil
+    self.currentNextSwingEntries = nil
+    HideFrames(self)
+end
+
+function CenterIcons:Refresh()
     if not self.frames then
         return
     end
 
-    local index
-    for index = 1, #self.frames do
-        self.frames[index]:Hide()
+    if not addon.Settings:IsRotationEnabled()
+        or not addon.Settings:IsModeActive()
+        or not addon.db.rotation.centerIcons.enabled then
+        HideFrames(self)
+        return
     end
-end
 
-function CenterIcons:Refresh()
-    if self.currentEntries then
-        self:Show(self.currentEntries)
+    local primaryTexture = GetEntryTexture(self.currentPrimaryEntries and self.currentPrimaryEntries[1])
+    local nextSwingTexture = GetEntryTexture(self.currentNextSwingEntries and self.currentNextSwingEntries[1])
+
+    if nextSwingTexture then
+        ShowFrame(self, 1, nextSwingTexture, NEXT_SWING_FRAME_TEXTURE)
+
+        if primaryTexture then
+            ShowFrame(self, 2, primaryTexture, PRIMARY_FRAME_TEXTURE)
+        else
+            self.frames[2]:Hide()
+        end
+    elseif primaryTexture then
+        ShowFrame(self, 1, primaryTexture, PRIMARY_FRAME_TEXTURE)
+        ShowFrame(self, 2, primaryTexture, PRIMARY_FRAME_TEXTURE)
     else
-        self:Hide()
+        HideFrames(self)
     end
 end

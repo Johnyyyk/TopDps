@@ -5,6 +5,21 @@ local function GetHighlightEntries(provider, category, entries)
     return addon.ActionBarService:FindVisibleActions(provider, category, entries)
 end
 
+local function RefreshCenterIcons(presenter)
+    local nextSwingEntries
+    if presenter.nextSwingProvider
+        and presenter.nextSwingEntries
+        and presenter.nextSwingProvider:IsNextSwingCenterEnabled() then
+        nextSwingEntries = presenter.nextSwingEntries
+    end
+
+    if presenter.entries or nextSwingEntries then
+        addon.CenterIcons:Show(presenter.entries, nextSwingEntries)
+    else
+        addon.CenterIcons:Hide()
+    end
+end
+
 function RecommendationPresenter:Set(provider, category, entries)
     self.provider = provider
     self.category = category
@@ -14,7 +29,7 @@ function RecommendationPresenter:Set(provider, category, entries)
         addon.HIGHLIGHT_CHANNEL_PRIMARY,
         GetHighlightEntries(provider, category, entries)
     )
-    addon.CenterIcons:Show(entries)
+    RefreshCenterIcons(self)
 
     local recommendationName = provider:GetRecommendationName(category, entries)
     local signature = recommendationName or "NONE"
@@ -41,6 +56,7 @@ function RecommendationPresenter:SetNextSwing(provider, category, entries)
         addon.HIGHLIGHT_CHANNEL_NEXT_SWING,
         GetHighlightEntries(provider, category, entries)
     )
+    RefreshCenterIcons(self)
 
     local recommendationName = provider:GetRecommendationName(category, entries)
     local signature = recommendationName or "NONE"
@@ -58,7 +74,7 @@ function RecommendationPresenter:ClearPrimary()
     self.entries = nil
 
     addon.HighlightManager:SetEntries(addon.HIGHLIGHT_CHANNEL_PRIMARY, nil)
-    addon.CenterIcons:Hide()
+    RefreshCenterIcons(self)
 
     if self.lastSignature == "NONE" then
         return
@@ -74,6 +90,7 @@ function RecommendationPresenter:ClearNextSwing()
     self.nextSwingEntries = nil
 
     addon.HighlightManager:SetEntries(addon.HIGHLIGHT_CHANNEL_NEXT_SWING, nil)
+    RefreshCenterIcons(self)
 
     if self.lastNextSwingSignature == "NONE" then
         return
