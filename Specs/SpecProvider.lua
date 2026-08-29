@@ -4,6 +4,7 @@ local SpecProvider = addon:CreateModule("SpecProvider")
 SpecProvider.__index = SpecProvider
 
 local EMPTY_PRIORITY = {}
+local NEXT_SWING_CENTER_SETTING_KEY = "showNextSwingCenter"
 
 local VALID_SWING_RESETS = {
     MAIN_HAND = true,
@@ -144,6 +145,15 @@ function SpecProvider:BuildSettingsCatalog()
     local stableSettings = {}
     local experimentalSettings = {}
     local customIndex
+
+    if #(self.nextSwingCategories or EMPTY_PRIORITY) > 0 then
+        table.insert(stableSettings, {
+            type = "checkbox",
+            key = NEXT_SWING_CENTER_SETTING_KEY,
+            labelKey = "SHOW_NEXT_SWING_CENTER",
+            default = true,
+        })
+    end
 
     for customIndex = 1, #customSettings do
         local definition = customSettings[customIndex]
@@ -382,6 +392,14 @@ end
 
 function SpecProvider:GetNextSwingPriority()
     return EMPTY_PRIORITY
+end
+
+function SpecProvider:IsNextSwingCenterEnabled()
+    if #self:GetNextSwingCategories() == 0 then
+        return false
+    end
+
+    return self:GetSetting(NEXT_SWING_CENTER_SETTING_KEY) ~= false
 end
 
 function SpecProvider:IsNextSwingCategoryAllowed(category, context)

@@ -43,9 +43,12 @@ end
 local function TestSpecProviderContract()
     TopDps = NewAddon()
     TopDps.REFRESH_LEAD_CAST_TIME = "CAST_TIME"
+    local settingValues = {
+        showNextSwingCenter = true,
+    }
     TopDps.Settings = {
-        GetSpecSetting = function() return true end,
-        SetSpecSetting = function() end,
+        GetSpecSetting = function(_, _, key) return settingValues[key] end,
+        SetSpecSetting = function(_, _, key, value) settingValues[key] = value end,
     }
     TopDps.L = {}
 
@@ -64,6 +67,15 @@ local function TestSpecProviderContract()
     AssertEqual(#provider:GetNextSwingPriority({}), 0, "default next-swing priority is empty")
     AssertEqual(provider:GetNextSwingCategories()[1], "queued", "provider exposes stable next-swing categories")
     AssertEqual(provider:IsNextSwingCategoryAllowed("queued", {}), true, "next-swing allow falls back to normal allow")
+    AssertEqual(
+        provider:GetSettingDefinition("showNextSwingCenter").default,
+        true,
+        "next-swing provider exposes center display setting"
+    )
+    AssertEqual(provider:IsNextSwingCenterEnabled(), true, "next-swing center display defaults to enabled")
+
+    provider:SetSetting("showNextSwingCenter", false)
+    AssertEqual(provider:IsNextSwingCenterEnabled(), false, "next-swing center display can be disabled per spec")
 end
 
 local function TestHighlightChannels()
@@ -250,7 +262,7 @@ local function TestCheeseChannelTextures()
     AssertEqual(overlay.ants.texture, baseAntsTexture, "Cheese primary restores original ants texture")
 end
 
-local function TestRecommendationPresenterKeepsCenterIconsPrimaryOnly()
+local function TestRecommendationPresenterSeparatesCenterChannels()
     TopDps = NewAddon()
     dofile("Core/Constants.lua")
 
@@ -267,10 +279,15 @@ local function TestRecommendationPresenterKeepsCenterIconsPrimaryOnly()
         end,
     }
 
-    local centerShows = 0
+    local centerStates = {}
     local centerHides = 0
     TopDps.CenterIcons = {
-        Show = function() centerShows = centerShows + 1 end,
+        Show = function(_, primaryEntries, nextSwingEntries)
+            table.insert(centerStates, {
+                primaryEntries = primaryEntries,
+                nextSwingEntries = nextSwingEntries,
+            })
+        end,
         Hide = function() centerHides = centerHides + 1 end,
     }
     TopDps.Logger = { Info = function() end }
@@ -281,23 +298,123 @@ local function TestRecommendationPresenterKeepsCenterIconsPrimaryOnly()
 
     dofile("Presentation/RecommendationPresenter.lua")
 
+    local showNextSwingCenter = true
     local provider = {
         GetRecommendationName = function(_, category) return category end,
+        IsNextSwingCenterEnabled = function() return showNextSwingCenter end,
     }
+    local primaryEntries = { { button = {} } }
+    local nextSwingEntries = { { button = {} } }
 
-    TopDps.RecommendationPresenter:SetNextSwing(provider, "heroicStrike", { { button = {} } })
-    AssertEqual(centerShows, 0, "next-swing does not show center icons")
+    TopDps.RecommendationPresenter:SetNextSwing(provider, "heroicStrike", nextSwingEntries)
+    AssertEqual(centerStates[#centerStates].primaryEntries, nil, "next-swing can be shown without primary")
+    AssertEqual(
+        centerStates[#centerStates].nextSwingEntries,
+        nextSwingEntries,
+        "next-swing owns the left center channel"
+    )
     AssertEqual(centerHides, 0, "next-swing does not hide center icons")
 
-    TopDps.RecommendationPresenter:Set(provider, "bloodthirst", { { button = {} } })
-    AssertEqual(centerShows, 1, "primary recommendation owns center icons")
+    TopDps.RecommendationPresenter:Set(provider, "bloodthirst", primaryEntries)
+    AssertEqual(centerStates[#centerStates].primaryEntries, primaryEntries, "primary owns the right center channel")
+    AssertEqual(
+        centerStates[#centerStates].nextSwingEntries,
+        nextSwingEntries,
+        "primary change keeps the left next-swing channel"
+    )
 
     TopDps.RecommendationPresenter:ClearNextSwing()
+    AssertEqual(centerStates[#centerStates].primaryEntries, primaryEntries, "clearing next-swing keeps primary")
+    AssertEqual(centerStates[#centerStates].nextSwingEntries, nil, "clearing next-swing restores primary-only layout")
     AssertEqual(centerHides, 0, "clearing next-swing keeps center icons")
+
+    showNextSwingCenter = false
+    TopDps.RecommendationPresenter:SetNextSwing(provider, "heroicStrike", nextSwingEntries)
+    AssertEqual(
+        centerStates[#centerStates].nextSwingEntries,
+        nil,
+        "per-spec setting hides next-swing only from center icons"
+    )
+    AssertEqual(
+        highlightCalls[#highlightCalls].channel,
+        TopDps.HIGHLIGHT_CHANNEL_NEXT_SWING,
+        "hidden center next-swing keeps its action-bar channel"
+    )
 
     TopDps.RecommendationPresenter:ClearPrimary()
     AssertEqual(centerHides, 1, "clearing primary hides center icons")
     AssertEqual(highlightCalls[#highlightCalls].channel, TopDps.HIGHLIGHT_CHANNEL_PRIMARY, "primary clear targets primary channel")
+end
+
+local function TestCenterIconsUseSeparateFrames()
+    TopDps = NewAddon()
+    TopDps.db = {
+        rotation = {
+            centerIcons = { enabled = true, opacity = 0.8 },
+        },
+    }
+    TopDps.Settings = {
+        IsRotationEnabled = function() return true end,
+        IsModeActive = function() return true end,
+    }
+
+    GetSpellInfo = function(spell)
+        if spell == "Bloodthirst" then
+            return "Bloodthirst", nil, "bloodthirst-texture"
+        end
+
+        if spell == "Heroic Strike" then
+            return "Heroic Strike", nil, "heroic-strike-texture"
+        end
+
+        return nil
+    end
+
+    dofile("Presentation/CenterIcons.lua")
+
+    local function NewFrame()
+        return {
+            icon = {
+                SetTexture = function(self, texture) self.texture = texture end,
+            },
+            overlay = {
+                SetTexture = function(self, texture) self.texture = texture end,
+            },
+            SetAlpha = function() end,
+            Show = function(self) self.visible = true end,
+            Hide = function(self) self.visible = false end,
+        }
+    end
+
+    local left = NewFrame()
+    local right = NewFrame()
+    TopDps.CenterIcons.frames = { left, right }
+
+    local primaryEntries = { { spellName = "Bloodthirst" } }
+    local nextSwingEntries = { { spellName = "Heroic Strike" } }
+    local primaryFrame = "Interface\\AddOns\\TopDps\\Textures\\CenterFrame"
+    local nextSwingFrame = "Interface\\AddOns\\TopDps\\Textures\\CenterFrameNextSwing"
+
+    TopDps.CenterIcons:Show(primaryEntries, nextSwingEntries)
+    AssertEqual(left.icon.texture, "heroic-strike-texture", "next-swing is shown on the left")
+    AssertEqual(left.overlay.texture, nextSwingFrame, "next-swing uses the blue center frame")
+    AssertEqual(right.icon.texture, "bloodthirst-texture", "primary is shown on the right")
+    AssertEqual(right.overlay.texture, primaryFrame, "primary keeps the gold center frame")
+
+    TopDps.CenterIcons:Show(primaryEntries, nil)
+    AssertEqual(left.icon.texture, "bloodthirst-texture", "primary returns to the left without next-swing")
+    AssertEqual(left.overlay.texture, primaryFrame, "left primary restores the gold center frame")
+    AssertEqual(right.icon.texture, "bloodthirst-texture", "primary stays duplicated on the right")
+    AssertEqual(right.visible, true, "both primary icons stay visible")
+
+    TopDps.CenterIcons:Show(nil, nextSwingEntries)
+    AssertEqual(left.icon.texture, "heroic-strike-texture", "standalone next-swing remains on the left")
+    AssertEqual(right.visible, false, "right slot is hidden without primary")
+
+    TopDps.CenterIcons:Hide()
+    TopDps.CenterIcons:Refresh()
+    AssertEqual(left.visible, false, "cleared left slot is not restored by refresh")
+    AssertEqual(right.visible, false, "cleared right slot is not restored by refresh")
 end
 
 local function TestQueuedNextSwingDetection()
@@ -504,7 +621,8 @@ TestSpecProviderContract()
 TestHighlightChannels()
 TestBlizzardChannelColor()
 TestCheeseChannelTextures()
-TestRecommendationPresenterKeepsCenterIconsPrimaryOnly()
+TestRecommendationPresenterSeparatesCenterChannels()
+TestCenterIconsUseSeparateFrames()
 TestQueuedNextSwingDetection()
 TestRotationEngineChannels()
 
