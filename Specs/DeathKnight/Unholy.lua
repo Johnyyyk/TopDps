@@ -1,6 +1,8 @@
 local addon = TopDps
 local DeathKnight = addon.DeathKnight
 
+local DESOLATION_REFRESH_LEAD = 3
+
 local Unholy = addon.SpecProvider:Create({
     id = "DEATHKNIGHT_UNHOLY",
     classToken = DeathKnight.CLASS_TOKEN,
@@ -57,6 +59,16 @@ local PRIORITY_SINGLE_TARGET = {
     "deathCoil",
 }
 
+local PRIORITY_SINGLE_TARGET_DESOLATION = {
+    "deathAndDecay",
+    "icyTouch",
+    "plagueStrike",
+    "pestilence",
+    "bloodStrike",
+    "scourgeStrike",
+    "deathCoil",
+}
+
 local PRIORITY_AOE = {
     "deathAndDecay",
     "icyTouch",
@@ -68,9 +80,40 @@ local PRIORITY_AOE = {
     "bloodStrike",
 }
 
+local PRIORITY_AOE_DESOLATION = {
+    "deathAndDecay",
+    "icyTouch",
+    "plagueStrike",
+    "pestilence",
+    "bloodStrike",
+    "bloodBoil",
+    "deathCoil",
+    "scourgeStrike",
+}
+
 local function UsesScourgeStrike(context)
     local entries = context and context.abilitiesByCategory and context.abilitiesByCategory.scourgeStrike or nil
     return type(entries) == "table" and #entries > 0
+end
+
+function Unholy:OnSpellCatalogBuilt()
+    local talentName = GetSpellInfo(DeathKnight.SPELL_IDS.desolationTalent)
+    self.desolationTalentRank = talentName
+        and addon.GameApi:GetTalentRankByName(DeathKnight.TALENT_TABS.UNHOLY, talentName)
+        or 0
+end
+
+function Unholy:ShouldMaintainDesolation(context)
+    if (tonumber(self.desolationTalentRank) or 0) <= 0 then
+        return false
+    end
+
+    local aura = DeathKnight:FindPlayerAura(DeathKnight.DESOLATION_AURA_IDS)
+    if not aura then
+        return true
+    end
+
+    return DeathKnight:GetAuraRemaining(aura, context) <= DESOLATION_REFRESH_LEAD
 end
 
 function Unholy:IsCategoryAllowed(category, context)
@@ -92,11 +135,13 @@ function Unholy:IsCategoryAllowed(category, context)
 end
 
 function Unholy:GetPriority(context)
+    local maintainDesolation = self:ShouldMaintainDesolation(context)
+
     if DeathKnight:GetEnemyCount(context) >= 2 then
-        return PRIORITY_AOE
+        return maintainDesolation and PRIORITY_AOE_DESOLATION or PRIORITY_AOE
     end
 
-    return PRIORITY_SINGLE_TARGET
+    return maintainDesolation and PRIORITY_SINGLE_TARGET_DESOLATION or PRIORITY_SINGLE_TARGET
 end
 
 addon.SpecRegistry:Register(Unholy)
