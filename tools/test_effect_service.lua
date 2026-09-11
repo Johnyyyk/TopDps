@@ -36,7 +36,9 @@ local spellNames = {
     [469] = "Commanding Shout",
     [6307] = "Blood Pact",
     [57330] = "Horn of Winter",
+    [57623] = "Horn of Winter",
     [8076] = "Strength of Earth",
+    [58646] = "Strength of Earth",
     [1459] = "Arcane Intellect",
     [23028] = "Arcane Brilliance",
     [43002] = "Arcane Brilliance",
@@ -143,6 +145,32 @@ local function TestEquivalentBuffLookup()
         true,
         "Strength of Earth satisfies Horn of Winter effect"
     )
+end
+
+local function TestStrengthAgilityIndexedLookup()
+    local effectSpellIds = EffectService:GetSpellIds(
+        TopDps.EFFECT_STRENGTH_AGILITY,
+        TopDps.EFFECT_QUALITY_FULL
+    )
+
+    auras.player = {}
+    local auraIndex = TopDps.AuraService:BuildAuraIndex("player", "HELPFUL")
+    local aura = TopDps.AuraService:FindAuraInIndex(auraIndex, effectSpellIds)
+    AssertEqual(aura, nil, "no Strength/Agility aura keeps the requirement inactive")
+
+    auras.player = {
+        Aura(57623, "player"),
+    }
+    auraIndex = TopDps.AuraService:BuildAuraIndex("player", "HELPFUL")
+    aura = TopDps.AuraService:FindAuraInIndex(auraIndex, effectSpellIds)
+    AssertEqual(aura and aura.spellId, 57623, "rank 2 Horn of Winter is found through rank-name fallback")
+
+    auras.player = {
+        Aura(58646, "party1"),
+    }
+    auraIndex = TopDps.AuraService:BuildAuraIndex("player", "HELPFUL")
+    aura = TopDps.AuraService:FindAuraInIndex(auraIndex, effectSpellIds)
+    AssertEqual(aura and aura.spellId, 58646, "rank 8 Strength of Earth is found as an equivalent")
 end
 
 local function TestExternalMagicVulnerability()
@@ -270,6 +298,7 @@ end
 
 TestQualityFiltering()
 TestEquivalentBuffLookup()
+TestStrengthAgilityIndexedLookup()
 TestExternalMagicVulnerability()
 TestRequiredStacks()
 TestAuraOrderDoesNotChangeQualityResult()

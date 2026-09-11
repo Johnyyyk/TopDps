@@ -99,9 +99,19 @@ AssertEqual(
     "missing required buff remains a requirement"
 )
 AssertEqual(
+    panel:IsEntryVisible(requiredBuff, inactive, false),
+    true,
+    "missing required buff is visible in locked mode"
+)
+AssertEqual(
     panel:IsEntryVisible(requiredBuff, active, false),
     false,
     "satisfied required buff stays hidden in locked mode"
+)
+AssertEqual(
+    panel:IsEntryVisible(requiredBuff, active, true),
+    true,
+    "satisfied required buff is visible in unlocked preview"
 )
 
 print("panel buff semantics regression tests passed")

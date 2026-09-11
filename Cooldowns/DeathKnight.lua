@@ -78,7 +78,11 @@ addon.CooldownRegistry:Register({
             order = 30,
         },
         { id = "summonGargoyle", type = "spell", spellIds = { DeathKnight.SPELL_IDS.summonGargoyle }, group = addon.COOLDOWN_GROUP_OFFENSIVE, order = 20 },
-        { id = "boneShield", type = "spell", spellIds = { DeathKnight.SPELL_IDS.boneShield }, group = addon.COOLDOWN_GROUP_DEFENSIVE, order = 30 },
+        {
+            id = "boneShield", type = "spell", spellIds = { DeathKnight.SPELL_IDS.boneShield },
+            group = addon.COOLDOWN_GROUP_DEFENSIVE, panelCategory = addon.PANEL_CATEGORY_BUFFS,
+            panelBehavior = addon.PANEL_BEHAVIOR_REQUIRED_BUFF, order = 30,
+        },
         { id = "antiMagicZone", type = "spell", spellIds = { DeathKnight.SPELL_IDS.antiMagicZone }, group = addon.COOLDOWN_GROUP_DEFENSIVE, order = 40 },
     },
 })

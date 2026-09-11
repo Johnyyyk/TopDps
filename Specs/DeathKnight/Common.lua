@@ -49,9 +49,24 @@ DeathKnight.SPELL_IDS = {
     killingMachine = 51124,
     freezingFog = 59052,
 
+    desolationTalent = 66817,
+    desolationRank1 = 63583,
+    desolationRank2 = 66800,
+    desolationRank3 = 66801,
+    desolationRank4 = 66802,
+    desolationRank5 = 66803,
+
     summonGargoyle = 49206,
     boneShield = 49222,
     antiMagicZone = 51052,
+}
+
+DeathKnight.DESOLATION_AURA_IDS = {
+    DeathKnight.SPELL_IDS.desolationRank1,
+    DeathKnight.SPELL_IDS.desolationRank2,
+    DeathKnight.SPELL_IDS.desolationRank3,
+    DeathKnight.SPELL_IDS.desolationRank4,
+    DeathKnight.SPELL_IDS.desolationRank5,
 }
 
 function DeathKnight:FindPlayerAura(spellIds)
